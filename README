@@ -1,7 +1,19 @@
-Nomoa.com is another space on the 'NET.
+Nomoa.com is another soapbox on the 'NET.
 
-The following pages are the public space but more specifically, a repo for my
-published notes.
+Over time, I've dropped notes here that are relevant in my professional and private lives. Could they be of some use to you?
 
-bsd - OpenBSD Installation, Maintenance Guides 
-compstud - Junior High School Computer Studies Course Notes
+./bsd
+
+The OpenBSD guides evolved as a way of keeping track of how I could install a secure, functional, system for schools in Tonga, and disseminate this knowledge to maximimise sustainability of these installations.
+
+Over time there have been support from a few private firms and some material have been kept 'current' while others have had fewer updates.
+
+./compstud 
+
+Computer Studies Course Notes developed for Junior and Senior High School students in Tonga. I hope that the material is significant, although I no longer have time to contribute to it's development.
+
+LICENSE - ISC
+
+Materials in this body of work are copyright (c) 2005 - 2009 Samiuela Loni Vea Taufa.
+
+For further information on the licensing, please view the LICENSE.txt file
