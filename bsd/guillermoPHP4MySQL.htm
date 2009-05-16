@@ -1,0 +1,157 @@
+
+<html>
+<head>
+<title>=8&gt; nomoa.com/bsd OpenBSD - php4 and mysql</title><link rel="STYLESHEET" type="text/css" href="openbsd.css">
+<script language="JavaScript">
+<!--
+
+function newImage(arg) {
+	if (document.images) {
+		rslt = new Image();
+		rslt.src = arg;
+		return rslt;
+	}
+}
+
+function changeImages() {
+	if (document.images && (preloadFlag == true)) {
+		for (var i=0; i<changeImages.arguments.length; i+=2) {
+			document[changeImages.arguments[i]].src = changeImages.arguments[i+1];
+		}
+	}
+}
+
+var preloadFlag = false;
+function preloadImages() {
+	if (document.images) {
+		openbsd_over = newImage("mmedia/openbsd-over.gif");
+		openbsd_down = newImage("mmedia/openbsd-down.gif");
+		preloadFlag = true;
+	}
+}
+
+// -->
+</script>
+<!-- End Preload Script -->
+</head>
+
+<body bgcolor="#fffacd" onLoad="preloadImages();">
+<p class="logo">
+<a class="anchBlue" onmousedown="changeImages('openbsd', 
+   'mmedia/openbsd-down.gif'); return true;" href
+   ="http://www.nomoa.com/bsd" onMouseOver  
+   ="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;"
+   onMouseOut="changeImages('openbsd', 'mmedia/openbsd.gif'); return true;" onMouseUp="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;">
+   <img name="openbsd"  align="absMiddle" 
+        alt="OpenBSD ... The Only way to Go ..." border="0" height="50"
+        src="mmedia/openbsd.gif" width="368"></a>
+</p>
+
+<h1> php4</h1>
+<hr color="fuchsia">
+<p>Table of Contents: </p>
+<ul>
+  <li><A href="#introduction">Introduction</a> 
+  <li><A href="#configure"> Configuring</a> 
+  <li><a href="#editorial">Editorial Notes</a>
+  <li><A href="#author">Author and Copyright</a></li>
+</ul>
+<hr color="fuchsia">
+<h2><a name="introduction"></a>Introduction</h2>
+<DIV>Dear Samiuela LV Taufa, </DIV>
+<DIV>My name is Guillermo Ruiz and I'm writing you from Hayward, California USA. 
+Just recently I came across your website http://nomoa.com/bsd/index.html Buddy, 
+I need to tell you this: It is awesome! I've been looking for so long about 
+setting up web applications using OpenBSD OS but no more search. I think your 
+pages are filled with so much rich and valuable data anywhere else I would find. 
+Keep up the good work! </DIV>
+<DIV>&nbsp;</DIV>
+<DIV></DIV>
+<DIV></DIV>
+<DIV>As a token of apreciation, and giving you my most sincere thanks for your 
+help, I would like to share some information about implementing PHP4 with MySQL 
+support. I setup my old and friendly Cyrix 333 Mhz computer with the latest, I 
+mean, the latest versions of OpenBSD(2.8), PHP-with-MySQL-support(4.0.3pl1), and 
+MySQL (Stable 3.22.32) </DIV>
+<DIV></DIV>
+<DIV></DIV>
+<H2><a name="introduction"></a>Configuring</H2>
+<P>After installing the OS, I setup the Apache web server, I setup the database 
+program, and then installed the PHP package. When the setup finished, a message 
+popped up saying that I had to run /usr/local/sbin/php4-enable command to 
+activate the PHP modules which I did, and it automatically&nbsp;added the 
+LoadModule php4_module line in the httpd.conf file I also tweaked the mime files 
+the way you explained on your web pages, and added the php extensions to the 
+Directory Index. I rebooted the machine, and something funny happened: Apache 
+wasn't loading at all! I tried to load it manually, and the following message 
+came up:</P>
+<table border="0" width="800" class="Code">
+  <tr>
+    <td nowrap class="pScreenOutput">/usr/libexec/ld.so: httpd: libmysqlclient.so.6.0: 
+      No such file or directory<BR>
+  /usr/sbin/apache start: httpd could not be started
+</td></tr>
+</table>
+<p>That same message I saw during the boot process. I did a little research until 
+  I found the solution: </P>
+<p>Just add</P>
+<table border="0" width="800" class="Code">
+  <tr><td nowrap class="Code">shlib_dirs=/usr/local/lib/mysql
+  </td></tr>
+</table>
+<P>in</P>
+<table border="0" width="800" class="Code">
+  <tr>
+    <td nowrap class="pFileReference">File: /etc/rc.conf </td>
+  </tr>
+</table>
+
+<P>so ld.so finds the MySQL libraries. </P>
+<P>shlib_dirs is usually empty, but it is already in the rc.conf file. Just add 
+what it is after the equal sign and&nbsp;then&nbsp;Apache will work&nbsp;but now 
+there&nbsp;was another problem: I created a test.php file with the famous 
+phpinfo() function to see if PHP was active, but it wasn't or Apache didn't know 
+what to do with that file! Everytime I pinpointed the test.php file using Lynx 
+or any other browser it tried to download it instead of displaying the php 
+environment. So again I did a little research and I came up with another 
+solution: In the section of the httpd.conf file dealing with "tweaking the 
+mime.types" I modified&nbsp;it this way:</P>
+<P class="pFileReference">File: /var/www/conf/httpd.conf</P>
+<P class="Code">AddType application/x-httpd-php <span class="Code">.phtml</span></P>
+<P class="Code"><span class="Code">AddType application/x-httpd-php .php .php3 
+  .php4</span></P>
+<P class="Code"><span class="Code">AddType application/x-httpd-php-source </span>.phps</P>
+<P>And again, it worked! You can, of course, add this information in your web 
+site just in case someone wants to install PHP4 to use it with MySQL. Thanks 
+again, for providing me the most rewarding information available for the OpenBSD 
+OS! I'll keep in touch if I find something interesting.</P>
+<P>Sincerely,</P>
+<P>Guillermo Ruiz</P>
+<P>;-)8</P>
+<h2><a name="editorial"></a>Editorial Notes</h2>
+<p>The contents of Guillermo Ruiz's original e-mail has remained largely intact. 
+  Where changes have been made, they have been to hopefully enhance readability.</p>
+<p>You may find it useful to read through my php3 installation guide.</p>
+<p>The copyright of the original material remains with Guillermo Ruiz.</p>
+<h2><a name="author"></a>Author and Copyright</h2>
+<p>Layout Copyright (c) 2000 Samiuela LV Taufa. All Rights Reserved.</p>
+<p>I reserve the right to be totally incorrect even at the best advice of betters. 
+  In other words, I'm probably wrong in enough places for you to call me an idiot, 
+  but don't 'cause you'll hurt my sensibilities, just tell me where I went wrong 
+  and I'll try again.</p>
+<p>You are permitted and encouraged to use this guide for fun or for profit as 
+  you see fit. If you republish this work in what-ever form, it would be nice 
+  (though not enforceable) to be credited.</p>
+<P>&nbsp;</P>
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+  <tr> 
+    <td class="block" valign="center" width="100%" bgcolor="#cccccc"><strong> 
+      <p class="block">php4.</p>
+      </strong></td>
+  </tr>
+</table>
+<p><font color="#808080" face="sans-serif" size="-2"><strong>Copyright&nbsp; © 
+  2000 <a href="http://www.nomoa.com">NoMoa Publishers</a> All rights 
+  reserved.  Caveat Emptor</strong></font></p>
+</body>
+</html>

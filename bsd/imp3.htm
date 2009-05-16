@@ -1,0 +1,262 @@
+
+<html>
+<head>
+<title>=8> nomoa.com/bsd OpenBSD - IMP Imap webMail Program.</title><link rel="STYLESHEET" type="text/css" href="openbsd.css">
+<script language="JavaScript">
+<!--
+
+function newImage(arg) {
+	if (document.images) {
+		rslt = new Image();
+		rslt.src = arg;
+		return rslt;
+	}
+}
+
+function changeImages() {
+	if (document.images && (preloadFlag == true)) {
+		for (var i=0; i<changeImages.arguments.length; i+=2) {
+			document[changeImages.arguments[i]].src = changeImages.arguments[i+1];
+		}
+	}
+}
+
+var preloadFlag = false;
+function preloadImages() {
+	if (document.images) {
+		openbsd_over = newImage("mmedia/openbsd-over.gif");
+		openbsd_down = newImage("mmedia/openbsd-down.gif");
+		preloadFlag = true;
+	}
+}
+
+// -->
+</script>
+<!-- End Preload Script -->
+</head>
+
+<body bgcolor="#FFFACD" onLoad="preloadImages();">
+<p class="logo">
+<a class="anchBlue" href="http://www.nomoa.com/bsd" 
+   onMouseOver="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;"
+   onMouseOut="changeImages('openbsd', 'mmedia/openbsd.gif'); return true;"
+   onMouseDown="changeImages('openbsd', 'mmedia/openbsd-down.gif'); return true;"
+   onMouseUp="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;">
+   <img name="openbsd"  align="absMiddle" 
+        alt="OpenBSD ... The Only way to Go ..." border="0" height="50"
+        src="mmedia/openbsd.gif" width="368"></a>
+</p>
+
+<h1>IMP Imap webMail Program</h1>
+<hr color="fuchsia">
+<p>Table of Contents: </p>
+<ul>
+  <li><a href="#shell">Introduction</a></li>
+  <li><a href="#prereq">Pre-requisites</a></li>
+  <li><a href="#imp">Installing</a></li>
+  <li><a href="#configure">Configuring IMP</a></li>
+  <li><a href="#security">Securing the Installation</a></li>
+  <li><a href="#author">Author and Copyright</a></li>
+</ul>
+<hr color="fuchsia">
+<h2><a name="introduction"></a>Introduction</h2>
+<p>Described in more detail on http://www.horde.org, IMP is an IMAP client (reads 
+  and delivers mail) that functions using a Web Browser as the client, while operations 
+  are performed on the Web Server.</p>
+<h2><a name="pre-req"></a>Pre-requisites (from IMP FAQ)</h2>
+<p> <a href="horde.htm">Horde</a><br>
+  <a href="mailServer.htm#imap">IMAP<br>
+  </a><a href="mysql.htm">MySQL<br>
+  </a></p>
+<h5>Optional and seriously recommended</h5>
+<p>OpenLDAP<br>
+  ispell (interactive spelling checker)<br>
+  GD (binary package available. graphics library for TTF support in PHP3 through 
+  FreeType)<br>
+  FreeType (binary package available, TTF rendering library required for MSWord 
+  attachments)<br>
+  Zlib (required for MSWordView)<br>
+  MSWordView</p>
+<a name="imp"> 
+<h2> Installing the files</h2>
+</a> 
+<p class="pFileReference">Source File: imp-2.2.0-pre13.tar.gz (available from 
+  http://www.horde.org)</p>
+<p>The 1st thing to do is untar the imp distribution files and move it under the 
+  horde directory.</p>
+<p class="Code"># <b>cd /usr/src</b><br>
+  # <b>tar -zxf /[path-to-file]/imp-2.2.0-pre13.tar.gz</b><br>
+  # <b>mv imp-2.2.0-pre13 /var/www/horde/imp</b> </p>
+<p>The install script that comes with horde needs to be executed. The install 
+  script should copy the distribution configuration files within the config directory 
+  into release forms (eg. horde.php3.dist ==&gt; horde.php3; defaults.php3.dist 
+  ==&gt; defaults.php3; mime.php3.dist ==&gt; mime.php3; ldap.php3.dist ==&gt; 
+  ldap.php3; servers.php3.dist ==&gt; servers.php3 ) After the files have been 
+  copied the script will also chmod the files to what they should be for use by 
+  horde. </p>
+<p class="Code"># <b>cd /var/www/horde</b><br>
+  horde # <b>sh install.sh</b> </p>
+<p class="pScreenOutput"> Your blank configuration files have been created, please 
+  go to <br>
+  the configuration utitlity at : <br>
+  <br>
+  your install path url/setup.php3 </p>
+<p class="Code"></p>
+<a name="configure">
+<h2>Configuring the IMP Services</h2>
+</a> 
+<p>Now you can configure the IMP setup using the setup.php3 file by using your 
+  browser and pointing to the server:</p>
+<p class="Code"># <b>lynx http://localhost/horde/setup.php3</b></p>
+<p>The above will take you through a graphical (web-interface) configuration of 
+  the IMP setup. Following the web-interface the areas of interest should include:-</p>
+<p class="pScreenOutput"><b>Page 3 of 11:</b><br>
+  Root Base Url: <b>/horde/imp</b><br>
+  Graphics Base Url: <b>/horde/imp/graphics</b><br>
+  <b>Page 4 of 11:</b><br>
+  Default IMAP Server: <b>localhost</b><br>
+  Default from address append: <b>mydomain.com</b><br>
+</p>
+<p class="pScreenOutput">Mail Folder Root: <b>.mail</b><br>
+</p>
+<p class="pScreenOutput"> <b>Page 9 of 11</b><br>
+  Use Database: <b>True</b><br>
+  Database Type: <b>MySQL</b><br>
+  User Name: <b>hordemgr</b><br>
+  Password: <b>hordemgr</b><br>
+  Database Name: <b>horde</b><br>
+  Server Name: <b>localhost</b><br>
+  Preference Table: <b>&lt;do not change&gt;</b><br>
+  Address Table: <b>&lt;do not change&gt;</b></p>
+<p>The configuration changes will be written to the file: imp/config/defaults.php3. 
+  You can manually make the changes by opening the file and making changes such 
+  as listed below:</p>
+<p class="Code">$default->root_url = <b>'/horde/imp/</b>';<br>
+  $default->graphics_url = $default->root_url . '<b>graphics</b>'; <br>
+  $default->from_server = '<b>mydomain.com</b>'; </p>
+<a name="security"> 
+<h2>Securing the installation</h2>
+</a> 
+<p>Final cleanup. The final activity to do is secure the configuration files and 
+  turn off the ability to configure the system through the web interface. The 
+  horde/secure.sh script will perform these tasks for us, so we can execute that 
+  script and our system is ready for live action.</p>
+<p class="Code"># cd /var/www/horde<br>
+  # sh ./secure.sh</p>
+<p class="pScreenOutput"> I have made your configuration files, and libraries 
+  mode 0444<br>
+  which is read for everyone.<br>
+  <br>
+  And setup.php3 and test.php3 are mode 0000 which is no access period. </p>
+<p class="Normal">Now we're ready to test IMP by starting horde with http://localhost/horde/ 
+  Opening this website will show the available horde modules (at this point we 
+  only have IMP.) Selecting IMP should let you login to your e-mail account. </p>
+<h5 class="Normal">Security Note: Fixing that password hole</h5>
+<p class="Normal">From ../horde/imp/docs/SECURITY</p>
+<p class="pScreenOutput">Default database password is a security hole <br>
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~<br>
+  The Horde and IMP documentation and sample database creation scripts <br>
+  create a user "hordemgr" with password "hordemgr" for accessing the <br>
+  horde database. Using this password in a production environment is <br>
+  a security hole, since an attacker will easily guess it. </p>
+<p class="pScreenOutput">&nbsp;</p>
+<p class="pScreenOutput">It is very important that you change the password of 
+  the "hordemgr"<br>
+  user to something secure. The horde/scripts/database/dbpasswd.sh<br>
+  script can be used to make this change, or alter the instructions in <br>
+  horde/docs/DATABASE to set a different password. </p>
+<p class="pScreenOutput">&nbsp;</p>
+<p class="pScreenOutput">IMP will display an error on the login page if the default 
+  database <br>
+  password is in use. If you insist on using the default password (NOT <br>
+  RECOMMENDED), the error can be turned off in imp/config/defaults.php3 <br>
+  by setting "$default->db_security_nag = false". </p>
+<p>An example of using the dbpasswd.sh script is show below where you will be 
+  asked by the script for the directory where IMP's configuration reside. If you 
+  have followed the installation procedure shown above then you can use /var/www/horde/imp/config.</p>
+<p class="Code">#&nbsp;cd /var/www/horde/scripts/database<br>
+  # sh&nbsp;dbpasswd.sh</p>
+<p class="pScreenOutput"> This&nbsp;script&nbsp;changes&nbsp;the&nbsp;password&nbsp;for&nbsp;the&nbsp;Horde&nbsp;database&nbsp;user.&nbsp;&nbsp;It<br>
+  makes&nbsp;the&nbsp;change&nbsp;to&nbsp;the&nbsp;database&nbsp;itself,&nbsp;and&nbsp;to&nbsp;the&nbsp;configuration<br>
+  files&nbsp;used&nbsp;by&nbsp;Horde/IMP&nbsp;to&nbsp;access&nbsp;it.&nbsp;&nbsp;You&nbsp;will&nbsp;need&nbsp;your&nbsp;database<br>
+  administrator&nbsp;password,&nbsp;and&nbsp;permission&nbsp;to&nbsp;change&nbsp;your&nbsp;Horde/IMP<br>
+  configuration&nbsp;files.</p>
+<p class="pScreenOutput">&nbsp; </p>
+<p class="Code"> What&nbsp;is&nbsp;your&nbsp;IMP&nbsp;configuration&nbsp;directory?<b>&nbsp;/var/www/horde/imp/config</b></p>
+<p class="pScreenOutput"> Your&nbsp;PHPLIB&nbsp;configuration&nbsp;file&nbsp;is:&nbsp;&nbsp;&nbsp;&nbsp;../../phplib/local.inc<br>
+  &nbsp;&nbsp;It&nbsp;says&nbsp;the&nbsp;database&nbsp;user&nbsp;name&nbsp;is:&nbsp;&nbsp;&nbsp;&nbsp;hordemgr<br>
+  Your&nbsp;IMP&nbsp;configuration&nbsp;file&nbsp;is:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/var/www/horde/imp/config/defaults.php3<br>
+  &nbsp;&nbsp;It&nbsp;says&nbsp;the&nbsp;database&nbsp;driver&nbsp;is:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mysql<br>
+  &nbsp;&nbsp;It&nbsp;says&nbsp;the&nbsp;database&nbsp;user&nbsp;name&nbsp;is:&nbsp;&nbsp;&nbsp;&nbsp;hordemgr<br>
+  &nbsp;&nbsp;It&nbsp;says&nbsp;the&nbsp;old&nbsp;password&nbsp;is:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;hordemgr<br>
+  <br>
+  Enter&nbsp;the&nbsp;new&nbsp;'hordemgr'&nbsp;database&nbsp;password:&nbsp;******<br>
+  Enter&nbsp;the&nbsp;password&nbsp;again&nbsp;to&nbsp;confirm:&nbsp;******<br>
+  <br>
+  Change&nbsp;the&nbsp;'hordemgr'&nbsp;database&nbsp;password&nbsp;now?&nbsp;<b>yes</b><br>
+  <br>
+  Changing&nbsp;the&nbsp;database&nbsp;password...<br>
+  <br>
+  The&nbsp;password&nbsp;change&nbsp;has&nbsp;been&nbsp;made. </p>
+<p class="Normal">There are further security issues noted in the ../horde/imp/docs/SECURITY 
+  which I suggest you browse. A simple security precaution is to deny access to 
+  the configuration files (which detail password and database information) by 
+  implementing the below apache configurations.</p>
+<p class="Code">&lt;Directory "/var/www/horde/config"&gt;<br>
+  &nbsp;&nbsp;&nbsp; order deny,allow<br>
+  &nbsp;&nbsp;&nbsp; deny from all<br>
+  &lt;/Directory&gt;<br>
+  &lt;Directory "/var/www/horde/imp/config"&gt;<br>
+  &nbsp;&nbsp;&nbsp; order deny,allow<br>
+  &nbsp;&nbsp;&nbsp; deny from all<br>
+  &lt;/Directory&gt; </p>
+<p>The following security settings are recommended from the SECURITY file and 
+  I have made modifications to the specified routines to fit the user/directory 
+  layouts used in this document.</p>
+<p class="pScreenOutput">Preventing local users from reading configuration files<br>
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~<br>
+  The Horde and IMP configuration files contain sensitive data (such<br>
+  as database passwords) that should not be read by local system users.<br>
+  If your IMP server allows untrusted users to log in, one way to make the<br>
+  configuration directories accessible only to the web server is as follows:<br>
+  <br>
+  # chgrp -R www /var/www/horde/config<br>
+  # chgrp -R www /var/www/horde/imp/config<br>
+  # chmod -R o-rwx /var/www/horde/config<br>
+  # chmod -R o-rwx /var/www/horde/imp/config<br>
+  <br>
+  For completely fascist permissions, you can make the entire Horde/IMP<br>
+  tree inaccessible except by the web server:<br>
+  <br>
+  # chgrp -R www /var/www/horde<br>
+  # chmod -R o-rwx /var/www/horde<br>
+  <br>
+  This assumes that the web server runs as group "www" (typical for<br>
+  OpenBSD 2.7 Apache(?)); if not, you'll want to change the above commands accordingly. 
+</p>
+<p class="Normal">Security Note: The above discussion has not gone into securing 
+  clear-text transfers of e-mail and passwords between the web-browser client 
+  and your server. I've haven't figured that part out so if you have it working, 
+  please feel free to tell me (IMP FAQ seems clear enough, I just haven't done 
+  it yet.)</p>
+<p class="Normal">If I've given you the correct instructions you should now have 
+  a useable Web Hosted e-mail service available for your users at http://your-site/horde/</p>
+<p class="Normal">Happy Mailing</p>
+<h2><a name="author"></a>Author and Copyright</h2> 
+<p>Copyright (c) 2000/1/2 Samiuela LV Taufa. All Rights Reserved.</p>
+<p>I reserve the right to be totally incorrect even at the best advice of betters. In other words, I'm probably wrong in enough places for you to call me an idiot, but don't 'cause you'll hurt my sensibilities, just tell me where I went wrong and I'll try again.</p>
+<p>You are permitted and encouraged to use this guide for fun or for profit as 
+  you see fit. If you republish this work in what-ever form, it would be nice 
+  (though not enforceable) to be credited.</p>
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+  <tr> 
+    <td class="block" valign="MIDDLE" width="100%" bgcolor="#cccccc"><strong> 
+      <p class="block">IMP Imap webMail Program - serving up mail on the Web</p>
+      </strong></td>
+  </tr>
+</table>
+<p><font color="#808080" face="sans-serif" size="-2"><strong>Copyright&nbsp; &copy; 
+  2000/1/2 <a href="http://www.nomoa.com">NoMoa Publishers</a> All rights 
+  reserved.  Caveat Emptor</strong></font></p>
+</body>
+</html>

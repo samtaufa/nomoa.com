@@ -1,0 +1,118 @@
+#php_nuke Configuration Settings:-
+INSTALLATION PHASE 1
+====================
+* Create User/Database using nuke_NOMOA.sql
+* Create Database Tables using: phpnuke_distribution/sql/nuke.sql
+	Use the following instead of the earlier instructions in nuke.sql
+	    mysql nukeNOMOA < nuke.sql
+		
+		-- where nukeNOMOA is the name of the database that you've created with nuke_NOMOA.sql
+* Modify: config.php
+  #  Database & System Config
+	$dbhost  = "localhost";
+	$dbuname = "NOMOAuser";
+	$dbpass  = "NOpassword";
+	$dbname  = "nukeNOMOA";
+	$system  = 0; //1 for MS Windows, 0 for Unix
+
+INSTALLATION PHASE 2
+====================
+* Start http://site-details/admin.php
+
+  Use Username/Password    God/Password
+  Change Admin Name/Password
+  ******************************************
+  ***** CHANGE THE ADMINISTRATOR LOGIN *****
+  ******************************************
+  [ADMINISTRATION BLOCK] ==> EDIT ADMINS
+
+  ******************************************
+  ***** CREATE an  UNPRIVILEGED  LOGIN *****
+  ******************************************
+  [EDIT USERS]
+  . add unprivileged user
+  . add local administrators
+
+  **************************  
+  * Use [BLOCKS] to modify:-
+  **************************
+  [] Languages ==> DEACTIVATE, the length of info causes wrapping problem on my screen. 
+     -- fix the wrapping problem 1st (this depends on your priority)
+  [] Main Menu ==> EDIT and MAKE CHANGES
+     - in my situation we would start without the following services.
+	    ..:: Downloads ::..    most of my 1st start projects do not have any download files
+		..:: Members List ::.. most of my 1st start projects will not want to advertise users immediately
+		..:: Recommend Us ::.. put on hold until things are more reasonable ?
+  [] Administration ==> ACTIVATE
+  [] Random Headlines ==> DEACTIVATE
+     - reactivate after you figure out what it is.
+	   e.g. NoMOA ==> ON --> Deadly, Daily.daemonnews.org, bsdtoday, slashdot.org
+  [] First Block Left ==> EDIT and MAKE CHANGES.
+     - This can be an additional sequence of menus
+	   . in my situation, I DEACTIVATE and will REACTIVATE after better configuration
+	   e.g. QSC.  ==> Local Tutorials
+	        NoMOA ==> News & Information
+  [] First Block Right ==> EDIT and MAKE CHANGES.
+       e.g. QSC.  ==> Internal Sites
+	        NoMOA ==> OpenBSD Sites
+  [] Information Block ==> EDIT and MAKE CHANGES.
+       e.g. QSC.  ==> 
+	        NoMOA ==> 
+			
+  *******************************
+  * Use [Preferences] to modify:-
+  *******************************
+  [] Site Name
+  [] Site URL
+  [] Site Logo
+  [] Site Slogan
+  etc.
+  
+  Of importance are:-
+  ====================
+  [] Activate Ultramode (say NO)
+  [] Allow Anonymous Post (say NO)
+  [] Default Theme (make sure you have your graphics ready)
+  [] Locale Time Format (en_us,   
+  [] Let Anonymous users to post new links?
+  
+  Mail New Stories to Admin (in our case "YES") ==> set the details required for this.
+  
+  Comments Moderation ==> Moderation by Admin
+  Minimum User Password ==> We require a minimum length '8', try to force it so it isn't commonly used on other sites.
+
+  **********************************
+  * Use [TOPICS MANAGER] to modify:-
+  **********************************
+  Topics is used to categorise articles. 
+  Add / Remove Categories relevant to your configuration.
+       e.g. QSC.  ==> 
+	        NoMOA ==> Application Serving, File Sharing, etc.
+  
+  **********************************
+  * Use [HTTP REFERRERS] to modify:-
+  **********************************
+  Who is linking to us ?
+  - Delete the entries already in the system, they are for phpnuke not us.
+  
+  **********************************
+  * Use [Web Links] to modify:-
+  **********************************
+  This looks like it would have been really nice for tongatapu.net.to
+       e.g. QSC.  ==> 
+	   			- 
+	        NoMOA ==> 
+				- 
+  **********************************
+  *        FINAL MODIFICATIONS     #
+  **********************************
+
+  META TAGS in :-
+  
+  file       Line # Item
+  ========================
+  header.php # 49   KEYWORDS
+  
+				
+  
+  

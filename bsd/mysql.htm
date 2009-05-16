@@ -1,0 +1,626 @@
+<html><head>
+  
+
+
+  <title>=8&gt; nomoa.com/bsd OpenBSD - mySQL Database Server</title><link rel="STYLESHEET" type="text/css" href="openbsd.css">
+
+  <script language="JavaScript">
+<!--
+function newImage(arg) {
+if (document.images) {
+rslt = new Image();
+rslt.src = arg;
+return rslt;
+}
+}
+function changeImages() {
+if (document.images && (preloadFlag == true)) {
+for (var i=0; i<changeImages.arguments.length; i+=2) {
+document[changeImages.arguments[i]].src = changeImages.arguments[i+1];
+}
+}
+}
+var preloadFlag = false;
+function preloadImages() {
+if (document.images) {
+openbsd_over = newImage("mmedia/openbsd-over.gif");
+openbsd_down = newImage("mmedia/openbsd-down.gif");
+preloadFlag = true;
+}
+}
+// -->
+  </script><!-- End Preload Script --></head><body onload="preloadImages();" style="background-color: rgb(255, 250, 205);">
+<p class="logo">
+<a class="anchBlue" href="http://www.nomoa.com/bsd" onmouseover="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;" onmouseout="changeImages('openbsd', 'mmedia/openbsd.gif'); return true;" onmousedown="changeImages('openbsd', 'mmedia/openbsd-down.gif'); return true;" onmouseup="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;">
+<img name="openbsd" alt="OpenBSD ... The Only way to Go ..." src="mmedia/openbsd.gif" align="middle" border="0" height="50" width="368"></a>
+</p>
+
+<h1>MySQL Database Server</h1>
+
+<hr color="fuchsia">
+<p>Table of Contents: </p>
+
+<ul>
+
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#mysql">Installing</a></li>
+<ul>
+<li><a href="#library">Setting the Library Configuration</a></li>
+<li><a href="#password">Setting the Password</a></li>
+</ul>
+<li><a href="#testing">Testing the Installation</a></li>
+<li><a href="#starting">Starting MySQL</a></li>
+<li><a href="#stopping">Stopping MySQL</a></li>
+<li><a href="#usability">Usability Assistance Tip</a></li>
+<ul>
+<li><a href="#mysqlConf" class="anchBlue">User Configuration Files</a></li>
+<li><a href="#mysqlScreenEditor">Screen Editor in mysql</a></li>
+</ul>
+<li>Troubleshooting</li>
+<li><a href="#ref">Related Reference</a></li>
+<li><a href="#author">Author and Copyright</a></li>
+</ul>
+
+<hr color="fuchsia">
+<h2><a name="introduction"></a>Introduction</h2>
+
+<p>To be written: but there are
+seriously a lot of written material on the 'NET about mysql, this guide
+is for how to install the package in OpenBSD and some basic testing
+tools to verify everything is running.</p>
+
+<p>Another great location for aids are:</p>
+<ul>
+  <li> <a href="http://www.sancho2k.net/filemgmt_data/files/mysql_notes.html">http://www.sancho2k.net/filemgmt_data/files/mysql_notes.html&nbsp;</a></li>
+  <li><a href="http://www.devx.com/security/Article/28059/0/page/4">http://www.devx.com/security/Article/28059/0/page/4</a></li>
+</ul>
+
+
+<h2><a name="mysql"></a> Installing MySQL</h2>
+
+<p class="pFileReference">[ref: Paul Dubois, MySQL, (Indiana, New Riders, 2000)]<br>
+Reference: mysql-server-4.0.18.tgz (port-package) OpenBSD 3.5Beta</p>
+
+<p>Install the mysql package using
+pkg_add. The package installation will install the mysql binaries and
+create the default database by executing mysql_install_db. This
+includes initialising the data directory (--datadir=/var/mysql,) and
+Grant Tables for the 'root' user. The datadir is where the system-wide
+databases will be located. The Grant Tables is specify access
+privileges available. Together with creating the database
+directories/files the package will also chown/chmod the directories.
+Install the package with the standard method shown below:</p>
+
+<table class="Code" border="1" width="80%">
+
+<tbody><tr> <td class="Code" nowrap="nowrap"># <b>pkg_add</b> /<font color="#0000ff">[path-to-package]</font>/mysql-server-4.0.18.tgz</td>
+</tr>
+</tbody>
+</table>
+
+<p>The package automatically
+creates the user '_mysql' (on my system with uid 502) and group
+'_mysql' (gid 502) which are used for running the sql server.</p>
+
+<h3><a name="library"></a>Setting the Library Configuration</h3>
+
+<p>Somewhere in the life of mysql
+development, the libraries were moved from /usr/local/lib to their own
+directory /usr/local/lib/mysql. Because of this, we need to specify its
+location for the machine startup routines. We make these changes in <a href="rc.conf.htm" class="anchBlue">rc.conf.local</a> by modifying the reference to shlib_dirs:</p>
+
+<p class="pFileReference">Edit rc.conf.local and add the following line in <a href="rc.conf.htm#Section3" class="anchBlue">Section 3</a>:</p>
+
+<table class="Code" border="0" width="800">
+
+<tbody><tr> <td class="Code" nowrap="nowrap">shlib_dirs="$shlib_dirs /usr/local/lib/mysql" # extra directories for ldconfig</td>
+</tr>
+</tbody>
+</table>
+
+<p class="pFileReference">This will include the library directory to the original settings in rc.conf which is usually:</p>
+
+<table class="pScreenOutput" border="0" width="800">
+
+<tbody><tr> <td class="pScreenOutput" nowrap="nowrap">shlib_dirs=
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#
+extra directories for ldconfig</td>
+</tr>
+</tbody>
+</table>
+
+<h3><a name="password"></a>Setting the Password</h3>
+
+<p><b>Priority 1:</b> Set the root access password for the database, and before we can do that we need to temporarily start mysql.</p>
+
+<table class="Code" border="0" width="800">
+
+<tbody><tr> <td class="Code" nowrap="nowrap"># <b>/usr/local/bin/mysqld_safe &amp;</b><br>
+# <b>/usr/local/bin/mysqladmin -u root password&nbsp;</b><strong>new_password</strong></td>
+</tr>
+</tbody>
+</table>
+
+<p>If you are on a live system&nbsp;a more secure way of changing the
+password is to log into the mysql interactive client program 'mysql' and create the
+password from within the client.</p>
+<p>For example, after 'mysqld_safe &amp;' do something like the below. (courtesy of <a href="http://www.revunix.tk/" class="anchBlue">http://www.revunix.tk/</a>)</p>
+
+
+<table class="Code" border="0" width="800">
+
+<tbody><tr>
+<td class="Code" nowrap="nowrap"># <b>/usr/local/bin/mysqld_safe &amp;</b><br>
+# <b>/usr/local/bin/mysql -u root</b></td>
+</tr>
+<tr>
+<td class="pScreenOutput" nowrap="nowrap">Welcome to the MySQL monitor. Commands end with ; or \g.<br>
+Your MySQL connection id is 1 to server version: 4.0.20-log<br>
+Type 'help;' or '\h' for help. Type '\c' to clear the buffer.<br> </td>
+</tr>
+<tr>
+<td class="Code" nowrap="nowrap">mysql&gt; <strong>SET PASSWORD FOR root@localhost=PASSWORD('new_password');</strong></td>
+</tr>
+<tr>
+<td class="pScreenOutput" nowrap="nowrap">Query OK, 0 rows affected (0.07 sec)
+<p></p></td>
+</tr>
+</tbody>
+</table>
+
+<p>&nbsp; </p>
+
+<h2><a name="testing"></a>Testing the installation.</h2>
+
+<h3>Is it Running?</h3>
+
+<p>Reference: fstat(1)</p>
+
+<p>Verify the server is running by using the 'fstat' in the following example:</p>
+
+<table class="Code" border="0" width="80%">
+
+<tbody><tr> <td class="Code" nowrap="nowrap"># <b>fstat | grep "*:" | grep mysql</b></td>
+</tr>
+<tr> <td class="pScreenOutput" nowrap="nowrap"> _mysql mysqld 22190 5* internet stream tcp 0xd0bc25a4 *:3306</td>
+</tr>
+</tbody>
+</table>
+
+<p>Now we know through fstat that
+the mysql daemon (mysqld) is running with user privileges of _mysql and
+listening on port 3306. The [ | grep "*:" ] filters for processes that
+have an "internet stream" open. The [ | grep mysql ] further filters
+down to processes with the word mysql on the line.</p>
+
+<p>One neat feature of the 'fstat' program is that the "*.nnnnn" indicates the port on which the processes is listening. </p>
+
+<p>The displayed line is fstat(1):</p>
+
+<table class="Code" border="0" width="80%">
+
+<tbody><tr>
+<td class="pScreenOutput" nowrap="nowrap">USER
+&nbsp;&nbsp;Command PID &nbsp;&nbsp;&nbsp;FD
+DOMAIN&nbsp;&nbsp;&nbsp;Socket_Type&nbsp;Socket_Flag
+&nbsp;Protocol_Numb:Protocol_Address</td>
+</tr>
+<tr>
+<td class="pScreenOutput" nowrap="nowrap">_mysql mysqld &nbsp;22190 &nbsp;5* internet stream tcp &nbsp;0xd0bc25a4 &nbsp;&nbsp;*:3306</td>
+</tr>
+</tbody>
+</table>
+
+<p>&nbsp;</p>
+
+<h3>Can we access the server?</h3>
+
+<p>Our first test for validating
+the installation is to access the MySQL database server and look at the
+server maintenance database 'mysql.' We log in to the system through
+mysql interactive interface to the server.</p>
+
+<table class="Code" border="0" width="80%">
+
+<tbody><tr> <td class="Code" nowrap="nowrap"># <b>/usr/local/bin/mysql -u root -p </b></td>
+</tr>
+<tr> <td class="pScreenOutput" nowrap="nowrap"> Enter password: <b>mypassword </b>&lt;-- this will show as **********<br>
+Welcome to the MySQL monitor. Commands end with ; or \g.<br>
+Your MySQL connection id is 5 to server version: 4.0.18 <br>
+<br>
+Type 'help;' or '\h' for help. Type '\c' to clear the buffer.<br> <br>
+<br>
+mysql&gt; </td>
+</tr>
+</tbody>
+</table>
+
+<p class="Normal">The
+mysql&gt; prompt allows sql statements and MySQL commands to be
+entered. Most commands are completed by using the ";" semi-colon
+delimiter.</p>
+
+<p class="Normal">We check
+whether the initial database creation was successful (mysql, and test.)
+Use the show databases; command. The MySQL package should have
+successful created the system database 'mysql' and a sample database
+'test'.</p>
+
+<table class="Code" border="0" width="80%">
+
+<tbody><tr> <td class="Code" nowrap="nowrap">mysql&gt; <b>show databases; </b></td>
+</tr>
+<tr> <td class="pScreenOutput" nowrap="nowrap">+----------+<br>
+|&nbsp;Database&nbsp;|<br>
++----------+<br>
+|&nbsp;mysql&nbsp;&nbsp;&nbsp;&nbsp;|<br>
+|&nbsp;test&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
++----------+ </td>
+</tr>
+</tbody>
+</table>
+
+<p>We can check whether the mysql database has been installed by looking at the installed tables which should look like the below.</p>
+
+<table class="Code" border="0" width="80%">
+
+<tbody><tr> <td class="Code" nowrap="nowrap">mysql&gt; <b>use mysql;</b><br>
+mysql&gt; <b>show tables; </b></td>
+</tr>
+<tr> <td class="pScreenOutput" nowrap="nowrap">+-----------------+<br>
+|&nbsp;Tables&nbsp;in&nbsp;mysql&nbsp;|<br>
++-----------------+<br>
+|&nbsp;columns_priv&nbsp;&nbsp;&nbsp;&nbsp;|<br>|&nbsp;db&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
+|&nbsp;func&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
+|&nbsp;host&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
+|&nbsp;tables_priv&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
+|&nbsp;user&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
++-----------------+ </td>
+</tr>
+</tbody>
+</table>
+
+<p>The user table is the system
+wide table to record what users are allowed onto the system and with
+what privileges. By using the 'describe' command we can see a list of
+the table fields and data-types. In this table it shows us the
+different levels of privileges available on the MySQL server. </p>
+
+<table class="Code" border="0" width="800">
+
+<tbody><tr> <td class="Code" nowrap="nowrap"> mysql&gt;&nbsp;<b>describe&nbsp;user;</b></td>
+</tr>
+<tr>
+<td class="pScreenOutput" nowrap="nowrap">+-----------------+---------------+------+-----+---------+-------+<br>|&nbsp;Field&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;Type&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;Null&nbsp;|&nbsp;Key&nbsp;|&nbsp;Default&nbsp;|&nbsp;Extra&nbsp;|<br>
++-----------------+---------------+------+-----+---------+-------+<br>
+|&nbsp;Host&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;char(60)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;PRI&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
+|&nbsp;User&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;char(16)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;PRI&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
+|&nbsp;Password&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;char(16)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
+|&nbsp;Select_priv&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;enum('N','Y')&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;N&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
+|&nbsp;Insert_priv&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;enum('N','Y')&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;N&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
+|&nbsp;Update_priv&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;enum('N','Y')&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;N&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
+|&nbsp;Delete_priv&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;enum('N','Y')&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;N&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
+|&nbsp;Create_priv&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;enum('N','Y')&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;N&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
+|&nbsp;Drop_priv&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;enum('N','Y')&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;N&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
+|&nbsp;Reload_priv&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;enum('N','Y')&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;N&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
+|&nbsp;Shutdown_priv&nbsp;&nbsp;&nbsp;|&nbsp;enum('N','Y')&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;N&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
+|&nbsp;Process_priv&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;enum('N','Y')&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;N&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
+|&nbsp;File_priv&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;enum('N','Y')&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;N&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
+|&nbsp;Grant_priv&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;enum('N','Y')&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;N&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
+|&nbsp;References_priv&nbsp;|&nbsp;enum('N','Y')&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;N&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
+|&nbsp;Index_priv&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;enum('N','Y')&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;N&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
+|&nbsp;Alter_priv&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;enum('N','Y')&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;N&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
++-----------------+---------------+------+-----+---------+-------+</td>
+</tr>
+</tbody>
+</table>
+
+<p>Grabbing a set of information
+from the user table lets us see who has been given access to the
+system. The machine I have mysql installed on is called <b> iwill</b>,
+and you should see a similar result to the select query on your
+machine. Note the "blank" users is used by mysql for 'anonymous' and at
+the beginning only --user=root has privileges to do anything on the
+system. Note that the password field is encrypted with a one-way
+encryption system similar to but not the unix crypt() function.</p>
+
+<table class="Code" border="0" width="800">
+
+<tbody><tr> <td class="Code" nowrap="nowrap"> mysql&gt;&nbsp;<b>select&nbsp;host,&nbsp;user,&nbsp;select_priv,&nbsp;grant_priv,&nbsp;password&nbsp;from&nbsp;user;</b></td>
+</tr>
+<tr> <td class="pScreenOutput" nowrap="nowrap">+-----------+------+-------------+------------+------------------+<br>|&nbsp;host&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;user&nbsp;|&nbsp;select_priv&nbsp;|&nbsp;grant_priv&nbsp;|&nbsp;password&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
++-----------+------+-------------+------------+------------------+<br>
+|&nbsp;localhost&nbsp;|&nbsp;root&nbsp;|&nbsp;Y&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;Y&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;162eebfb6477e5d3&nbsp;|<br>
+|&nbsp;iwill&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;root&nbsp;|&nbsp;Y&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;Y&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
+|&nbsp;localhost&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;N&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;N&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
+|&nbsp;iwill&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;N&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;N&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
++-----------+------+-------------+------------+------------------+ </td>
+</tr>
+<tr> <td class="Code" nowrap="nowrap">mysql&gt; <b>quit</b></td>
+</tr>
+</tbody>
+</table>
+
+<h2><a name="starting"></a>Starting MySQL with each start-up.</h2>
+
+<p>To configure OpenBSD to
+automatically start mysql with every system start-up then you can edit
+the rc.conf.local file to modfiy the configuration and rc.local to take
+action when the configurations are set.</p>
+
+<p class="pFileReference">Edit: <a href="rc.conf.htm#rc.conf.local">/etc/rc.conf.local</a> file to include in Section 2 the following lines:</p>
+
+<table class="Code" border="0" width="800">
+
+<tbody><tr>
+<td class="pScreenOutput" nowrap="nowrap">mysql=YES </td>
+</tr>
+</tbody>
+</table>
+
+<p class="pFileReference"> Edit: /etc/rc.local</p>
+
+<p><b>After</b> the 'starting local daemons' <b>and</b> <b>before</b> the following echo '.', Insert the following instructions to the /etc/rc.local file: </p>
+
+<table class="Code" border="0" width="800">
+
+<tbody><tr> <td class="pScreenOutput" nowrap="nowrap"> <b>echo -n 'starting local daemons:'</b> &nbsp;&nbsp;<br>
+# [ ... stuff left out ... ]<br> &nbsp;</td>
+</tr>
+<tr> <td class="Code" nowrap="nowrap">if [ X"${mysql}" == X"YES" -a -x /usr/local/bin/mysqld_safe ]; then<br> <br>&nbsp;&nbsp;&nbsp;&nbsp;echo
+-n " mysqld"; /usr/local/bin/mysqld_safe --user=_mysql --log
+--open-files-limit=256 &amp;<br> <br>
+&nbsp;&nbsp;&nbsp;&nbsp;for i in 1 2 3 4 5 6; do<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if [ -S /var/run/mysql/mysql.sock ]; then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sleep
+1<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;echo
+-n "."<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fi<br>
+&nbsp;&nbsp;&nbsp;&nbsp;done <br> &nbsp;&nbsp;&nbsp;&nbsp;#<br>
+&nbsp;&nbsp;&nbsp;&nbsp;# Apache chroot Settings<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;mkdir -p /var/www/var/run/mysql<br>
+&nbsp; &nbsp; sleep 2<br> &nbsp;&nbsp;&nbsp;&nbsp;ln -f /var/run/mysql/mysql.sock /var/www/var/run/mysql/mysql.sock<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;#<br>
+&nbsp;&nbsp;&nbsp;&nbsp;# Postfix chroot Settings<br>
+&nbsp;&nbsp;&nbsp;&nbsp;if [ "X${postfix_flags}" != X"NO" ]; then <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mkdir
+-p /var/spool/postfix/var/run/mysql<br>
+&nbsp; &nbsp; &nbsp; &nbsp; sleep 2<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ln
+-f /var/run/mysql/mysql.sock /var/spool/postfix/var/run/mysql/mysql.sock<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fi<br>
+<br>
+fi<p></p> </td>
+</tr>
+<tr> <td class="pScreenOutput" nowrap="nowrap"> # [ ... stuff left out ... ]<br> <b>echo '.' </b></td>
+</tr>
+</tbody>
+</table>
+
+<p> Now each restart of the
+machine will automatically check to see whether we have enabled mysql
+in the configuration file (rc.conf) and then start the mysql daemon. If
+we wish to disable mysql we can simply change mysql=YES to mysql=NO</p>
+
+<p>Once you have the startup
+script working you can get rid of all the extraneous messages that
+mysql startup daemons makes by changing the mysqld_safe line to be
+something like the following:</p>
+
+<table class="Code_td" border="0" width="800">
+
+<tbody><tr>
+<td nowrap="nowrap">/usr/local/bin/mysqld_safe
+--user=_mysql --log --open-files-limit=256 &gt; /dev/null
+3&gt;&amp;1 2&gt;&amp;1 &amp;</td>
+</tr>
+</tbody>
+</table>
+
+<p>Since the above configuration
+is what I use on my test server, you may find that your needs require
+more open-files so in your situation (as I've been informed for others)
+you may need to increase the number of open files like: <a href="http://marc.theaimsgroup.com/?l=openbsd-misc&amp;m=109842287618174&amp;w=2">http://marc.theaimsgroup.com/?l=openbsd-misc&amp;m=109842287618174&amp;w=2</a></p>
+
+<table class="Code_td" border="0" width="800">
+
+<tbody><tr>
+<td nowrap="nowrap">/usr/local/bin/mysqld_safe
+--user=_mysql --log --open-files-limit=1000 &gt; /dev/null
+3&gt;&amp;1 2&gt;&amp;1 &amp;</td>
+</tr>
+</tbody>
+</table>
+
+<p>Note:
+/usr/local/share/mysql/mysql.server is a script for starting/stopping
+mysql daemon. The files are there with mysql-server-4.0.18 on OpenBSD
+3.5 so your mileage may vary.</p>
+
+<h3>WARNING!!! Hard Link (ln) won't work across devices</h3>
+
+<p>[ref: <a href="http://mailman.theapt.org/pipermail/openbsd-newbies/2005-February/002341.html">http://mailman.theapt.org/pipermail/openbsd-newbies/2005-February/002341.html</a>]</p>
+
+<p>The above rc.local updates work
+fine when you are running your chroot environments within the /var
+filesystem (ie. /var/www and /var/spool/postfix are not separate
+filesystems 'mounted' on /var/...)&nbsp;</p>
+
+<p>From the manual ln(1)</p>
+
+<p><span class="pScreenOutput Screen">By default, ln makes "hard" links.&nbsp; A hard link to a file is indistin</span><span class="pScreenOutput Screen">guishable from the original directory entry; any changes to a file are </span><span class="pScreenOutput Screen">effectively independent of the name used to reference the file.</span><span class="pScreenOutput Screen" style="font-weight: bold;">&nbsp; Hard </span><span class="pScreenOutput Screen" style="font-weight: bold;">links may not normally refer to directories and may not span file sys</span><span class="pScreenOutput Screen" style="font-weight: bold;">tems.</span><br class="pScreenOutput">
+</p>
+
+<p>If you are using separate file
+systems for your chroot environment, instead of hard links to sockets
+there are a few alternatives.</p>
+
+<ol>
+
+<li>Use 127.0.0.1 as your host for connecting to the mysql server instead of "localhost"</li>
+<li>Create the socket file inside the chroot environment.
+
+<table class="Code_td" border="0" width="800">
+<tbody><tr>
+<td nowrap="nowrap">/usr/local/bin/mysqld_safe
+--user=_mysql --log --open-files-limit=1000 --socket=/var/www/var/run/mysql/mysql.sock &gt; /dev/null
+3&gt;&amp;1 2&gt;&amp;1 &amp;</td>
+</tr>
+</tbody>
+</table>
+<p>Alternatively you can add something like the following to your /etc/my.cnf file:
+</p>
+<ul>
+<li>[client]<br>
+socket=/var/www/var/run/mysql/mysql.sock</li><li>[mysql]<br>
+socket=/var/www/var/run/mysql/mysql.sock</li>
+<li>[mysqld_safe]<br>
+open-files=1000</li>
+</ul>
+</li>
+</ol>
+
+<h2><a name="stopping"></a> Stopping MySQL</h2>
+
+<p>To stop the MySQL server, a standard approach is to use the mysqladmin program as shown below:</p>
+
+<p class="Code"># <b>/usr/local/bin/mysqladmin shutdown</b></p>
+
+<p>Of course you have to be logged
+in as a user with privileges to shutdown the server (as noted above in
+the the user table, field Shutdown_priv. Otherwise if you had root
+access you could shutdown the server through a 'kill'.</p>
+
+<p>Security Notice: MySQL installs
+anonymous login access from the localhost with its default
+installation, you may or may not consider this a security issue. If you
+do consider it a problem then you can remove the anonymous access by
+using commands similar to that shown below:</p>
+
+<table class="Code" border="0" width="800">
+
+<tbody><tr> <td class="Code" nowrap="nowrap"> # <b>/usr/local/bin/mysql -u root -p </b></td>
+</tr>
+<tr> <td class="pScreenOutput" nowrap="nowrap"> Enter password: <b>mypassword </b>&lt;-- this will show as **********<br>
+Welcome to the MySQL monitor. Commands end with ; or \g. <br>
+Your MySQL connection id is 6 to server version: 3.22.32<br>
+<br>
+Type 'help' for help.</td>
+</tr>
+<tr> <td class="Code" nowrap="nowrap">mysql &gt; <b>use mysql</b></td>
+</tr>
+<tr> <td class="pScreenOutput" nowrap="nowrap"> Reading table information for completion of table and column names<br>
+You can turn off this feature to get a quicker startup with -A</td>
+</tr>
+<tr> <td class="Code" nowrap="nowrap">mysql &gt; <b>delete from user where user = "";</b> </td>
+</tr>
+<tr>
+<td class="pScreenOutput" nowrap="nowrap">Query OK, 2 rows affected (0.08 sec) </td>
+</tr>
+</tbody>
+</table>
+
+<h2><a name="usability"></a>Usability Assistance</h2>
+
+<h3><a name="mysqlConf"></a>User Configuration Files</h3>
+
+<p>mysql will search for user
+configurations in a file called ~/.my.cnf which has a simple format to
+let you specify settings we have been forced to manually type with each
+invocation (start) of msyql.</p>
+
+<p>~/.my.cnf have the below settings which are user configurable.</p>
+
+<table class="pScreenOutput" border="0" width="800">
+
+<tbody><tr> <td class="pFileReference" nowrap="nowrap">[client]<br>
+host=<br>
+user=<br>
+password=<br>
+socket=<br>
+<br>
+[mysqld]<br>
+socket= </td>
+</tr>
+</tbody>
+</table>
+
+<h3><a name="mysqlScreenEditor"></a>Screen Editor in mysql</h3>
+
+<p>In Unix, the mysql command line
+supports using a screen editor for modifying and creating queries. The
+'edit' command in the MySQL command line calss the text editor of your
+choice (typically set with the EDITOR environment variable, probably vi
+on your OpenBSD.)</p>
+
+<p class="Code">mysql&gt; <font color="#0000ff"><b>edit</b></font></p>
+
+<p>If you make a mistake in keying
+in a command, then you can use the up-arrow to review your command, or
+you can type in edit to re-enter. edit remembers the previous command
+string you typed, so it is especially useful getting those large
+queries working.</p>
+
+<h2>Troubleshooting</h2>
+
+<p class="pFileReference">[ref: misc@openbsd.org October 2001 archives]<br>
+[ref: /usr/ports/databases/mysql/patches/]</p>
+
+<p>One problem that seems to be
+reported a lot on the mailing lists (and subsequently responded to) is
+that mysql at a large level of use begins to consume all available
+resources and locks up the system.</p>
+
+<p>The answer for this problem OpenBSD 2.x and OpenBSD 3.0 have been well documented at <a href="http://www.hostbaby.com/misc/mysql-openbsd.html" class="anchBlue">http://www.hostbaby.com/misc/mysql-openbsd.html</a> by Derek Sivers.</p>
+
+<h2><a name="ref"></a>Related References</h2>
+
+<p>MySQL Home <a href="http://www.tcx.se">http://www.tcx.se</a><br>
+phpAdmin <a href="http://www.phpwizard.net/phpMyAdmin/">http://www.phpwizard.net/phpMyAdmin/</a></p>
+<p>MySQL 5.x and OpenBSD 4.0: <a href="http://www.openbsdsupport.org/mysql.htm">
+http://www.openbsdsupport.org/mysql.htm</a> </p>
+
+<p>Page Descriptions Verified: 2003-01-09; </p>
+
+<table class="pScreenSmall" border="1" width="75%">
+
+<tbody><tr> <td class="pScreenSmall">OpenBSD 3.2-current (GENERIC) #39: Wed Dec 11 21:00:29 MST 2002<br>
+deraadt@i386.openbsd.org:/usr/src/sys/arch/i386/compile/GENERIC</td>
+</tr>
+<tr>
+<td class="pScreenSmall"> mysql-server-3.23.49.tgz</td>
+</tr>
+</tbody>
+</table>
+
+<h2><a name="author"></a>Author and Copyright</h2>
+
+<p>Copyright (c) 2000/1/2 Samiuela LV Taufa. All Rights Reserved.</p>
+
+<p>I reserve the right to be
+totally incorrect even at the best advice of betters. In other words,
+I'm probably wrong in enough places for you to call me an idiot, but
+don't 'cause you'll hurt my sensibilities, just tell me where I went
+wrong and I'll try again.</p>
+
+<p>You are permitted and
+encouraged to use this guide for fun or for profit as you see fit. If
+you republish this work in what-ever form, it would be nice (though not
+enforceable) to be credited.</p>
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+
+<tbody><tr> <td class="block" bgcolor="#cccccc" valign="middle" width="100%"><strong> <p class="block">MySQL - Serving up SQL</p>
+</strong></td>
+</tr>
+</tbody>
+</table>
+
+<p><font color="#808080" face="sans-serif" size="-2"><strong>Copyright&nbsp; &copy; 2000/1/2 <a href="http://www.nomoa.com">NoMoa Publishers</a> All rights reserved. Caveat Emptor</strong></font></p>
+
+</body></html>

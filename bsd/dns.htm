@@ -1,0 +1,1151 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0//EN">
+<html>
+  <head>
+    <title>=8> nomoa.com/bsd OpenBSD - DNS, setting up named for Domain Name Services</title>
+    <link rel="STYLESHEET" type="text/css" href="openbsd.css">
+<script language="JavaScript">
+<!--
+
+function newImage(arg) {
+	if (document.images) {
+		rslt = new Image();
+		rslt.src = arg;
+		return rslt;
+	}
+}
+
+function changeImages() {
+	if (document.images && (preloadFlag == true)) {
+		for (var i=0; i<changeImages.arguments.length; i+=2) {
+			document[changeImages.arguments[i]].src = changeImages.arguments[i+1];
+		}
+	}
+}
+
+var preloadFlag = false;
+function preloadImages() {
+	if (document.images) {
+		openbsd_over = newImage("mmedia/openbsd-over.gif");
+		openbsd_down = newImage("mmedia/openbsd-down.gif");
+		preloadFlag = true;
+	}
+}
+
+// -->
+</script>
+<!-- End Preload Script -->
+</head>
+
+<body bgcolor="#FFFACD" onLoad="preloadImages();">
+<p class="logo">
+<a class="anchBlue" href="http://www.nomoa.com/bsd" 
+   onMouseOver="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;"
+   onMouseOut="changeImages('openbsd', 'mmedia/openbsd.gif'); return true;"
+   onMouseDown="changeImages('openbsd', 'mmedia/openbsd-down.gif'); return true;"
+   onMouseUp="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;">
+   <img name="openbsd"  align="absMiddle" 
+        alt="OpenBSD ... The Only way to Go ..." border="0" height="50"
+        src="mmedia/openbsd.gif" width="368"></a>
+</p>
+
+<h1> named - Setting up a Domain Name Service (daemon) </h1>
+<hr color="fuchsia">
+<ul>
+  <li><a href="#intro">Introduction</a></li>
+  <li><a href="#preliminary">Preliminary Information</a></li>
+  <ul>
+    <li><a href="#TextLayout">Text Layout, Documentation Convention</a></li>
+  </ul>
+  <li><a href="#starting">Starting named</a></li>
+  <li><a href="#configure">Configuring named</a></li>
+  <ul>
+    <li><a href="#named.boot">named.boot - the named Configuration File</a></li>
+    <li><a href="#resolv">resolv.conf - name resolution path</a></li>
+    <li><a href="#mydomain.com.zone">db.mydomain.com.zone - Authoritative forward 
+      lookup</a></li>
+    <li><a href="#mydomain.com.rev">db.mydomain.com.rev - Authoritative reverse 
+      name lookup</a></li>
+    <li><a href="#localhost.zone">db.localhost.zone - The special localhost ip</a></li>
+    <li><a href="#localhost.rev">db.localhost.rev - reverse name lookup on localhost</a></li>
+    <li><a href="#all-zero">db.all-zero.rev - reverse name lookup on 0.0.0.0 address</a></li>
+    <li><a href="#all-one">db.all-one.rev - reverse name lookup no 255.255.255.255 
+      address</a></li>
+    <li><a href="#cache">root.cache</a></li>
+  </ul>
+  <li><a href="#Tools">Tools</a></li>
+  <li><a href="#author">Author and Copyright</a></li>
+</ul>
+<hr color="fuchsia">
+<h2><a name="intro"></a>Introduction</h2>
+<p>The Domain Name Service (DNS) allow IP based networks to offer human friendly 
+  names for numerically labelled machines. Where it does not matter for computers 
+  whether other computers are addressed by letters or numbers, it is more convenient 
+  for human beings to use names and it was more convenient for the developers 
+  of IP space to use numbers for transferring data between locations.</p>
+<p><i>named</i> implements a DNS through OpenBSD. There are three major revisions 
+  of named (bind) 4.x, 8.x, and 9.x. This guide will review the 4.x revision shipped 
+  with OpenBSD 2.7. For more recent versions of OpenBSD (e.g. 3.x ~ 4.x) you 
+should consider other documentation such as
+<a href="http://www.kernel-panic.it/openbsd.html">
+http://www.kernel-panic.it/openbsd.html</a>.</p>
+  <p>For the ultimate collection of HOWTos for DNS, try Nicolai Langfeldt's <a href="http://www.langfeldt.net/DNS-HOWTO/">http://www.langfeldt.net/DNS-HOWTO/</a></p>
+  <p>Otherwise, the mailing lists is chock-full of answers and different referencing include: <a href="http://www.nominum.com/content/documents/bind9arm.pdf">ISC's - The BIND 9 Administrator Reference Manual</a> which is apparently in the 3.3 default install. 
+</p>
+
+<h2><a name="preliminary"></a>Preliminary System Information</h2>
+ 
+<p class="pFileReference">[ref: named(8), ]<br>
+  [ref: Setting up DNS by Jeff Moe &lt;<a href="mailto:jeffdns@verinet.com">jeffdns@verinet.com</a>&gt;]<br>
+  [ref: <a href="http://www.hill.com/staffpubs/dns.html">SETTING UP YOUR OWN DNS</a> 
+  by Gary Kessler ] <br>
+</p>
+<p class="pFileReference">[ref: <a href="http://www.softpanorama.org/Security/dns_security.shtml" class="anchBlue">SoftPanorama</a>]</p>
+<p>This page gives a guide to how you can configure DNS using named and OpenBSD 
+  2.7. Although I attempt to provide useful documentation on why certain things 
+  are as they are in this document, further readings from the references above 
+  and the OpenBSD FAQ will most likely be more instructive rigerous on the intricacies 
+  of DNS.</p>
+<p>The sample configuration which I would like to set up the DNS for will have 
+  three machines as servers (everything else on the lan are client-workstations 
+  only.)</p>
+<p>The three servers I will use in this configuration are:</p>
+<table cellpadding="2" border="2">
+  <tr> 
+    <td nowrap valign="top"><b>IP Address</b></td>
+    <td nowrap valign="top"><b>hostname</b></td>
+    <td nowrap valign="top"><b>services/aliases</b></td>
+    <td nowrap valign="top"><b>HINFO (cpu_type, OS_type)</b></td>
+  </tr>
+  <tr>
+    <td nowrap valign="top">192.168.101.1</td>
+    <td nowrap valign="top">iwill</td>
+    <td nowrap valign="top">dns, mail</td>
+    <td nowrap valign="top">PentiumII-300, OpenBSD 2.7</td>
+  </tr>
+  <tr>
+    <td nowrap valign="top">192.168.101.77</td>
+    <td nowrap valign="top">athlon</td>
+    <td nowrap valign="top">www, ftp</td>
+    <td nowrap valign="top">Athlon 600, Win2000Pro</td>
+  </tr>
+  <tr>
+    <td nowrap valign="top">192.168.101.130</td>
+    <td nowrap valign="top">compaq</td>
+    <td nowrap valign="top">dns2, mail2</td>
+    <td nowrap valign="top">Pentium 100, OpenBSD 2.7</td>
+  </tr>
+</table>
+
+<p>The files I will be using to configure named for my sample domain: mydomain.com 
+  are listed below:</p>
+
+<table cellpadding="2" border="2">
+  <tr> 
+    <td nowrap valign="top" colspan="2"><b>Primary Domain Name Server</b></td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top"><b>Filename</b></td>
+    <td valign="top"><b>Purpose</b></td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top">/etc/resolv.conf</td>
+    <td valign="top">resolver configuration file</td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top">/var/named/named.boot</td>
+    <td valign="top">named Configuration File</td>
+  </tr>
+  <tr> 
+    <td valign="top" colspan="2">The following files are in /var/named/namedb 
+      (location and filenames dictated by named.boot configuration file.)</td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top">db.mydomain.com.zone</td>
+    <td valign="top">forward address lookups for mydomain.com zone</td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top">db.mydomain.com.rev</td>
+    <td valign="top">reverse address lookups for mydomain.com zone</td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top">db.localhost.zone</td>
+    <td valign="top">forward address lookups for localhost zone</td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top">db.localhost.rev</td>
+    <td valign="top">reverse address lookups for localhost zone</td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top">db.all-zero.rev</td>
+    <td valign="top">reverse address lookups for all-zero (security item)</td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top">db.all-one.rev</td>
+    <td valign="top">reverse address lookups for all-one (security item)</td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top">root.cache</td>
+    <td nowrap valign="top">Specify data such as locations of root domain servers</td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top">&nbsp;</td>
+    <td nowrap valign="top">&nbsp;</td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top" colspan="2"><b>Secondary Domain Name Server</b></td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top">/etc/resolv.conf</td>
+    <td valign="top">&nbsp;</td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top">/var/named/named.boot</td>
+    <td valign="top">&nbsp;</td>
+  </tr>
+  <tr> 
+    <td valign="top" colspan="2">The following files are in /var/named/namedb 
+      (location and filenames dictated by named.boot configuration file.)</td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top">db.localhost.zone</td>
+    <td valign="top">&nbsp;</td>
+  </tr>
+  <tr>
+    <td nowrap valign="top">root.cache</td>
+    <td valign="top">&nbsp;</td>
+  </tr>
+</table>
+
+<h3><a name="TextLayout"></a>Text Layout, Documentation Convention</h3>
+<p>To hopefully improve the chances of applying this text to different sites, 
+  I have used the below colour coding scheme and text layout. (My apologies to 
+  those with colour blind-ness)</p>
+<p>Line-numbers are in <font color="#FF0000">red</font><br>
+  Site-specific details are in <font color="#0000FF">blue.</font> This includes 
+  names and IP addresses used in my sample site that need to be changed to reflect 
+  your site details.<br>
+  Filenames begin with <b>db</b> because it minimises my confusion between what 
+  are files and what are domain names.</p>
+<p>The machine names have been chosen to make them easily recogniseable within 
+  this example, I know it isn't going to expand well into a site with 200 machines, 
+  so don't tell me.</p>
+<a name="starting">
+<h2>Starting named - the DNS Server</h2>
+</a>
+<p>First off, we need to configure our OpenBSD box so named is started each time 
+  there is a restart. Thankfully, it is installed with a standard installation 
+  and all we need to do is set our configurations in <a href="rc.conf.htm">/etc/rc.conf.local</a>
+<p>To enable named: 
+<p class="pFileReference">Edit the file /etc/rc.conf.local and add the following 
+  lines to <a href="#directory">Section 1</a>:<br>
+
+<p class="Code">named_flags=""&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# 
+  note use two double-quotes<br>
+  named_user=named&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# 
+  note to leave this as per standard setting<br>
+  named_chroot=/var/named&nbsp;&nbsp;&nbsp;# note to leave this as per standard 
+  setting </p>
+<p class="pFileReference">The above changes will override the default settings 
+  in /etc/rc.conf which reads: </p>
+<p class="pScreenOutput">named_flags=NO<br>
+  named_user=named<br>
+  named_chroot=/var/named</p>
+<p>To start named (and begin testing) without restarting your machine you can 
+  use the following command-line:</p>
+<p class="Code"># named -t /var/named -u named</p>
+
+<p>A tool for managing your named server is /usr/sbin/ndc</p>
+<table width="80%" border="0" cellspacing="0" cellpadding="0" class="pScreenSmall">
+  <tr> 
+    <td class="pScreenOutput" nowrap>usage: /usr/sbin/ndc (status|dumpdb|reload|stats|trace|notrace|querylog|start|stop|restart)</td>
+  </tr>
+</table>
+<h2> <a name="configure"></a>Configuring named </h2>
+<p>As we noted above in the preliminary discussion, we now need to look at editing 
+  some configuration files which named will read at each start-up.</p>
+<ul>
+  <li><a href="#named.boot">named.boot - named Configuration file</a></li>
+  <li><a href="#resolv">resolv.conf - name resolution path</a></li>
+  <li><a href="#mydomain.com.zone">db.mydomain.com.zone - Authoritative forward 
+    lookup</a></li>
+  <li><a href="#mydomain.com.rev">db.mydomain.com.rev - Authoritative reverse 
+    name lookup</a></li>
+  <li><a href="#localhost.zone">db.localhost.zone - The special localhost ip</a></li>
+  <li><a href="#localhost.rev">db.localhost.rev - reverse name lookup on localhost</a></li>
+  <li><a href="#all-zero">db.all-zero.rev - reverse name lookup on 0.0.0.0 address</a></li>
+  <li><a href="#all-one">db.all-one.rev - reverse name lookup no 255.255.255.255 
+    address</a></li>
+  <li><a href="#cache">root.cache</a></li>
+  </ul>
+<h3><a name="named.boot"></a>named.boot - Configuring named</h3>
+ 
+<p> When named starts up, it will read its configuration file to determine its 
+  behaviour. The boot file contains information about where the name server is 
+  to get its initial data. named looks for the boot file named.boot in the startup 
+  (chroot) directory it is given &quot;-t directory&quot;</p>
+<p>As we have used &quot;-t /var/named&quot; in our above startup command-line 
+  (which is the same as what rc (OpenBSD) will do, this means named will look 
+  for the file named.boot in the /var/named directory.</p>
+<p>Note that lines in the boot file cannot be continued on subsequent lines. </p>
+
+<table cellspacing="2" border="2" class="dns">
+  <tr> 
+    <td> 
+      <pre>
+<font color="Red">01</font> ; FILE: /var/named/named.boot
+<font color="Red">02</font> ; directory /var/named/namedb
+<font color="Red">03</font> directory /namedb
+<font color="Red">04</font> <b>;Type       Domain                         Data file</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Backup Data File</b>
+<font color="Red">05</font> primary     <font color="#0000FF">mydomain.com</font>                   db.<font color="#0000FF">mydomain.com.</font>zone
+<font color="Red">06</font> primary     <font color="#0000FF">101.168.192</font>.in-addr.arpa       db.<font color="#0000FF">mydomain.com</font>.rev
+<font color="Red">07</font> primary     localhost                      db.localhost.zone
+<font color="Red">08</font> primary     0.0.127.in-addr.arpa           db.localhost.rev
+<font color="Red">09</font> primary     0.in-addr.arpa                 db.all-zero.rev
+<font color="Red">10</font> primary     255.in-addr.arpa               db.all-one.rev
+<font color="Red">11</font> cache       .                              root.cache
+<font color="Red">12</font> forwarders  <font color="#0000FF">207.124.73.129</font>	</pre>
+    </td>
+  </tr>
+  <tr align="center"> 
+    <td>Figure 1 - /var/named/named.boot</td>
+  </tr>
+</table>
+
+<p>Explanation:</p>    
+<table>
+  <tr> 
+    <td nowrap valign="top"><font color="Red">01, </font></td>
+    <td valign="top"><font color="Red">02, 04</font> Comments in the file are 
+      preceded by a semi-colon ";"</td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top"><font color="Red">02</font></td>
+    <td valign="top">OpenBSD chroots named by default, but if you do not chroot 
+      named then you will need to specify the full path for the data files</td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top"><font color="Red">03</font></td>
+    <td valign="top"> 
+      <p>The path to the data files from the chroot'ed named. This is the standard 
+        location for OpenBSDs 2.7 build.</p>
+      <p> The &quot;directory&quot; line causes the server to change its working 
+        directory to the directory specified. This can be important for the correct 
+        processing of $INCLUDE files in primary zone files. </p>
+    </td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top"><font color="Red">05</font></td>
+    <td valign="top"> The first example &quot;primary&quot; line states that the 
+      file &quot;db.<font color="#0000FF">mydomain.com</font>.zone&quot; contains 
+      authoritative data for the &quot;<font color="#0000FF">mydomain.com</font>&quot; 
+      zone. The file &quot;db.<font color="#0000FF">mydomain.com</font>.zone&quot; 
+      contains data in the master file format described in RFC 883. All domain 
+      names are relative to the origin, in this case, &quot;<font color="#0000FF">mydomain.com</font>&quot;. 
+      <p><b>Change</b> <font color="#0000FF">mydomain.com</font> to your site 
+        domain.</p>
+    </td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top"><font color="Red">06</font></td>
+    <td valign="top"> 
+      <p>The second &quot;primary&quot; line states that the file &quot;db.<font color="#0000FF">mydomain.com</font>.rev&quot; 
+        contains authoritative data for the domain &quot;<font color="#0000FF">101.168.192</font>.in-addr.arpa&quot;, 
+        which is used to translate addresses in network <font color="#0000FF">192.168.101</font> 
+        to hostnames.</p>
+      <p><b>Change</b> <font color="#0000FF">mydomain.com</font> and <font color="#0000FF">101.168.192</font> 
+        to your site domain-name and IP range. (Note that <font color="#0000FF">101.168.192</font> 
+        is the reverse address of the C-class IP address used in this example. 
+        <font color="#0000FF">192.168.101.*</font> becomes <font color="#0000FF">101.168.192.</font>addr.arpa)</p>
+    </td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top"><font color="Red">07</font></td>
+    <td valign="top"><b>localhost</b> is a special IP address and we are specifying 
+      here that authoritative data for the domain localhost is in the file &quot;db.localhost.zone&quot;</td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top"><font color="Red">08</font></td>
+    <td valign="top">The file &quot;db.localhost.rev&quot; contains authoritative 
+      data for the domain 0.0.127.in-addr.arpa, the reverse address for <b>localhost.</b> 
+      (The localhost IP is 127.0.0.1, and the reverse of the address is 0.0.127.)</td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top"><font color="Red">09</font></td>
+    <td valign="top"> 
+      <p><font color="#FF0000">10<br>
+        </font>0.in-addr.arpa and 255.in-addr.arpa: The all zeros (0) and all 
+        ones (255) addresses are reserved for special purposes in IP. These "domains" 
+        are defined in the db.all-zero.zone and db.all-one.zone file, respectively. 
+      </p>
+      </td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top"><font color="Red">11</font></td>
+    <td valign="top"> 
+      <p>The "cache" line specifies where the DNS cache information for the domain 
+        root (".") can be found. This is not a "cache," as in short-term memory, 
+        but is a set of fixed pointers to the higher-level DNS databases.</p>
+      </td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top"><font color="Red">12</font></td>
+    <td valign="top"> 
+      <p>This is my ISPs Primary DNS server. When a name cannot be resolved from 
+        our cache, named will 'forward' the query to servers listed as 'forwarders'. 
+        More than one line of forwarders can be listed here.</p>
+      <p>Change the IP address <font color="#0000FF">207.124.73.129</font> to 
+        one your ISP has given you.</p>
+      <p>[ref: resolv.conf(5)] The forwarding facility is useful to cause a large 
+        sitewide cache to be generated on a master, and to reduce traffic over 
+        links to outside servers. It can also be used to allow servers to run 
+        that do not have direct access to the Internet, but wish to look up exterior 
+        names anyway. </p>
+    </td>
+  </tr>
+</table>
+
+<a name="resolv"> 
+<h3>resolv.conf - name resolution</h3>
+</a> 
+<p class="pFileReference"> [ref: resolv.conf(5)]</p>
+<p>If the system's resolv.conf file does not exist, then the only database used 
+  is file. </p>
+<p>The resolv.conf file specifies how the resolver(3) routines in the C library 
+  (which provide access to the Internet Domain Name System) should operate. The 
+  resolver configuration file contains information that is read by the resolver 
+  routines the first time they are invoked by a process. </p>
+<p>On a normally configured system this file should not be necessary. The only 
+  name server to be queried will be on the local machine, the domain name is determined 
+  from the host name, and the domain search path is constructed from the domain 
+  name. </p>
+<table border="2" class="dns">
+  <tr> 
+    <td> 
+      <pre>
+<font color="#FF0000">1</font> domain <font color="#0000FF">      mydomain.com</font>
+<font color="#FF0000">2</font> nameserver   <font color="#0000FF">192.168.101.1</font>
+<font color="#FF0000">3</font> nameserver   <font color="#0000FF">192.168.101.130</font>
+<font color="#FF0000">4</font> lookup       file bind</pre>
+    </td>
+  </tr>
+  <tr align="center"> 
+    <td>Figure 2 -/etc/resolv.conf</td>
+  </tr>
+</table>
+<p>Explanation:</p>
+<table>
+  <tr> 
+    <td nowrap valign="top"><font color="Red">01</font></td>
+    <td valign="top"> 
+      <p><b>domain</b> specifies the domain to use when given a shortname. We 
+        can do a query on host athlon, iwill, or compaq and the system will check 
+        that this is relative to <font color="#0000FF">mydomain.com</font>.</p>
+      <p>If no domain entry is present, the domain is determined from the local 
+        host name returned by gethostname(3); the domain part is taken to be everything 
+        after the first &quot;.&quot;. Finally, if the host name does not contain 
+        a domain part, the root domain is assumed. </p>
+      <p><b>Change</b> <font color="#0000FF">mydomain.com</font> to your site 
+        domain.</p>
+    </td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top"><font color="Red">02, </font></td>
+    <td valign="top"> 
+      <p><font color="#FF0000">03</font> <b>nameserver</b> specifies an internet 
+        address (in dot notation) that the name resolver will query. A maximum 
+        of 3 servers can be listed (on separate nameserver lines)</p>
+      <p><b>Change</b> the <font color="#0000FF">192.168.101.x</font> to the host 
+        address you will use as the name server on your site.</p>
+    </td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top">&nbsp;</td>
+    <td valign="top">If no nameserver is listed then the standard behaviour is 
+      to query the name server on the host.</td>
+  </tr>
+  <tr>
+    <td nowrap valign="top"><font color="#FF0000">04</font></td>
+    <td valign="top">
+      <p><b>lookup</b> specifies which databases should be searched, and the order 
+        to do so.</p>
+      <p>Assuming that your /etc/hosts will contain information more up-to-date 
+        than the dns records we specify file (/etc/hosts) and then bind. Otherwise, 
+        only have your local NICs listed in /etc/hosts and there will be no problem 
+        with specifying lookup as in the above.</p>
+    </td>
+  </tr>
+</table>
+
+
+<a name="mydomain.com.zone"> 
+<h3>db.mydomain.com.zone - Authoritative forward address lookup</h3>
+</a> 
+<p>&quot;db.<font color="#0000FF">mydomain.com</font>.zone&quot; contains authoritative 
+  data for the &quot;<font color="#0000FF">mydomain.com</font>&quot; zone. All 
+  domain names are relative to the origin, in this case, &quot;<font color="#0000FF">mydomain.com</font>&quot;. 
+</p>
+<table border="2" class="dns">
+  <tr> 
+    <td> 
+      <pre>
+<font color="#FF0000">01</font> ; Start of Authority (SOA) record
+<font color="#FF0000">02</font> <font color="#0000FF">mydomain.com</font>.   IN SOA  <font color="#0000FF">dns.mydomain.com</font>.  <font color="#0000FF">dnsowner.mydomain.com</font>.  (
+<font color="#FF0000">03</font>                   2000272400   ; serial # (date format) + [0-9][0-9]
+<font color="#FF0000">04</font>                        10800   ; refresh (3 hours)
+<font color="#FF0000">05</font>                         3600   ; retry (1 hour)
+<font color="#FF0000">06</font>                       604800   ; expire (1 week)
+<font color="#FF0000">07</font>                        86400)  ; TTL (1 day)
+<font color="#FF0000">08</font> 
+<font color="#FF0000">09</font> ; Name Server (NS) records.
+<font color="#FF0000">10</font>                          IN NS   <font color="#0000FF">dns.mydomain.com</font>.
+<font color="#FF0000">11</font>                          IN NS   <font color="#0000FF">dns2.mydomain.com</font>.
+<font color="#FF0000">12</font> 
+<font color="#FF0000">13</font> ; Mail Exchange (MX) records.
+<font color="#FF0000">14</font> <font color="#0000FF">             </font>            IN MX   20  <font color="#0000FF">mail.mydomain.com</font>.
+<font color="#FF0000">15</font>                          IN MX   50  <font color="#0000FF">mail2.mydomain.com.</font>
+<font color="#FF0000">16</font> ; Address (A) records. (real-names of machines)
+<font color="#FF0000">17</font>                          IN A      192.168.101.1
+<font color="#FF0000">18</font> localhost.<font color="#0000FF">mydomain.com.</font>  IN A      127.0.0.1
+<font color="#FF0000">19</font> <font color="#0000FF">iwill.mydomain.com</font>.      IN A      192.168.101.1
+<font color="#FF0000">20</font> <font color="#0000FF">athlon.mydomain.com</font>.     IN A      192.168.101.77
+<font color="#FF0000">21</font> <font color="#0000FF">compaq.mydomain.com</font>.     IN A      192.168.101.130
+<font color="#FF0000">22</font> <font color="#0000FF">mail.mydomain.com.</font>       IN A      192.168.101.1
+<font color="#FF0000">23</font> ; We can continue Address records to list all machines (not only servers)
+<font color="#FF0000">24</font> 
+<font color="#FF0000">25</font> ; Aliases in Canonical Name (CNAME) records...
+<font color="#FF0000">26</font> 
+<font color="#FF0000">27</font> <font color="#0000FF">dns</font>                      IN CNAME  <font color="#0000FF">iwill.mydomain.com</font>.
+<font color="#FF0000">28</font> <font color="#0000FF">www</font>                      IN CNAME  <font color="#0000FF">athlon.mydomain.com</font>.
+<font color="#FF0000">29</font> <font color="#0000FF">ftp</font>                      IN CNAME  <font color="#0000FF">athlon.mydomain.com</font>.
+<font color="#FF0000">30</font> <font color="#0000FF">dns2</font>                     IN CNAME  <font color="#0000FF">compaq.mydomain.com</font>.
+<font color="#FF0000">31</font> <font color="#0000FF">mail2</font>                    IN CNAME  <font color="#0000FF">compaq.mydomain.com.</font>
+</pre>
+    </td>
+  </tr>
+  <tr align="center"> 
+    <td>Figure 3 - /var/named/namedb/db.<font color="#0000FF">mydomain</font>.zone</td>
+  </tr>
+</table>
+<p>Explanations</p>
+<table>
+  <tr> 
+    <td nowrap valign="top"><font color="Red">01</font></td>
+    <td valign="top">Comments are started by semi-colons &quot;;&quot;</td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top"><font color="Red">02</font></td>
+    <td valign="top"> 
+      <p><font color="#0000FF">mydomain.com.</font> is the address name we are 
+        going to be working with (sometimes you will see this written as @)</p>
+      <p><font color="#0000FF">dns.mydomain.com.</font> is the authoritative dns 
+        for this domain. If you choose to use a different dns host naming convention 
+        or use a specific hostname for the DNS server, then you should also change 
+        <font color="#0000FF">dns.*</font> to your naming convention.</p>
+      <p><font color="#0000FF">dnsowner.mydomain.com</font> is the domain name 
+        address of the maintaner, e-mail contact (dnsowner@mydomain.com) On my 
+        machine I use root, but this option allows you to specify another e-mail 
+        address. Note the user-id is followed by a dot &quot;.&quot; and not the 
+        @. </p>
+      <p><b>Change</b> <font color="#0000FF">mydomain.com</font> to your site 
+        domain.</p>
+    </td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top"><font color="Red">03</font></td>
+    <td valign="top"> 
+      <p><font color="#FF0000"> Start of Authority (SOA) Record Items<a name="SOA_info"></a></font></p>
+      <p> (a)<b> </b>A serial Number for synchronising revisions of the file. 
+        Standard format is to use the current date (YYYYMMDD) and two digits to 
+        differentiate revisions for that date (ie. you should change this serial 
+        number each time you make changes.)</p>
+      <p><b>Change</b> this value.</p>
+    </td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top"><font color="Red">04</font></td>
+    <td valign="top">(b) refresh in seconds. The refresh value tells the secondary 
+      name server(s) how often to check for updated information (10,800 seconds 
+      is three hours). <i>This value should be fine.</i></td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top"><font color="Red">05</font></td>
+    <td valign="top">(c) retry in seconds. If the secondary name server is unable 
+      to contact the primary name server, it will re-attempt a connection every 
+      retry seconds (3600 seconds is one hour). <i>This value should be fine.</i></td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top"><font color="Red">06</font></td>
+    <td valign="top">(d) expire in seconds. If a secondary name server cannot 
+      contact the primary name server for expire seconds, the secondary will stop 
+      answering any queries about this domain. The theory here is that at some 
+      point, the data is so old as to be possibly harmful, and no answer is better 
+      than a bad answer (604,800 seconds is one week). <i>This value should be 
+      fine.</i></td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top"><font color="Red">07</font></td>
+    <td valign="top">(e) Time to Live in seconds. The TTL (time-to-live) value 
+      is returned with all responses to database queries, and tells the requester 
+      (or other servers) how long the information can safely be cached (86,400 
+      seconds is one day). This TTL value is the default value for all records 
+      in the file; it may be over-ridden by a TTL value provided with a given 
+      RR. <i>This value should be fine.</i></td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top"><font color="Red">10</font></td>
+    <td valign="top"> 
+      <p>Our Name Server (NS) Authoritative Record pointing to the primary DNS 
+        server.</p>
+      <p><b>Change</b> <font color="#0000FF">mydomain.com</font> to your site 
+        domain.<br>
+        <b>Change</b> <font color="#0000FF">dns.mydomain.com</font> to the server-name 
+        hosting DNS.</p>
+    </td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top"><font color="Red">11</font></td>
+    <td valign="top"> 
+      <p>Another Name Server (NS) Authoritative Record pointing to our secondary 
+        DNS server.</p>
+      <p><b>Change</b> <font color="#0000FF">mydomain.com</font> to your site 
+        domain.<br>
+        <b>Change</b> <font color="#0000FF">dns2.mydomain.com</font> to the server-name 
+        hosting DNS.</p>
+    </td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top"><font color="Red">13,</font></td>
+    <td valign="top"> 
+      <p><font color="#FF0000">14</font><br>
+        Our Mail Exchange (MX) record. MX records tell mail-servers where to send 
+        mail destined for a domain. The lower the MX value, the higher the priority 
+        of the server, so mail sent to <font color="#0000FF">mydomain.com</font> 
+        will be prioritised to <font color="#0000FF">mail.mydomain.com</font>. 
+        If <font color="#0000FF">mail.mydomain.com</font> is unavailable then 
+        the next lower MX value will be attempted (in our case <font color="#0000FF">mail2.mydomain.com</font>.)</p>
+      <p>(Warning: CNAME records can not be used for MX records so technically 
+        mail2 has been incorrectly defined above; see <a href="http://www.sendmail.org/rfc/1123.html#Section5.2.2"> 
+        5.2.2</a> of <a href="http://www.sendmail.org/rfc/1123.html">RFC 1123</a> 
+        for details.)</p>
+      <p><b>Change</b> <font color="#0000FF">mydomain.com</font> to your site 
+        domain.<br>
+        <b>Change</b> <font color="#0000FF">mail.mydomain.com</font> to the server-name 
+        hosting mail.<br>
+        <b>Change</b> <font color="#0000FF">mail2</font> and use an Address Record</p>
+    </td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top"><font color="Red">17</font></td>
+    <td valign="top">
+      <p>I want queries for <font color="#0000FF">mydomain.com</font> to be directed 
+        to one of the three servers, putting this A address resolves <font color="#0000FF">mydomain.com</font> 
+        queries to the IP address <font color="#0000FF">192.168.101.1</font></p>
+      <p><b>Change</b> <font color="#0000FF">192.168.101.1</font> to your IP address 
+        you want to resolve to.</p>
+    </td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top"><font color="Red">18</font></td>
+    <td valign="top"> 
+      <p>Our localhost mapping which will force localhost to be mapped to 127.0.0.1 
+        if not specified with a qualifying domain.</p>
+      <p><b>Change</b> <font color="#0000FF">mydomain.com</font> to your site 
+        domain.</p>
+    </td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top"><font color="Red">19, </font></td>
+    <td valign="top"> 
+      <p><font color="#FF0000">20, 21</font> <br>
+        The Server Machines we are using in this example. The A records contain 
+        an IP address to be associated with the host name in the first field of 
+        the record. </p>
+      <p><b>Change</b> <font color="#0000FF">mydomain.com</font> to your site 
+        domain.<br>
+        <b>Change</b> host names to host names you are using.</p>
+    </td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top"><font color="#FF0000">22</font></td>
+    <td valign="top"> 
+      <p>We specify an A record for the mail server (although a similar effect 
+        should have been available by using CNAME records.) According to some 
+        documentation some mailers behave unpredictably when asked to resolve 
+        an MX hostname that uses a CNAME record rather than an explicit A record.</p>
+      <p><b>Change</b> <font color="#0000FF">mydomain.com</font> to your site 
+        domain.<br>
+        <b>Change</b> <font color="#0000FF">192.168.101.1</font> to the IP address 
+        of the machine to recieve mail.</p>
+    </td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top"><font color="Red">24</font></td>
+    <td valign="top"><i>To document your network you could specify here all assigned 
+      IPs and their hostnames in the same format as that shown above.</i></td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top"><font color="Red">26</font></td>
+    <td valign="top"> 
+      <p><font color="Red">- 31</font> <br>
+        Aliases in Canonical Name (CNAME) records. The CNAME records contain an 
+        alias host name to associate with the host named in the first field of 
+        the record. Although a single A records and many CNAME records can be 
+        assigned to a single system, care must be taken. In the examples above, 
+        the address of both the backup DNS and mail servers are specified with 
+        separate A records, even though they point to the same machine. </p>
+      <p>(Warning: CNAME records can not be used for MX records so technically 
+        mail2 has been incorrectly defined above; see <a href="http://www.sendmail.org/rfc/1123.html#Section5.2.2"> 
+        5.2.2</a> of <a href="http://www.sendmail.org/rfc/1123.html">RFC 1123</a> 
+        for details.)</p>
+      <p>Just as was done with the dns.mydomain.com and mail.mydomain.com you 
+        should also have mail2.mydomain.com as an A record.</p>
+      <p><b>Change</b> <font color="#0000FF">mydomain.com</font> to your site 
+        domain.<br>
+        <b>Change</b> machine names to the configuration settings you have for 
+        your network.</p>
+    </td>
+  </tr>
+</table>
+
+<a name="mydomain.com.rev"> 
+<h3>db.mydomain.com.rev - Authoritative reverse address lookup</h3>
+</a> 
+<p>&quot;db.<font color="#0000FF">mydomain.com</font>.rev&quot; contains authoritative 
+  data for the domain &quot;<font color="#0000FF">101.168.192</font>.in-addr.arpa&quot;, 
+  which is used to translate addresses in network <font color="#0000FF">192.168.101</font> 
+  to hostnames</p>
+<table border="2" class="dns">
+  <tr> 
+    <td> 
+      <pre>
+<font color="#FF0000">01</font> ; Start of Authority (SOA) record
+<font color="#FF0000">02</font> <font color="#0000FF">101.168.192</font>.in-addr.arpa. IN SOA <font color="#0000FF">dns.mydomain.com.</font> <font color="#0000FF">dnsowner.mydomain.com.</font>
+<font color="#FF0000">03</font>                          (2000072400   ; serial # (date format) + [0-9][0-9]
+<font color="#FF0000">04</font>                                10800   ; refresh (3 hours)
+<font color="#FF0000">05</font>                                 3600   ; retry (1 hour)
+<font color="#FF0000">06</font>                               604800   ; expire (1 week)
+<font color="#FF0000">07</font>                                86400)  ; minimum TTL (1 day)
+<font color="#FF0000">08</font> 
+<font color="#FF0000">09</font> ; Name Server (NS) records.
+<font color="#FF0000">10</font>                            IN NS   <font color="#0000FF">dns.mydomain.com</font>.
+<font color="#FF0000">11</font>                            IN NS   <font color="#0000FF">dns2.mydomain.com</font>.
+<font color="#FF0000">12</font> 
+<font color="#FF0000">13</font> ; Addresses point to canonical names (PTR) for reverse lookups
+<font color="#FF0000">14</font> <font color="#0000FF">1</font>                                IN PTR    <font color="#0000FF">iwill.mydomain.com.</font>
+<font color="#FF0000">15</font> <font color="#0000FF">130                          </font>    IN PTR    <font color="#0000FF">compaq.mydomain.com.</font>
+<font color="#FF0000">16</font> <font color="#0000FF">77</font><font color="#0000FF">                          </font>     IN PTR    <font color="#0000FF">athlon.mydomain.com.</font></pre>
+    </td>
+  </tr>
+  <tr align="center"> 
+    <td>Figure 4 -/var/named/namedb/db.mydomain.rev</td>
+  </tr>
+</table>
+
+<p>Explanation</p>
+<table>
+  <tr> 
+    <td nowrap valign="top"><font color="Red">01</font></td>
+    <td valign="top">Comments are started by semi-colons &quot;;&quot;</td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top"><font color="Red">02</font></td>
+    <td valign="top"> 
+      <p><font color="#0000FF">101.168.192</font>.in-addr.arpa. is the address 
+        name we are going to be working with (sometimes you will see this written 
+        as @)</p>
+      <p><font color="#0000FF">dns.mydomain.com.</font> is the authoritative dns 
+        for this domain. If you choose to use a different dns host naming convention 
+        or use a specific hostname for the DNS server, then you should also change 
+        <font color="#0000FF">dns.*</font> to your naming convention.</p>
+      <p><font color="#0000FF">dnsowner.mydomain.com</font> is the domain name 
+        address of the maintainer, e-mail contact (dnsowner@mydomain.com) On my 
+        machine I use root, but this option allows you to specify another e-mail 
+        address. Note the user-id is followed by a dot &quot;.&quot; and not the 
+        @. </p>
+      <p><b>Change</b> <font color="#0000FF">mydomain.com</font> to your site 
+        domain.<br>
+        <b>Change</b> <font color="#0000FF">101.168.192</font> to the reverse 
+        IP of your selected IP range.</p>
+    </td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top"><font color="Red">03, </font></td>
+    <td valign="top"><font color="#FF0000">04, 05, 06, 07</font><font color="#FF0000"> 
+      Start of Authority (SOA) Record Item</font><br>
+      <a href="#SOA_info">See documentation above.</a></td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top"><font color="Red">10, </font></td>
+    <td valign="top"> 
+      <p><font color="#FF0000">11</font><br>
+        <b>Change</b> <font color="#0000FF">mydomain.com</font> to your site domain.<br>
+        <b>Change</b> <font color="#0000FF">101.168.192</font> to the reverse 
+        IP of your selected IP range.</p>
+      <p>The Name Servers used to service this range of IPs</p>
+    </td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top"><font color="Red">14, </font></td>
+    <td valign="top"><font color="#FF0000">15, 16</font><br>
+      Match the reverse-ips on the left with servers on the system (noted on the 
+      right column.)</td>
+  </tr>
+  <tr>
+    <td nowrap valign="top">&nbsp;</td>
+    <td valign="top"><i>To document your network you could specify here all assigned 
+      IPs (reversed) and their hostnames in the same format as that shown above.</i></td>
+  </tr>
+</table>
+<a name="localhost.zone"> 
+<h3>db.localhost.zone - forward address lookup</h3>
+</a> 
+<p>Since localhost. does not exist in IP space, this mapping allows us to map 
+  localhost. to the special ip 127.0.0.1. Otherwise an nslookup or similar query 
+  will not resolve.</p>
+<table class="dns" border="2">
+  <tr>
+    <td> 
+      <pre>
+<font color="#FF0000">01</font> localhost.              IN SOA  <font color="#0000FF">dns.mydomain.com.  dnsowner.mydomain.com.</font>
+<font color="#FF0000">02</font>                         ( 2000072400   ; serial # (date format) + [0-9][0-9]
+<font color="#FF0000">03</font>                                10800   ; refresh     (3 hours)
+<font color="#FF0000">04</font>                                 3600   ; retry       (1 hour)
+<font color="#FF0000">05</font>                               604800   ; expire      (1 week)
+<font color="#FF0000">06</font>                                86400)  ; minimum TTL (1 day)
+<font color="#FF0000">07</font> 
+<font color="#FF0000">08</font> localhost.                IN NS   <font color="#0000FF">dns.mydomain.com.</font>
+<font color="#FF0000">09</font>                           IN NS   <font color="#0000FF">dns2.mydomain.com.</font>
+<font color="#FF0000">10</font> 
+<font color="#FF0000">11</font> localhost.                IN A    127.0.0.1
+</pre>
+    </td>
+  </tr>
+  <tr align="center"> 
+    <td>Figure 5 - /var/named/namedb/db.localhost.zone</td>
+  </tr>
+</table>
+<p>Explanation:</p>
+<p></p>
+
+<table>
+  <tr> 
+    <td nowrap valign="top"><font color="Red">01</font></td>
+    <td valign="top"> 
+      <p>localhost. is the address name we are going to be working with (sometimes 
+        you will see this written as @)</p>
+      <p><font color="#0000FF">dns.mydomain.com.</font> is the authoritative dns 
+        for this domain. If you choose to use a different dns host naming convention 
+        or use a specific hostname for the DNS server, then you should also change 
+        <font color="#0000FF">dns.*</font> to your naming convention.</p>
+      <p><font color="#0000FF">dnsowner.mydomain.com</font> is the domain name 
+        address of the maintaner, e-mail contact (dnsowner@mydomain.com) On my 
+        machine I use root, but this option allows you to specify another e-mail 
+        address. Note the user-id is followed by a dot &quot;.&quot; and not the 
+        @. </p>
+      <p><b>Change</b> <font color="#0000FF">mydomain.com</font> to your site 
+        domain. </p>
+    </td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top"><font color="Red">02,</font></td>
+    <td valign="top"><font color="#FF0000">03, 04, 05, 06 Start of Authority (SOA) 
+      Record Items</font><br>
+      <a href="#SOA_info">See documentation above. </a></td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top"><font color="Red">08</font></td>
+    <td valign="top"> 
+      <p>Specify the DNS server hosts.</p>
+      <p><b>Change</b> <font color="#0000FF">mydomain.com</font> to your site 
+        domain.<br>
+        <b>Change</b> <font color="#0000FF">dns</font> to the hostname of your 
+        DNS Server.</p>
+    </td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top"><font color="Red">11</font></td>
+    <td valign="top">Specify that localhost. (rooted) is the IP address 127.0.0.1</td>
+  </tr>
+</table>
+<a name="localhost.rev"> 
+<h3>db.localhost.rev - reverse address lookup</h3>
+</a> 
+<table class="dns" border="2">
+  <tr>
+    <td> 
+      <pre>
+<font color="#FF0000">01</font> ; Start of Authority (SOA) record
+<font color="#FF0000">02</font> 0.0.127.in-addr.arpa.  IN SOA <font color="#0000FF">dns.mydomain.com.</font> <font color="#0000FF">dnsowner.mydomain.com.</font> (
+<font color="#FF0000">03</font>                         2000072400   ; serial # (date format) + [0-9][0-9]
+<font color="#FF0000">04</font>                            10800     ; refresh     (3 hours)
+<font color="#FF0000">05</font>                             3600     ; retry       (1 hour)
+<font color="#FF0000">06</font>                           604800     ; expire      (1 week)
+<font color="#FF0000">07</font>                            86400)    ; minimum TTL (1 day)
+<font color="#FF0000">08</font> 
+<font color="#FF0000">09</font> ; Name Server (NS) records.
+<font color="#FF0000">10</font> 0.0.127.in-addr.arpa.     IN NS   <font color="#0000FF">dns.mydomain.com.</font>
+<font color="#FF0000">11</font>                           IN NS   <font color="#0000FF">dns2.mydomain.com.</font>
+<font color="#FF0000">12</font> 
+<font color="#FF0000">13</font> ; Only one PTR record
+<font color="#FF0000">14</font> 1.0.0.127.in-addr.arpa.   IN PTR   localhost.</pre>
+    </td>
+  </tr>
+  <tr align="center"> 
+    <td>Figure 6 - /var/named/namedb/db.localhost.rev</td>
+  </tr>
+</table>
+
+
+<p>Explanation:</p>
+<table>
+  <tr> 
+    <td nowrap valign="top"><font color="Red">01</font></td>
+    <td valign="top">Comments are started by semi-colons &quot;;&quot;</td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top"><font color="Red">02</font></td>
+    <td valign="top"> 
+      <p>0.0.127.in-addr.arpa. is the address name we are going to be working 
+        with (sometimes you will see this written as @)</p>
+      <p><font color="#0000FF">dns.mydomain.com.</font> is the authoritative dns 
+        for this domain. If you choose to use a different dns host naming convention 
+        or use a specific hostname for the DNS server, then you should also change 
+        <font color="#0000FF">dns.*</font> to your naming convention.</p>
+      <p><font color="#0000FF">dnsowner.mydomain.com</font> is the domain name 
+        address of the maintaner, e-mail contact (dnsowner@mydomain.com) On my 
+        machine I use root, but this option allows you to specify another e-mail 
+        address. Note the user-id is followed by a dot &quot;.&quot; and not the 
+        @. </p>
+      <p><b>Change</b> <font color="#0000FF">mydomain.com</font> to your site 
+        domain. </p>
+    </td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top"><font color="Red">03, </font></td>
+    <td valign="top"><font color="#FF0000">04, 05, 06, 07</font><font color="#FF0000"> 
+      Start of Authority (SOA) Record Items</font><br>
+      <a href="#SOA_info">See documentation above.</a></td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top"><font color="Red">10, </font></td>
+    <td valign="top"> 
+      <p><font color="#FF0000">11</font><br>
+        Specify the DNS server hosts.</p>
+      <p><b>Change</b> <font color="#0000FF">mydomain.com</font> to your site 
+        domain.<br>
+        <b>Change</b> <font color="#0000FF">dns</font> to the hostname of your 
+        DNS Server.</p>
+      </td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top"><font color="Red">14, </font></td>
+    <td valign="top">Leave as is.</td>
+  </tr>
+</table>
+<a name="all-zero"> 
+<h3>db.all-zero.rev - reverse address lookup</h3>
+</a> 
+<p>As all-zero and all-one's in IP addresses are special IP addresses we create 
+  reverse address lookups for both IP addresses for control over how our name 
+  server resolves these addresses.</p>
+<table class="dns" border="2">
+  <tr> 
+    <td> 
+      <pre>
+<font color="#FF0000">01</font> 0.in-addr.arpa.         IN SOA <font color="#FF0000">dns.mydomain.com. dnsowner.mydomain.com.</font> (
+<font color="#FF0000">02</font>                       2000072400   ; serial # (date format) + [0-9][0-9]
+<font color="#FF0000">03</font>                            10800   ; refresh (3 hours)
+<font color="#FF0000">04</font>                             3600   ; retry (1 hour)
+<font color="#FF0000">05</font>                           604800   ; expire (1 week)
+<font color="#FF0000">06</font>                            86400)  ; minimum TTL (1 day)
+<font color="#FF0000">07</font> 
+<font color="#FF0000">08</font> 0.in-addr.arpa.           IN NS   <font color="#0000FF">dns.mydomain.com.</font>
+<font color="#FF0000">09</font>                           IN NS   <font color="#0000FF">dns2.mydomain.com.</font>
+</pre>
+    </td>
+  </tr>
+  <tr align="center"> 
+    <td>Figure 7 - /var/named/namedb/db.all-zero.rev</td>
+  </tr>
+</table>
+
+<p>Explanation:</p>
+<table>
+  <tr> 
+    <td nowrap valign="top"><font color="Red">01</font></td>
+    <td valign="top"> 
+      <p><b>Change</b> <font color="#0000FF">mydomain.com</font> to your site 
+        domain.<br>
+      </p>
+      <p>If you choose to use a different dns or use a specific hostname for the 
+        DNS server, then you should also change <font color="#0000FF">dns.*</font> 
+        to your naming convention.</p>
+    </td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top"><font color="Red">02, </font></td>
+    <td valign="top"><font color="#FF0000">03, 04, 05, 06</font><font color="#FF0000"> 
+      Start of Authority (SOA)</font><br>
+      <a href="#SOA_info">See documentation above.</a></td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top"><font color="Red">08, </font></td>
+    <td valign="top"> 
+      <p><font color="#FF0000">09</font><br>
+        <b>Change</b> <font color="#0000FF">mydomain.com</font> to your site domain. 
+      </p>
+    </td>
+  </tr>
+</table>
+
+<a name="all-one"> 
+<h3>db.all-one.rev - reverse address lookup</h3>
+</a> 
+<table class="dns" border="2">
+  <tr> 
+    <td> 
+      <pre>
+<font color="#FF0000">01</font> 255.in-addr.arpa.       IN SOA <font color="#0000FF">dns.mydomain.com. dnsowner.mydomain.com.</font> (
+<font color="#FF0000">02</font>                       2000072400   ; serial # (date format) + [0-9][0-9]
+<font color="#FF0000">03</font>                            10800   ; refresh (3 hours)
+<font color="#FF0000">04</font>                             3600   ; retry (1 hour)
+<font color="#FF0000">05</font>                           604800   ; expire (1 week)
+<font color="#FF0000">06</font>                            86400)  ; minimum TTL (1 day)
+<font color="#FF0000">07</font> 
+<font color="#FF0000">08</font> 255.in-addr.arpa.         IN NS   <font color="#0000FF">dns.mydomain.com.</font>
+<font color="#FF0000">09</font>                           IN NS   <font color="#0000FF">dns2.mydomain.com.</font></pre>
+    </td>
+  </tr>
+  <tr align="center"> 
+    <td>Figure 8 - /var/named/namedb/db.all-one.rev</td>
+  </tr>
+</table>
+
+<p>Explanation:</p>
+<table>
+  <tr> 
+    <td nowrap valign="top"><font color="Red">01</font></td>
+    <td valign="top"> 
+      <p><b>Change</b> <font color="#0000FF">mydomain.com</font> to your site 
+        domain.<br>
+      </p>
+      <p>If you choose to use a different dns or use a specific hostname for the 
+        DNS server, then you should also change <font color="#0000FF">dns.*</font> 
+        to your naming convention.</p>
+    </td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top"><font color="Red">02, </font></td>
+    <td valign="top"><font color="#FF0000">03, 04, 05, 06</font><font color="#FF0000"> 
+      Start of Authority (SOA)</font><br>
+      <a href="#SOA_info">See documentation above.</a></td>
+  </tr>
+  <tr> 
+    <td nowrap valign="top"><font color="Red">08, </font></td>
+    <td valign="top"> 
+      <p><font color="#FF0000">09</font><br>
+        <b>Change</b> <font color="#0000FF">mydomain.com</font> to your site domain. 
+      </p>
+    </td>
+  </tr>
+</table>
+<p>&nbsp;</p>
+<a name="cache"> 
+<h3>root.cache - </h3>
+</a> 
+<p>Specify data such as locations of root domain servers. This is not a "cache," 
+  as in short-term memory, but is a set of fixed pointers to the higher-level 
+  DNS databases. This cache is not used during normal operation, but is used as 
+  "hints" to find the current root servers. </p>
+<p>The file "root.cache" is in the same format as "db.<font color="#0000FF">mydomain.com</font>.zone". 
+</p>
+
+<table border="2" class="dns">
+  <tr> 
+    <td> 
+      <pre>
+.                        3600000  IN  NS    A.ROOT-SERVERS.NET.
+A.ROOT-SERVERS.NET.      3600000      A     198.41.0.4
+.                        3600000      NS    B.ROOT-SERVERS.NET.
+B.ROOT-SERVERS.NET.      3600000      A     128.9.0.107
+.                        3600000      NS    C.ROOT-SERVERS.NET.
+C.ROOT-SERVERS.NET.      3600000      A     192.33.4.12
+.                        3600000      NS    D.ROOT-SERVERS.NET.
+D.ROOT-SERVERS.NET.      3600000      A     128.8.10.90
+.                        3600000      NS    E.ROOT-SERVERS.NET.
+E.ROOT-SERVERS.NET.      3600000      A     192.203.230.10
+.                        3600000      NS    F.ROOT-SERVERS.NET.
+F.ROOT-SERVERS.NET.      3600000      A     192.5.5.241
+.                        3600000      NS    G.ROOT-SERVERS.NET.
+G.ROOT-SERVERS.NET.      3600000      A     192.112.36.4
+.                        3600000      NS    H.ROOT-SERVERS.NET.
+H.ROOT-SERVERS.NET.      3600000      A     128.63.2.53
+.                        3600000      NS    I.ROOT-SERVERS.NET.
+I.ROOT-SERVERS.NET.      3600000      A     192.36.148.17
+.                        3600000      NS    J.ROOT-SERVERS.NET.
+J.ROOT-SERVERS.NET.      3600000      A     198.41.0.10
+.                        3600000      NS    K.ROOT-SERVERS.NET.
+K.ROOT-SERVERS.NET.      3600000      A     193.0.14.129
+.                        3600000      NS    L.ROOT-SERVERS.NET.
+L.ROOT-SERVERS.NET.      3600000      A     198.32.64.12
+.                        3600000      NS    M.ROOT-SERVERS.NET.
+M.ROOT-SERVERS.NET.      3600000      A     202.12.27.33
+</pre>
+    </td>
+  </tr>
+  <tr align="center"> 
+    <td>Figure 9 - /var/named/namedb/root.cache</td>
+  </tr>
+</table>
+<p>I've just taken the root.cache that comes with OpenBSD and listed it here (without 
+  the comments in the file.) There can be more than one "cache" file specified. 
+  The "cache.root" file should be retrieved periodically from FTP.RS.INTERNIC.NET 
+  <a href="ftp://rs.internic.net/domain/named.cache">ftp://rs.internic.net/domain/named.cache</a> 
+  since it contains a list of root servers, and this list changes periodically.</p>
+<p>The single "." indicates the root domain, while the "3600000" is the TTL value, 
+  indicating that these entries should expire after about 6 weeks (3.6 million 
+  seconds). </p>
+<h2><a name="Tools"></a>Tools</h2>
+<p>Just documenting some information garnered from misc@openbsd.org one of the 
+  OpenBSD mailing lists.</p>
+<p>The following are two methods of determining the version of bind running on 
+  your server.</p>
+<p>$ nslookup - &lt;your server&gt;<br>
+  set class=chaos<br>
+  set q=txt<br>
+  version.bind<br>
+</p>
+<p>$ dig @nameserver version.bind chaos txt </p>
+<p>Rob Thomas' Secure BIND Template <a href="http://www.cymru.com/Documents/secure-bind-template.html">http://www.cymru.com/Documents/secure-bind-template.html 
+  </a></p>
+<h2>Other Resources</h2>
+<p><a href="http://www.acmebw.com" class="anchBlue">http://www.acmebw.com</a> 
+  - Ask Mr. DNS</p>
+<p><a href="http://www.guinix.com/technote/dualdns.html" class="anchBlue">http://www.guinix.com/technote/dualdns.html</a> 
+  &quot;Dualling&quot; Nameservers on OpenBSD. &quot;A &quot;howto&quot; article 
+  describing the use of Bernstein's tinydns on OpenBSD, serving both Internet 
+  and local network queries from a single host. Wayne's provided a guide which 
+  you can use to quickly set up split view DNS for yourself or your office using 
+  OpenBSD. (ref: <a href="http://www.deadly.org/article.php3?sid=20030226143145&mode=flat" class="anchBlue">http://www.deadly.org/article.php3?sid=20030226143145&amp;mode=flat</a>)</p>
+
+
+<h2><a name="author"></a>Author and Copyright</h2> 
+<p>Copyright (c) 2000/1/2 Samiuela LV Taufa. All Rights Reserved.</p>
+
+<p>I reserve the right to be totally incorrect even at the best advice of betters. In other words, I'm probably wrong in enough places for you to call me an idiot, but don't 'cause you'll hurt my sensibilities, just tell me where I went wrong and I'll try again.</p>
+
+<p>You are permitted and encouraged to use this guide for fun or for profit as you see fit. If you republish this work in what-ever form, it would be nice (though not enforceable) to be credited.</p>
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+  <tr>
+    <td class="block" valign="MIDDLE" width="100%" bgcolor="#cccccc"><strong>
+      <p class="block">&nbsp;DNS - setting up named for Domain Name Services</p>
+      </strong></td>
+  </tr>
+</table>
+<p><font color="#808080" face="sans-serif" size="-2"><strong>Copyright&nbsp; &copy; 
+  2000/1/2
+<a href="http://www.nomoa.com">NoMoa.COM</a> All rights reserved.</strong></font></p>
+  </body>
+</html>
+

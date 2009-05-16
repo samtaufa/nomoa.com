@@ -1,0 +1,6 @@
+# CALL TO MENU: mnuDynamicWeb
+OnMouseOut="if(IE){event.srcElement.style.cursor='default'};" OnMouseOver="if(IE){event.srcElement.style.cursor='hand';}" OnClick="ShowMenu('mnuDynamicWeb', '0px', '0px', false);"
+
+# LOADER CODE. PLACE IT RIGHT AFTER THE <BODY> TAG
+<script language="JavaScript" src='menu.js'></script>
+

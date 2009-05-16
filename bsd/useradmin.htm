@@ -1,0 +1,612 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0//EN">
+<html>
+  <head>
+    <title>=8&gt; nomoa.com/bsd OpenBSD - User Administration</title>
+    <link rel="STYLESHEET" type="text/css" href="openbsd.css">
+<script language="JavaScript">
+<!--
+
+function newImage(arg) {
+	if (document.images) {
+		rslt = new Image();
+		rslt.src = arg;
+		return rslt;
+	}
+}
+
+function changeImages() {
+	if (document.images && (preloadFlag == true)) {
+		for (var i=0; i<changeImages.arguments.length; i+=2) {
+			document[changeImages.arguments[i]].src = changeImages.arguments[i+1];
+		}
+	}
+}
+
+var preloadFlag = false;
+function preloadImages() {
+	if (document.images) {
+		openbsd_over = newImage("mmedia/openbsd-over.gif");
+		openbsd_down = newImage("mmedia/openbsd-down.gif");
+		preloadFlag = true;
+	}
+}
+
+// -->
+</script>
+<!-- End Preload Script -->
+</head>
+
+<body bgcolor="#FFFACD" onLoad="preloadImages();">
+<p class="logo">
+<a class="anchBlue" href="http://www.nomoa.com/bsd" 
+   onMouseOver="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;"
+   onMouseOut="changeImages('openbsd', 'mmedia/openbsd.gif'); return true;"
+   onMouseDown="changeImages('openbsd', 'mmedia/openbsd-down.gif'); return true;"
+   onMouseUp="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;">
+   <img name="openbsd"  align="absMiddle" 
+        alt="OpenBSD ... The Only way to Go ..." border="0" height="50"
+        src="mmedia/openbsd.gif" width="368"></a>
+</p>
+
+<h1> User Administration</h1>
+    
+
+<p>Table of Contents</p>
+<ul>
+  <li class="anchBlue"><a href="#introduction">Introduction</a></li>
+  <li class="anchBlue"><a href="#instAddUser">Adding a New User</a></li>
+  <ul>
+    <li class="anchBlue"><a href="#instgroup">Specifying group access privileges</a></li>
+  </ul>
+  <li class="anchBlue"><a href="#instchpass">Changing details of a User</a></li>
+  <li><a href="#rmuser" class="anchBlue">Deleting a User</a></li>
+  <li class="anchBlue"><a href="#instGroupManagement">Group Management</a></li>
+  <ul>
+    <li><a href="#groupadd">Create a New Group</a></li>
+    <li><a href="#usermod">Adding users to an existing Group</a></li>
+  </ul>
+  <li class="anchBlue"><a href="#instRoot">Root, Super Administrator</a></li>
+  <ul>
+    <li><a href="#instAssigningPrivilegesToOrdinaryUsers">Assigning Root Privileges 
+      to Ordinary</a> </li>
+    <ul>
+      <li><a href="#instgroupwheel" class="anchBlue">Setting wheel during account 
+        creation</a></li>
+      <li class="anchBlue"><a href="#instusermodwheel">Using the usermod -G command</a></li>
+      <li><a href="#instmanuallyeditgroupwheel" class="anchBlue">Manually Editing 
+        the file /etc/group</a></li>
+    </ul>
+  </ul>
+  <li><a href="#instmovetoroot">Moving from UserID to root</a></li>
+  <li><a href="#author">Author and Copyright</a></li>
+</ul>
+
+<hr color="Fuchsia">
+<h2><a name="introduction"></a>Introduction</h2>
+<p class="pFileReference"> [ref: <a href="http://andrsn.stanford.edu/FreeBSD/newuser.html" class="anchBlue">http://andrsn.stanford.edu/FreeBSD/newuser.html</a>]<br>
+  [ref: What to do AFTER you have BSD installed by Chris Coleman,<a href= 
+      "http://www.daemonnews.org/200005/chrisc@daemonnews.org"> http://www.daemonnews.org/200005/chrisc@daemonnews.org</a>]<br>
+  [ref: adduser(8), group(8), rmuser(8)]<br>
+  [Config info: user-name, account-type]</p>
+<p>From the man pages <i>adduser(8)</i>:</p>
+<table border="0" width="80%" class="pScreenOutput">
+  <tr> 
+    <td class="pScreenOutput"> 
+      <p class="pScreenOutput"><b>DESCRIPTION</b><br>
+        The <b>adduser</b> program adds new users to the system. The <b>rmuser</b> 
+        program removes users from the system. When not passed any arguments, 
+        both utilities operate in interactive mode and prompt for any required 
+        information.</p>
+    </td>
+  </tr>
+</table>
+<p> The first thing that a fresh install of OpenBSD warns of when you login is, 
+  do not login as root but use su. This is saying that you should create a user 
+  who can use su (the Substitute User program) to change to the &quot;root&quot; 
+  user when you want to perform administration tasks.</p>
+<p>The following instructions guide you through the creation of a new user with 
+  SuperUser access privileges.</p>
+<p>OpenBSD supplies the <b>adduser</b> script to simplify adding new users. All 
+  you have to know to create a new user is the name of the person, and what you 
+  want the login account name to be. </p>
+    
+<p> The adduser script is started at the command prompt.</p>
+    
+<table border="0" width="80%" class="Code">
+  <tr class="pScreenOutput"> 
+    <td nowrap class="pScreenOutput"> # <b>adduser</b> </td>
+  </tr>
+</table>
+<p>When first started, <i>adduser </i>will query you to set or change the default 
+  settings. Once the standard configuration has been set, it will continue by 
+  prompting for adding new users. </p>
+    
+<h2> <a name="instAddUser"></a>Adding a New User</h2>
+<p>adduser supports two flags -silent or -verbose. You don't really need to know 
+  these at the beginning, but you can check the details in the man pages. Read 
+  through the example below and then start adduser to create your new account.</p>
+<table border="0" width="80%" class="Code">
+  <tr> 
+    <td nowrap class="Code"> 
+      <p class="Code"># adduser</p>
+    </td>
+  </tr>
+  <tr class="pScreenOutput"> 
+    <td nowrap class="pScreenOutput"> 
+      <p class="pScreenOutput">Enter username [a-z0-9_-]: <b>bricker</b> <br>
+        Enter full name [ ]: <b>Sven De La Palmer</b> <br>
+        Enter shell bash csh ksh nologin sh [bash]: <b>&lt;hit ENTER&gt;</b></p>
+    </td>
+  </tr>
+</table>
+<p> The shell is your command line interpreter. It reads in the commands you type 
+  and tries to decipher them. There are several different shells to choose from. 
+  If bash does not show on the screen, then review adding packages in the <a href="installation.htm" class="anchBlue">1st 
+  Time Config introduction</a>. You can change your settings at a later time so 
+  do not worry if some settings are not as you want them right now. The documentation 
+  that comes with OpenBSD says that 'most people' use bash.</p>
+    
+<table border="0" width="80%" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="pScreenOutput"> 
+      <p class="pScreenOutput">Enter home directory (full path) [/home/bricker]: 
+        <b>&lt;hit ENTER&gt;</b><br>
+        Uid [1002]: <b>&lt;hit ENTER&gt;</b></p>
+    </td>
+  </tr>
+</table>
+<p> The uid is the User ID number that the system uses to keep track of people. 
+  These should be unique on the system. Use the default values offered by the 
+  program unless you have good knowledge of previously granted ID numbers.</p>
+    
+<table border="0" width="80%" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="pScreenOutput"> 
+      <p class="pScreenOutput">Enter login class: default []: <b>&lt;hit ENTER&gt;</b> 
+      </p>
+    </td>
+  </tr>
+</table>
+<p> The login class allows you to set up resource limits for groups of users. 
+</p>
+<h3><a name="instGroup"></a>Specifying user-group privileges </h3>
+<table border="0" width="124" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="pScreenOutput"> 
+      <p class="pScreenOutput">Login group bricker [bricker]: <b>&lt;hit ENTER&gt;</b><br>
+        Login group is &quot;bricker&quot;. Invite bricker into other groups: 
+        guest no <br>
+        [no]:&nbsp; <b>&lt;hit ENTER&gt;</b></p>
+    </td>
+  </tr>
+</table>
+<p>Login groups are used to divide security privileges by account groups. For 
+  most users you can use the default setting (NO) and just hit <i>Enter</i> to 
+  continue.</p>
+<p>If the account you are creating will be your Administrator account, then you 
+  must make sure that you have specified the <a href="#instRoot">group 'wheel' 
+  </a>in the above response. Don't worry if you make a mistake, we can fix it 
+  later. </p>
+<table border="0" width="80%" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="pScreenOutput"> 
+      <p class="pScreenOutput">Enter password []: <br>
+        Enter password again []: </p>
+    </td>
+  </tr>
+</table>
+<p> You will be asked for the user's password twice and it will not be displayed. 
+  Afterwards, it will display all of the user's information and ask if it is correct. 
+</p>
+    
+<table border="0" width="80%" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="pScreenOutput"> 
+      <p class="pScreenOutput">Name:&nbsp;&nbsp;&nbsp;&nbsp; bricker <br>
+        Password: **** <br>
+        Fullname: Sven De La Palmer <br>
+        Uid:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 1000 <br>
+        Gid:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 1000 (bricker) <br>
+        Class:&nbsp;&nbsp;&nbsp; <br>
+        Groups:&nbsp;&nbsp; bricker<br>
+        HOME:&nbsp;&nbsp;&nbsp;&nbsp; /home/bricker <br>
+        Shell:&nbsp;&nbsp;&nbsp; /bin/sh <br>
+        OK? (y/n) [y]: <b>&lt;hit ENTER&gt;</b> </p>
+    </td>
+  </tr>
+</table>
+<p>If you make a mistake, you can start over, or its possible to correct most 
+  of this information using the 'chpass' command (discussed below).</p>
+    
+<h2><a name="instchpass"></a>Changing User Information </h2>
+    
+<p class="pFileReference"> [ref: chpass(1), vipw(8)]</p>
+    <p>
+      Once you've configured the base system for working, we can look at basic configuration of users. Note, for those
+      with some previous Unix experience, Do not just edit /etc/passwd or /etc/Master.passwd
+    </p>
+    
+<p> Use the chpass utility when adding or changing user information. If you try 
+  to modify the user shell selection manually (by changing /etc/passwd) it wont 
+  work, trust me I've made this mistake for weeks before I found out my errorneous 
+  ways. </p>
+    
+<p> Entered at the command line without a parameter (ie. typed by itself,) chpass 
+  will edit your personal information. As root, you can use it to modify any user 
+  account on the system. You can find more details on chpass in the man pages, 
+  but let's go through an example review of the account we created above.</p>
+<table border="0" width="80%" class="Code">
+  <tr> 
+    <td nowrap class="Code"> 
+      <p class="Code"># <b>chpass bricker</b> </p>
+    </td>
+  </tr>
+</table>
+<p> This will bring up information about the user '<i>bricker</i>' in the '<i>vi</i>' 
+  editor. The password line is encrypted, so don't change it. If you want to disable 
+  the user, one method would be to add a # at the beginning of the password string, 
+  so you can easily remove it later when you want to reactivate the user. There 
+  are methods of disabling user that may be better though.</p>
+    
+<table border="0" width="80%" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="pScreenOutput"> 
+      <p class="pScreenOutput">&nbsp; </p>
+      <p class="pScreenOutput"><span class="pScreenOutput">Login: bricker <br>
+        Password: <br>
+        Uid [#]: 1000 <br>
+        Gid [# or name]: 1000 <br>
+        Change [month day year]: <br>
+        Expire [month day year]: <br>
+        Class: <br>
+        Home directory: /home/bricker <br>
+        Shell: /bin/sh <br>
+        Full Name: Sven De La Palmer <br>
+        Office Location: <br>
+        Office Phone: <br>
+        Home Phone: <br>
+        Other information: <br>
+        ~ <br>
+        ~ <br>
+        ~ <br>
+        ~ <br>
+        ~ <br>
+        ~ <br>
+        ~ <br>
+        ~ <br>
+        /path/temp-file: unmodified: line 1 </span></p>
+    </td>
+  </tr>
+</table>
+<p>Remember your vi commands ? <b>:q</b> (colon+q) quit, <b>:w </b>(colon+w) write, 
+  <b>:q!</b> (colon+q+exlamation-mark) quit without saving. If you're still having 
+  problems, remember the tutorial <a href="http://www.freebsd.org/tutorials/new-users">http://www.freebsd.org/tutorials/new-users</a></p>
+    
+<p>Alternative tools, useful for batch processing include: usermod</p>
+<p class="pFileReference">[ref: What to do AFTER you have BSD installed by Chris 
+  Coleman,<a href= 
+      "http://www.daemonnews.org/200005/chrisc@daemonnews.org"><span class=
+      "c1">http://www.daemonnews.org/200005/chrisc@daemonnews.org</span></a>] 
+</p>
+<h2><a name="rmuser"></a>Deleting a User</h2>
+<p class="pFileReference">[ref rmuser(8), user(8), useradd(8), userdel(8), userinfo(8), 
+  usermod(8)]</p>
+<p>From the man page <i>userdel(8)</i></p>
+<table width="80%" border="0" class="pScreenOutput">
+  <tr> 
+    <td class="pScreenOutput">The userdel utility removes a user from the system, 
+      optionally removing that user's home diretory and any subdirectories.</td>
+  </tr>
+</table>
+<p>The main options are used during account deletion.</p>
+<table width="80%" border="0" class="pScreenOutput">
+  <tr> 
+    <td class="pScreenOutput"> 
+      <p><b>userdel [-prv]</b> <i>user</i><br>
+      </p>
+      <p>The following command line options are recognised:</p>
+      <p> <b>-p</b> preserve the user information in the password file, but do 
+        not allow the user to login, by switching the password to an ``impossible'' 
+        one, and by setting the user's shell to the false(1) program. This option 
+        can be helpful in preserving a user's files for later use by members of 
+        that person's group after the user has moved on. This value can also be 
+        set in the /etc/usermgmt.conf file, using the `preserve' field. If the 
+        field has any of the values `true', `yes', or a non-zero number, then 
+        user information preservation will take place.</p>
+      <p> <b>-r</b> remove the user's home directory, any subdirectories, and 
+        any files and other entries in them.</p>
+      <p> <b>-v</b> perform any actions in a verbose manner.</p>
+    </td>
+  </tr>
+</table>
+<p>&nbsp;</p>
+<h2><a name="instGroupManagement"></a>Group Management</h2>
+<p class="pFileReference">[ref group(8), groupadd(8), groupdel(8), groupinfo(8), 
+  groupmod(8)]</p>
+<p>Groups are important categorisations for users that allow administrators to 
+  specify privileges, restrictions to a range of users depending on their group 
+  allocation. </p>
+<p>OpenBSD 2.7 included a set of group management tools, including the wrapper 
+  program 'group' which can be used as the interface into the separate tools. 
+  /usr/sbin/group merely takes the parameters given it on the command line and 
+  passes it to the appropriate program.</p>
+<h3><a name="groupadd"></a>Create a new Group</h3>
+<p class="pFileReference">[ref: group(8), groupadd(8)]</p>
+<p>To add new groups 'computerstaff' and 'class501' to the system, we can enter 
+  the commands.</p>
+<table border="0" width="80%" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="Code"> # group info computerstaff</td>
+  </tr>
+  <tr> 
+    <td nowrap class="pScreenOutput">group: can't find group `computerstaff'</td>
+  </tr>
+  <tr> 
+    <td nowrap class="Code"># group add computerstaff</td>
+  </tr>
+  <tr> 
+    <td nowrap class="Code"> # group info computerstaff </td>
+  </tr>
+  <tr> 
+    <td nowrap class="pScreenOutput">name computerstaff<br>
+      passwd *<br>
+      gid 1002<br>
+      members </td>
+  </tr>
+</table>
+<p>Note that gid (Group ID) is sequential to the last group I have on my system, 
+  and there are no members yet for computerstaff.</p>
+<table border="0" width="80%" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="Code"> # group info class501</td>
+  </tr>
+  <tr> 
+    <td nowrap class="pScreenOutput">group: can't find group `class501'</td>
+  </tr>
+  <tr> 
+    <td nowrap class="Code"># group add class501</td>
+  </tr>
+  <tr> 
+    <td nowrap class="Code"> # group info class501</td>
+  </tr>
+  <tr> 
+    <td nowrap class="pScreenOutput">name class501<br>
+      passwd *<br>
+      gid 1003<br>
+      members </td>
+  </tr>
+</table>
+<p>We have successfully created two new groups, and verified their creation.</p>
+<h3><a name="usermod"></a>Adding Users to an Existing Group</h3>
+<p class="pFileReference">[ref user(8), userinfo(8), usermod(8), group(8), groupinfo(8)]</p>
+<p>Now that we have created our groups, we can go through and allocate users to 
+  the separate groups. The simplest method is to use the given utilities user 
+  or usermod.</p>
+<p>In our small scenario, we only have one user (bricker) but since bricker is 
+  going to be part of the 'computerstaff' we're putting that account into the 
+  group.</p>
+<p>1st we can check what group 'bricker' is in, and we can review membership in 
+  'computerstaff' again.</p>
+<table border="0" width="80%" class="Code">
+  <tr> 
+    <td nowrap class="Code"># userinfo bricker | grep &quot;^groups&quot;</td>
+  </tr>
+  <tr> 
+    <td nowrap class="pScreenOutput">groups bricker</td>
+  </tr>
+  <tr> 
+    <td nowrap class="Code"># group info computerstaff | grep &quot;^members&quot;</td>
+  </tr>
+  <tr> 
+    <td nowrap class="pScreenOutput">members</td>
+  </tr>
+</table>
+<p>We can simply add bricker using <i>usermod -G</i> (or <i>user mod -G</i>).</p>
+<table border="0" width="80%" class="Code">
+  <tr> 
+    <td nowrap class="Code"># user mod -G computerstaff bricker</td>
+  </tr>
+  <tr> 
+    <td nowrap class="Code"># group info computerstaff | grep &quot;^members&quot;</td>
+  </tr>
+  <tr> 
+    <td nowrap class="pScreenOutput">members bricker</td>
+  </tr>
+</table>
+<p>&nbsp;</p>
+
+<h2><a name="instRoot"></a>Root, Super Administrator</h2>
+<p>A common problem for novice Unix Administrators is not knowing how to setup 
+  a 'root' account or managing accounts with access to the 'root' account.</p>
+<p>The Super Administrator 'root' is any account configured with UserID as '0' 
+  and GroupID as '0'. This user has near fatal authority on your machine and you 
+  must be very careful in selecting any accounts with 0:0 privileges.</p>
+<p>You can quickly view the above by checking your /etc/passwd file, or by using 
+  a script similar that shown here.</p>
+<table border="0" width="80%" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="Code">$ /usr/bin/grep :0:0: /etc/passwd </td>
+  </tr>
+  <tr> 
+    <td nowrap class="pScreenOutput">root:*:0:0:Charlie &amp;,,,:/root:/usr/local/bin/bash</td>
+  </tr>
+</table>
+<h3><a name="instAssigningPrivilegesToOrdinaryUsers"></a>Assigning Root Privileges 
+  to Ordinary Users</h3>
+<p>Your administrator account should be a member of the group <b>wheel</b>. <i>Regular 
+  users of your host should not be members of the wheel group.</i></p>
+<p>You can specify the group in three ways:</p>
+<p>(a) at the creation of the account <a href="#instgroup">(as above)</a> or </p>
+<p>(b) using <i>usermod -G</i> or</p>
+<p>(c) by manually editing the file /etc/group.</p>
+<h4><a name="instgroupwheel"></a>Setting wheel during account creation</h4>
+<p>During account creation (using adduser) you are given the option to set the 
+  group an account belongs to, and any additional groups to include the user into.</p>
+<table border="0" width="124" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="pScreenOutput"> 
+      <p class="pScreenOutput">Login group bricker [bricker]: <b>&lt;hit ENTER&gt;</b><br>
+        Login group is &quot;bricker&quot;. Invite bricker into other groups: 
+        guest no <br>
+        [no]:&nbsp; <b>wheel</b></p>
+    </td>
+  </tr>
+</table>
+<p>During the user creation, you can specify that you want the userid to be invited, 
+  or included into the 'wheel' group.</p>
+<h4><a name="instusermodwheel"></a>Using the usermod -G command</h4>
+<p>From the man page usermod(8)</p>
+<table border="0" width="80%" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="pScreenOutput">-G secondary-group[,group,...]<br>
+      are the secondary groups the user will be a member of in the <br>
+      /etc/group file.</td>
+  </tr>
+</table>
+<p>First we check to make sure that 'wheel' is the superuser group.</p>
+<table border="0" width="80%" class="Code">
+  <tr> 
+    <td class="Code"># /usr/bin/grep ':0:' /etc/group</td>
+  </tr>
+  <tr> 
+    <td class="pScreenOutput">wheel:*:0:root</td>
+  </tr>
+</table>
+<p>In this scenario, bricker has not been added to the group 'wheel' which is 
+  the superuser group.</p>
+<p>To add the group wheel to the groups allocated for <i>bricker</i> you use the 
+  following usermod command.</p>
+<table border="0" width="80%" class="Code">
+  <tr> 
+    <td nowrap class="Code"># usermod -G wheel bricker</td>
+  </tr>
+  <tr> 
+    <td nowrap class="Code"># user info bricker | /usr/bin/grep &quot;^groups&quot;</td>
+  </tr>
+  <tr> 
+    <td nowrap class="pScreenOutput">groups bricker computerstaff wheel</td>
+  </tr>
+</table>
+<p>Our user information tells us bricker is now part of three groups: bricker, 
+  computerstaff, and wheel.</p>
+<p>We can verify the contents of the /etc/group file, specific to the group wheel 
+  by using group info or just grep:</p>
+<table border="0" width="80%" class="Code">
+  <tr> 
+    <td nowrap class="Code"># /usr/bin/grep ':0:' /etc/group</td>
+  </tr>
+  <tr> 
+    <td nowrap class="pScreenOutput">wheel:*:0:root,bricker</td>
+  </tr>
+  <tr> 
+    <td nowrap class="Code"># group info wheel | grep &quot;^members&quot; </td>
+  </tr>
+  <tr> 
+    <td nowrap class="pScreenOutput">members root bricker</td>
+  </tr>
+</table>
+<p><br>
+</p>
+<h4><a name="instmanuallyeditgroupwheel"></a>Manually Editing the file /etc/group</h4>
+<p>The third method for adding a new user to the group 'wheel' is to edit the 
+  entry.</p>
+<p>The format of the file is a line for each record, of the form</p>
+<table border="0" width="80%" class="dns">
+  <tr> 
+    <td nowrap> 
+      <pre>'GroupName:*:GroupIDNumber:UserIDA[[,UserIDn]...]</pre>
+    </td>
+  </tr>
+</table>
+<p>and no spaces are allowed(?)</p>
+<p class="pFileReference">For example file: /etc/group</p>
+<table border="0" width="80%" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="pScreenOutput">wheel:*:0:root<b>,bricker</b><br>
+      daemon:*:1:daemon<br>
+      kmem:*:2:root<br>
+      sys:*:3:root<br>
+      tty:*:4:root<br>
+      operator:*:5:root<br>
+      bin:*:7:<br>
+      news:*:8:<br>
+      wsrc:*:9:<br>
+      users:*:10:</td>
+  </tr>
+</table>
+<p>As indicated in the above example, edit the file and add your userid 'bricker' 
+  to the line 'wheel'. Remember that the special group is the group that corresponds 
+  to GroupID '0'.</p>
+<h2><a name="instmovetoroot"></a>Moving from your UserID to root</h2>
+<p>With your administrator account in the 'wheel' group you can substitute/switch 
+  user from bricker to root using the 'su' command.</p>
+<p>For example, while logged in as bricker, you can use 'su' to switch to root 
+  and perform the necessary tasks as 'root' before returning to your 'bricker' 
+  account.</p>
+<table border="0" width="80%" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="Code">$ whoami</td>
+  </tr>
+  <tr> 
+    <td nowrap class="pScreenOutput">bricker</td>
+  </tr>
+  <tr> 
+    <td nowrap class="Code">$ su -</td>
+  </tr>
+  <tr> 
+    <td nowrap class="pScreenOutput">Password:</td>
+  </tr>
+  <tr> 
+    <td nowrap class="Code">#</td>
+  </tr>
+  <tr> 
+    <td nowrap class="Code"> 
+      # whoami
+    </td>
+  </tr>
+  <tr> 
+    <td nowrap class="pScreenOutput">root</td>
+  </tr>
+  <tr> 
+    <td nowrap class="Code">#</td>
+  </tr>
+</table>
+<p class="pFileReference">From the man page su(1):</p>
+<table border="0" width="80%" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="pScreenOutput">If group 0 (normally ``wheel'') has users 
+      listed then only those users<br>
+      can su to ``root''. It is not sufficient to change a user's /etc/passwd<br>
+      entry to add them to the ``wheel'' group; they must explicitly be listed<br>
+      in /etc/group. If no one is in the ``wheel'' group, it is ignored, and<br>
+      anyone who knows the root password is permitted to su to ``root''.</td>
+  </tr>
+</table>
+<p>For a more granular control of what applications you allow users to perform, 
+  take a look at the <a href="sudo.htm">sudo command</a>.<br>
+</p>
+<h2>Relative Reference</h2>
+<p>Red Hat Linux Administrator's Handbook 2nd Edition. Mohammed J. Kabir, (<a href="http://www.mandtbooks.com" class="anchBlue">M&amp;T 
+  Books</a>, Foster City, 2001)</p>
+<p>Essential System Administration 2nd Edition. AEleen Frisch (<a href="http://www.ora.com">O'Reilly 
+  &amp; Associates</a>, Inc., Sebastopol, 1995)</p>
+<h2><a name="author"></a>Author and Copyright</h2>
+<p>Copyright (c) 2000/1/2 Samiuela LV Taufa. All Rights Reserved.</p>
+
+<p>I reserve the right to be totally incorrect even at the best advice of betters. In other words, I'm probably wrong in enough places for you to call me an idiot, but don't 'cause you'll hurt my sensibilities, just tell me where I went wrong and I'll try again.</p>
+
+<p>You are permitted and encouraged to use this guide for fun or for profit as you see fit. If you republish this work in what-ever form, it would be nice (though not enforceable) to be credited.</p>
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+  <tr>
+    <td class="block" valign="MIDDLE" width="100%" bgcolor="#cccccc">
+      <p class="block"><b>User Administration <strong> - for newbies like me</strong></b></p>
+      </td>
+  </tr>
+</table>
+<p><font color="#808080" face="sans-serif" size="-2"><strong>Copyright&nbsp; &copy; 
+  2000/1/2
+<a href="http://www.nomoa.com">NoMoa.COM</a> All rights reserved.</strong></font></p>
+  </body>
+</html>
+

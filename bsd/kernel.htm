@@ -1,0 +1,2973 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0//EN">
+<html>
+<!-- Document History:
+// 01-06-08 SoL - Processor references were wrong
+
+//--> 
+<head>
+<title>=8&gt; nomoa.com/bsd OpenBSD - kernel docs</title>
+<link rel="STYLESHEET" type="text/css" href="openbsd.css">
+<script language="JavaScript">
+<!--
+
+function newImage(arg) {
+	if (document.images) {
+		rslt = new Image();
+		rslt.src = arg;
+		return rslt;
+	}
+}
+
+function changeImages() {
+	if (document.images && (preloadFlag == true)) {
+		for (var i=0; i<changeImages.arguments.length; i+=2) {
+			document[changeImages.arguments[i]].src = changeImages.arguments[i+1];
+		}
+	}
+}
+
+var preloadFlag = false;
+function preloadImages() {
+	if (document.images) {
+		openbsd_over = newImage("mmedia/openbsd-over.gif");
+		openbsd_down = newImage("mmedia/openbsd-down.gif");
+		preloadFlag = true;
+	}
+}
+
+// -->
+</script>
+<!-- End Preload Script --> 
+<style type="text/css">
+<!--
+-->
+</style>
+</head>
+
+<body bgcolor="#FFFACD" onLoad="preloadImages();">
+<p class="logo">
+<a class="anchBlue" href="http://www.nomoa.com/bsd" 
+   onMouseOver="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;"
+   onMouseOut="changeImages('openbsd', 'mmedia/openbsd.gif'); return true;"
+   onMouseDown="changeImages('openbsd', 'mmedia/openbsd-down.gif'); return true;"
+   onMouseUp="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;">
+   <img name="openbsd"  align="absMiddle" 
+        alt="OpenBSD ... The Only way to Go ..." border="0" height="50"
+        src="mmedia/openbsd.gif" width="368"></a>
+</p>
+    
+<h1> kernel docs</h1>
+<hr color="Fuchsia">
+<p>Table of Contents</p>
+<ul>
+  <li><a href="#introduction">Introduction</a></li>
+  <li><a href="#warning">Warning - Don't Do It</a></li>
+  <li><a href="#reference">Reference Resources</a></li>
+  <li><a href="#configuringSample">Configuring a Kernel - Sample</a></li>
+  <li><a href="#categories">Categories of Kernel Configurations</a> 
+    <ul>
+      <li><a href="#optionsPlatform">Platform or Machine</a></li>
+      <li><a href="#optionsCPU">CPU Directives</a></li>
+      <li><a href="#optionsCompatibility">Compatibility with Other *Nix.</a></li>
+      <li><a href="#optionsDebugging">Debug Directives</a></li>
+      <li><a href="#optionsFileSystems">File Systems</a></li>
+      <li><a href="#optionsFileSystemOptions">File System Options</a></li>
+      <li><a href="#optionsNetworking">Networking</a></li>
+      <li><a href="#OptionsOperation">Operation Related Directives</a></li>
+      <li><a href="#optionsSCSI">SCSI Subsystem Options</a></li>
+      <li><a href="#optionsPCVT">PCVT Options (i386 Architecture) (pcvt(4))</a></li>
+      <li><a href="#optionsSystemV">System V IPC Options</a></li>
+      <li><a href="#optionsDevices">Devices</a> (Pseudo-Devices, Boot Config, 
+        Bus Controllers, SCSI, USB, Serial & Parallel, Mouse/Mice, IDE FD & HD, 
+        Networking, and Multimedia Devices )</li>
+      <li><a href="#optionsMiscellaneous">Miscellaneous</a></li>
+    </ul>
+  </li>
+  <li><a href="#LKM" class="anchBlue">LKM - Loadable Kernel Modules</a></li>
+  <li><a href="#author">Author and Copyright</a></li>
+</ul>
+<hr color="Fuchsia">
+<h2><a name="introduction"></a>Introduction</h2>
+<p>These notes are to try and compile kernel optimization options.</p>
+<p>Why go to the trouble of documenting something that is already documented well 
+  ? I just needed to have a table listing of what options may be there to make 
+  it easier for me to remove those 'bits' from the kernel that I do not need in 
+  my configuration.</p>
+<p>Would you like to build your own custom kernel ? Documentation on that is in 
+  the FAQ, config(8), and options(4) if that isn't helping you then hopefully 
+  the section at the end of these docs may help you further.</p>
+<p>Some of this information is extracted from the FreeBSD documentation.</p>
+<h2><a name="warning"></a>Warning</h2>
+<p>As they say, ignore these warnings at your own peril (especially since the 
+  warnings are from the developers themselves.)</p>
+<p>From the FAQ 5.0 Kernel Configuration:</p>
+<p class="pScreenOutput">Under most circumstances you will NOT need to compile your own kernel. The 
+  GENERIC kernel will usually be all that you need. In fact, there are several 
+  reasons why you do not want to create your own kernel. The main reason is that 
+  it is very easy to make changes to the kernel configuration which look logical, 
+  but do not work. This is your danger sign. If something does not appear to work 
+  properly, please try the GENERIC kernel before sending in a bug report.</p>
+<p class="pScreenOutput">&nbsp;<br>
+  5.2 - Kernel Configuration Options</p>
+<p class="pScreenOutput">&nbsp;</p>
+<p class="pScreenOutput">...<br>
+  &nbsp;</p>
+<p class="pScreenOutput">Not all kernel options have been tested for compatibility 
+  with all other options. Don't put an option in your kernel unless you actually 
+  have a reason to do so! The one kernel configuration which gets the most testing 
+  is the GENERIC kernel. This is usually a combination of the options in <b>/usr/src/sys/arch/&lt;your 
+  arch&gt;/conf/GENERIC</b> and <b>/usr/src/sys/conf/GENERIC</b>.<br>
+&nbsp;</p>
+<p class="pScreenOutput">Look closely at these files and you will notice a line like:<br>
+<p class="Code"> <b>include &quot;../../../conf/GENERIC&quot;</b></p>
+<p class="pScreenOutput">&nbsp;<br>
+  This means that it is referencing yet another configuration file. This file 
+  stores non arch-dependent options. So when creating your Kernel Config be sure 
+  to look through <b>/sys/conf/GENERIC</b> and see what you want. There ARE options 
+  in there that are NEEDED.</p>
+<p class="pScreenOutput">...</p>
+<p class="pScreenOutput">&nbsp;</p>
+<p class="pScreenOutput">It is always helpful to be able to debug problems with 
+  the kernel. But many choose not to put these options in their kernel because 
+  these options add considerable size to the kernel. They are however extremely 
+  helpful in a case where a bug might be present. This well help the developers 
+  discover the source of your problems much quicker. </p>
+<p>Thanks to Marc Espie for this additional Warning, Reference Information</p>
+<p class="kernelO">it's highly recommended to use the default GENERIC kernel as 
+  a rule.<br>
+  We try very hard to make it work and be efficient everywhere. Several<br>
+  reasons:</p>
+<ul>
+  <li class="kernelO"> with a good GENERIC kernel, every user benefits.</li>
+  <li class="kernelO"> boot -c + config -e means most useful tweaks don't need 
+    any recompiling.</li>
+  <li class="kernelO"> problems are MUCH easier to reproduce if starting with a GENERIC kernel.</li>
+  <li class="kernelO"> GENERIC is much better tested than any other combination. Thousands of<br>
+    people bang on GENERIC...</li>
+</ul>
+<p class="kernelO">Imagine you're doing a bug-report. If you are using the GENERIC kernel,<br>
+  it's much more likely that developers will take the time to look at your<br>
+  report. Speaking from experience, bugs in `custom kernels' can be very<br>
+  hard to track down... for instance, as a developer, you don't always have<br>
+  the right combination of hardware to have that kernel running. So you often<br>
+  need to tweak that custom kernel further... so that often, the resulting<br>
+  kernel no longer has the bug. What happens in such a case is that a busy<br>
+  developer will shelve the bug-report until he has time to track it further,<br>
+  and concentrate instead on something reproduceable...<br>
+</p>
+<h2><a name="reference"></a>Reference Resources.</h2>
+		
+    
+<p class="pFileReference"> [ref: afterboot(8), config(8), options(4), boot_config(8), 
+  OpenBSD FAQ: Kernel Configuration] <br>
+  [ref: CD1:src.tar.gz] </p>
+    
+<p></p>
+<p></p>
+<p> </p>
+<p>The options for the kernel are pretty well documented in the FAQ and man pages. 
+  And the most current information are more likely to be found in those man pages, 
+  and source code than anywhere else.</p>
+<p>Following Marc Espie's recommendation above, take a serious look at boot_config(8) 
+  if that will resolve your problems without the need to configure a custom kernel.</p>
+<h2><a name="configuringSample"></a>Configuring a Kernel - Sample</h2>
+<p>I needed to make some modifications to my kernel to optimize OpenBSD for using 
+  Samba to share files on the network. A simplified process to configuring a kernel 
+  is listed below. This step-by-step is covered well in the FAQ, including how 
+  to compile the kernel if you dont have space to extract the complete source 
+  onto your hard-disk. </p>
+<p>After decompressing the OpenBSD source tree onto your hard-disk (/usr/src), 
+  do the following: </p>
+<p class="Code"># cd /usr/src/sys/arch/<b>$ARCH</b>/conf </p>
+<p>This moves us into the custom configurations for your hardware architecture. 
+  Doing a listing in this directory will give you a sample of machine configurations. 
+  On my I386 architecture an (/usr/src/sys/arch/i386/conf) ls will indicate</p>
+<p class="pScreenOutput"># ls -al</p>
+<table width="90%" border="0" cellpadding="0" cellspacing="0">
+  <tr> 
+    <td rowspan="3" class="kernelO" width="5%">&nbsp;</td>
+    <td class="pScreenOutput" width="12%">CVS</td>
+    <td class="pScreenOutput" width="13%">GANDALF</td>
+    <td class="pScreenOutput" width="25%">LUCIFIER</td>
+    <td class="pScreenOutput" width="13%">OPRAH</td>
+    <td class="pScreenOutput" width="19%">RAMDISKB</td>
+    <td class="pScreenOutput" width="13%">SARUMAN</td>
+  </tr>
+  <tr> 
+    <td class="pScreenOutput" width="12%">DISKLESS</td>
+    <td class="pScreenOutput" width="13%">GENERIC</td>
+    <td class="pScreenOutput" width="25%">Makefile.i386</td>
+    <td class="pScreenOutput" width="13%">PETRA</td>
+    <td class="pScreenOutput" width="19%">RAMDISKC</td>
+    <td class="pScreenOutput" width="13%">WALDORF</td>
+  </tr>
+  <tr> 
+    <td class="pScreenOutput" width="12%">ELBERETH</td>
+    <td class="pScreenOutput" width="13%">HERMES</td>
+    <td class="pScreenOutput" width="25%">NETTAN</td>
+    <td class="pScreenOutput" width="13%">RAMDISK</td>
+    <td class="pScreenOutput" width="19%">RAMDISK_CD</td>
+    <td class="pScreenOutput" width="13%">&nbsp;</td>
+  </tr>
+</table>
+<p>Make a copy of the Generic kernel configuration. Remember that this is the 
+  most tested configuration, so lets not stray too far from 'working' configuration.</p>
+<p class="Code"># cp GENERIC <b>MYCUSTOMKERNEL</b></p>
+<p>We can now edit the configuration file <b>MYCUSTOMKERNEL</b> to add the directive 
+  for increasing NMBCLUSTERS (something I need to do.)</p>
+<p>Note that the name you give your file will also be the name given to the Kernel. 
+  Although it seems that traditionally kernel names are in ALL CAPITAL LETTERS 
+  it seems to work fine with a mix of letter cases.</p>
+<p class="pFileReference">Edit: /usr/src/arch/<b>$ARCH</b>/conf/<b>MYCUSTOMKERNEL</b> 
+  to include:</p>
+<p class="pFileReference">&nbsp;</p>
+<p class="pScreenOutput">option &quot;NMBCLUSTERS=8192&quot;</p>
+<p>We make the necessary changes to the GENERIC kernel into our proposed custom 
+  kernel configuration. After you have saved the above modifications we can now 
+  configure the kernel compilation, and make the kernel.</p>
+<p class="Code"># config <b>MYCUSTOMKERNEL</b></p>
+<p class="pScreenOutput">Don't forget to run "make depend"</p>
+<p class="Code"># cd ../compile/<b>MYCUSTOMKERNEL</b> </p>
+<p class="Code"># make depend &amp;&amp; make</p>
+<p>This uses the &quot;config&quot; program to validate your custom kernel configuration 
+  and create directories and files required to perform a compilation on the custom 
+  kernel. After the &quot;config&quot; (there should be no errors since we made 
+  a very minor modification) we run a make to create our new bsd kernel file &quot;bsd.&quot;</p>
+<p>To use the kernel copy the kernel to the root directory and make it available 
+  during boot time.</p>
+<p class="Code">cp /bsd /bsd.generic</p>
+<p class="Code">cp /usr/arch/$ARCH/compile/<b>MYCUSTOMKERNEL</b>/bsd /<b>bsd.nmb</b></p>
+<p>We first make a backup of the existing/generic kernel (the docs says that most 
+  use a sequence like bsd.1 bsd.2 and I'm only using named kernels above as a 
+  demonstration.) </p>
+<p>Next I copy the customised kernel into the root partition so boot can find 
+  it. In our experimental case I do not make it the default kernel and I name 
+  it bsd.nmb to indicate what was changed as opposed to the working kernel bsd.generic.</p>
+<p>When you restart your server and get to the boot prompt, we can specify the 
+  new kernel we wish to try.</p>
+<p class="pScreenOutput">Using Drive: 0 Partition: 3</p>
+<p class="pScreenOutput">reading boot....</p>
+<p class="pScreenOutput">probing: pc0 com0 com1 apm mem[639K 95M a20=on]</p>
+<p class="pScreenOutput">disk: fd0 hd0</p>
+<p class="pScreenOutput">&gt;&gt; OpenBSD/i386 BOOT 1.26 </p>
+<p class="pScreenOutput">boot &gt; <b>bsd.nmb &lt;-- type in the kernel you want 
+  to 'boot'</b></p>
+<p>The boot messages will scroll through your screen and you get to the login 
+  prompt. After login in you should see a display of your new kernel.</p>
+<p class="pScreenOutput">Last login: (date) from (ip-address) </p>
+<p class="pScreenOutput">OpenBSD 2.8 (<b>MYCUSTOMKERNEL</b>) #1: (date-of-compilation) 
+</p>
+<p class="pScreenOutput">Welcome to OpenBSD: The proactively secure Unix-like 
+  operating system. </p>
+<p>If you find the new kernel behaves as expected, without causing other problems 
+  on your system, then you can copy the new kernel over the default boot kernel.</p>
+<p class="Code">cp <b>/bsd.nmb</b> /bsd</p>
+<p>Please take the time to read the FAQ and afterboot(8) man pages before you 
+  continue. </p>
+<h2><a name="categories"></a>Categories of Kernel Configuration</h2>
+<p>The list below is by categories commonly found in documentation:</p>
+<ul>
+  <li><a href="#optionsPlatform">Platform or Machine</a></li>
+  <li><a href="#optionsCPU">CPU Directives</a></li>
+  <li><a href="#optionsCompatibility">Compatibility with Other *Nix.</a></li>
+  <li><a href="#optionsDebugging">Debug Directives</a></li>
+  <li><a href="#optionsFileSystems">File Systems</a></li>
+  <li><a href="#optionsFileSystemOptions">File System Options</a></li>
+  <li><a href="#optionsNetworking">Networking</a></li>
+  <li><a href="#OptionsOperation">Operation Related Directives</a></li>
+  <li><a href="#optionsSCSI">SCSI Subsystem Options</a></li>
+  <li><a href="#optionsPCVT">PCVT Options (i386 Architecture) (pcvt(4))</a></li>
+  <li><a href="#optionsSystemV">System V IPC Options</a></li>
+  <li><a name="OptionsDevices"></a><a href="#optionsDevices">Devices</a></li>
+  <ul>
+    <li><a href="#OptionsPseudoDevices">Pseudo-Devices</a></li>
+    <li><a href="#OptionsBootConfig">Boot Config</a></li>
+    <li><a href="#OptionsBusControllers">Bus Controllers</a></li>
+    <li><a href="#OptionsSCSIdevices">SCSI devices</a></li>
+    <li><a href="#OptionsUSB">USB and Universal Communication Devices</a></li>
+    <li><a href="#OptionsSerialParallel">Serial & Parallel Ports</a></li>
+    <li><a href="#OptionsMouse">Mouse/Mice</a></li>
+    <li><a href="#OptionsIDE">IDE FD & HD Interfaces</a></li>
+    <li><a href="#OptionsNetworkingDevices">Networking Devices</a></li>
+    <li><a href="#OptionsMultimedia">Multimedia Audio Devices</a></li>
+  </ul>
+  <li><a href="#optionsMiscellaneous">Miscellaneous</a></li>
+</ul>
+<h5><a name="optionsPlatform"></a>Platform or Machine Type</h5>
+<table width="88%" border="0" class="kernelO">
+  <tr> 
+    <td width="28%" class="kernelO"><b>Directive</b></td>
+    <td width="39%" class="kernelO"><b>Purpose</b></td>
+    <td width="33%" class="kernelO"><b>Ref:</b></td>
+  </tr>
+  <tr> 
+    <td width="28%" class="kernelO" nowrap>machine i386</td>
+    <td rowspan="4" valign="top" class="kernelO">At least one of these directives 
+      is required to specify the target system of the kernel.</td>
+    <td rowspan="4" class="kernelO" valign="top">/usr/src/sys/arch/<font color="#6699FF">$ARCH</font>/conf/<font color="#6699FF">[sample-files]</font></td>
+  </tr>
+  <tr> 
+    <td width="28%" class="kernelO" nowrap>machine atari m68k</td>
+  </tr>
+  <tr> 
+    <td width="28%" class="kernelO" nowrap>machine amiga m68k</td>
+  </tr>
+  <tr> 
+    <td width="28%" class="kernelO" nowrap> ...</td>
+  </tr>
+</table>
+<p>Not all available architecture directives are listed above, just an example 
+  of what to look for when specifying the configuration for your machine. On the 
+  i386 class configurations I've played with, the machine option is specified 
+  in the Kernel configuration file. On other systems such as the atari or amiga, 
+  the machine configuration is specified as part of the &quot;included&quot; files.</p>
+<p>Example use on a Macintosh (mac68k/conf/GENERIC)</p>
+<pre>machine mac68k m68k</pre>
+<h5><a name="OptionsCPU"></a>CPU Directives (i386 systems)</h5>
+<table width="88%" border="0" class="kernelO">
+  <tr valign="top"> 
+    <td width="25%" class="kernelO"><b>Option</b></td>
+    <td width="61%" class="kernelO"><b>Purpose</b></td>
+    <td width="14%" class="kernelO"><b>Ref:</b></td>
+  </tr>
+  <tr valign="top"> 
+    <td colspan="3" class="kernelO">At least one is required</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="25%" class="kernelO">I386_CPU</td>
+    <td width="61%" class="kernelO">Intel i386 Processor</td>
+    <td rowspan="4" class="kernelO">FreeBSD Handbook and emails from readers</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="25%" class="kernelO">I486_CPU</td>
+    <td width="61%" class="kernelO">Intel i486 Processor (AMD K5)</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="25%" class="kernelO">I586_CPU</td>
+    <td width="61%" class="kernelO">Intel Pentium Processor (AMD K6, K6-2)</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="25%" class="kernelO">I686_CPU</td>
+    <td width="61%" class="kernelO">Intel Pentium Pro / Pentium II </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="25%" class="kernelO">&nbsp;</td>
+    <td width="61%" class="kernelO">&nbsp;</td>
+    <td width="14%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="25%" class="kernelO">GPL_MATH_EMULATE</td>
+    <td colspan="2" class="kernelO">Software Math Co-processor emulation using 
+      GNU Library. Should not be necessary on CPUs with internal math co-processor 
+      (eg. 486DX and higher)</td>
+  </tr>
+</table>
+<p>The i386 Generic Kernel includes all CPUs to support starting up on any of 
+  the above CPUs, for optimal code it would be presumably best to use the CPU 
+  directive that best fits your configuration.</p>
+<p>Warning: Please review the June 2001 misc@openbsd.com mailing list archives 
+  which discusses some Kernel problems with omitting too many of the CPU directives. 
+  Remember, most of the testing has been with all directives ON, your mileage 
+  with taking some of the directives out may be very different.</p>
+<h5><a name="OptionsCompatibility"></a>Compatibility with Other *Nix.</h5>
+<table width="88%" border="0" class="kernelO">
+  <tr valign="top"> 
+    <td width="24%" class="kernelO"><b>Option</b></td>
+    <td width="76%" class="kernelO"><b>Purpose</b></td>
+  </tr>
+  <tr valign="top"> 
+    <td width="24%" class="kernelO">COMPAT_SVR4</td>
+    <td width="76%" class="kernelO">On those architectures that support it, this 
+      enables binary compatibility with AT&T System V.4 UNIX binaries built for 
+      the same architecture. This currently includes the sparc and i386. Possibly 
+      the most widely known operating system based on this binary architecture 
+      is Sun's Solaris 2.x. See compat_svr4(8). </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="24%" class="kernelO">COMPAT_BSDOS</td>
+    <td width="76%" class="kernelO">On those architectures that support it, this 
+      enables binary compatibility with BSD/OS applications. This option is supported 
+      on the i386 architecture. See compat_bsdos(8). Requires option COMPAT_43 
+      also be used for proper operation.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="24%" class="kernelO">COMPAT_LINUX</td>
+    <td width="76%" class="kernelO">On those architectures that support it, this 
+      enables binary compatibility with Linux ELF and a.out applications built 
+      for the same architecture. This option is supported on the i386 architecture. 
+      See compat_linux(8).</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="24%" class="kernelO">COMPAT_SUNOS</td>
+    <td width="76%" class="kernelO">On those architectures that support it, this 
+      enables binary compatibility with SunOS 4.x applications built for the same 
+      architecture. This option is supported on the sparc and most m68k platforms. 
+      See compat_sunos(8). </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="24%" class="kernelO">COMPAT_ULTRIX</td>
+    <td width="76%" class="kernelO">On those architectures that support it, this 
+      enables binary compatibility with Ultrix applications built for the same 
+      architecture. This option is available on the little-endian MIPS platforms 
+      like the pmax and arc. See compat_ultrix(8).</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="24%" class="kernelO">COMPAT_FREEBSD</td>
+    <td width="76%" class="kernelO">On those architectures that support it, this 
+      enables binary compatibility with FreeBSD applications built for the same 
+      architecture. This option is available on the i386 architecture. See compat_freebsd(8).</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="24%" class="kernelO">COMPAT_HPUX</td>
+    <td width="76%" class="kernelO">On those architectures that support it, this 
+      enables binary compatibility with HP/UX applications built for the same 
+      architecture. This option is available on some m68k architectures. See compat_hpux(8).</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="24%" class="kernelO">COMPAT_IBCS2</td>
+    <td width="76%" class="kernelO">On those architectures that support it, this 
+      enables binary compatibility with iBCS2 applications built for the same 
+      architecture. This option is available on the i386 architecture. See compat_ibcs2(8).</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="24%" class="kernelO">COMPAT_OSF1</td>
+    <td width="76%" class="kernelO">On those architectures that support it, this 
+      enables binary compatibility with Digital UNIX (formerly OSF/1) applications 
+      built for the same architecture. This option is available on the alpha architecture. 
+      See compat_osf1(8).</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="24%" class="kernelO">COMPAT_NOMID</td>
+    <td width="76%" class="kernelO">Enable compatibility with a.out executables 
+      that lack a machine ID. On the i386, this includes NetBSD 0.8's ZMAGIC format, 
+      386BSD and BSDI's QMAGIC, NMAGIC, and OMAGIC a.out formats. On the hp300 
+      and other m68k architectures this permits certain old 4.3BSD binaries to 
+      work, though its use is discouraged now.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="24%" class="kernelO">COMPAT_43</td>
+    <td width="76%" class="kernelO">Use of this option is discouraged. It enables 
+      compatibility with 4.3BSD. It adds an old syscall for lseek() as well as 
+      ioctls for TIOCGETP and TIOCSETP. The return values for the getpid(2), getgid(2), 
+      and getuid(2) system calls are modified as well, to return the parent's 
+      PID and UID as well as the current process's. It also enables the deprecated 
+      NTTYDISC terminal line discipline. It provides backwards compatibility with 
+      the &quot;old&quot; SIOC[GS]IF{ADDR,DSTADDR,BRDADDR,NETMASK} interface ioctls, 
+      including binary compatibility for code written before the introduction 
+      of the sa_len field in sockaddrs. It also enables support for some older 
+      pre BSD 4.4 socket calls.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="24%" class="kernelO">COMPAT_09</td>
+    <td width="76%" class="kernelO"> NetBSD 0.9. On those architectures that support 
+      it, this enables binary compatibility with NetBSD 0.9 applications built 
+      for the same architecture. (needs verification)</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="24%" class="kernelO"> COMPAT_10</td>
+    <td width="76%" class="kernelO"> NetBSD 1.0, On those architectures that support 
+      it, this enables binary compatibility with NetBSD 1.0 applications built 
+      for the same architecture. (needs verification)</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="24%" class="kernelO">COMPAT_11</td>
+    <td width="76%" class="kernelO"> NetBSD 1.1, On those architectures that support 
+      it, this enables binary compatibility with NetBSD 1.1 applications built 
+      for the same architecture. (needs verification)</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="24%" class="kernelO">&nbsp;</td>
+    <td width="76%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top">
+    <td width="24%" class="kernelO">&nbsp;</td>
+    <td width="76%" class="kernelO">&nbsp;</td>
+  </tr>
+</table>
+<p>Example Use on arch/sun3/conf/DISKLESS</p>
+<pre>#option        TCP_COMPAT_42   # TCP bug compatibility with 4.2BSD
+option         COMPAT_SUNOS    # can run SunOS 4.1.1 executables
+option         COMPAT_43       # and 4.3BSD and ...
+option         COMPAT_10       # NetBSD 1.0
+option         COMPAT_11       # NetBSD 1.1
+option         COMPAT_12       # NetBSD 1.2</pre>
+<h5><a name="optionsDebugging"></a>Debug</h5>
+<table width="88%" border="0" class="kernelO">
+  <tr valign="top"> 
+    <td width="24%" class="kernelO"><b>Option</b></td>
+    <td width="76%" class="kernelO"><b>Purpose</b></td>
+  </tr>
+  <tr valign="top"> 
+    <td width="24%" class="kernelO">DDB</td>
+    <td width="76%" class="kernelO">Compiles in a kernel debugger for diagnosing kernel problems. 
+      See ddb(4) for details. Note: not available on all architectures. </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="24%" class="kernelO">DDB_SAFE_CONSOLE</td>
+    <td width="76%" class="kernelO">Allows a break into the kernel debugger during boot. Useful 
+      when debugging problems that can cause init(8) to fail.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="24%" class="kernelO">KGDB</td>
+    <td width="76%" class="kernelO">Compiles in a remote kernel debugger stub for diagnosing kernel 
+      problems using the &quot;remote target&quot; feature of gdb. See gdb(1) for details. 
+      Note: not available on all architectures. </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="24%" class="kernelO">makeoptions DEBUG="-g"</td>
+    <td width="76%" class="kernelO">The -g flag causes bsd.gdb to be built in addition to bsd. 
+      bsd.gdb is useful for debugging kernel crash dumps with gdb. Note that gdb's 
+      -k flag is obsolete and should not be used. Instead, the kernel can be debugged by starting gdb with the kernel name as an argument (no core file) 
+      and then use the gdb command &quot;target kcore COREFILE&quot;.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="24%" class="kernelO">DEBUG</td>
+    <td width="76%" class="kernelO">Turns on miscellaneous kernel debugging. Since options are 
+      turned into preprocessor defines (see above), option DEBUG is equivalent 
+      to doing a #define DEBUG throughout the kernel. Much of the kernel has #ifdef 
+      DEBUG conditional debugging code. Note that many parts of the kernel (typically device drivers) include their own #ifdef XXX_DEBUG conditionals instead. 
+      This option also turns on certain other options, notably option KMEMSTATS, 
+      which may decrease system performance.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="24%" class="kernelO">DIAGNOSTIC</td>
+    <td width="76%" class="kernelO">Adds code to the kernel that does internal consistency checks. 
+      This code will cause the kernel to panic if corruption of internal data 
+      structures is detected.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="24%" class="kernelO">GPROF</td>
+    <td width="76%" class="kernelO">Adds code to the kernel for kernel profiling with kgmon(8).</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="24%" class="kernelO">makeoptions PROF="-pg"</td>
+    <td width="76%" class="kernelO">The -pg flag causes the kernel to be compiled with support 
+      for profiling. The option GPROF is required for the kernel compile to succeed. 
+    </td>
+  </tr>
+  <tr valign="top">
+    <td width="24%" class="kernelO">KTRACE</td>
+    <td width="76%" class="kernelO">Adds hooks for the system call tracing facility, which allows 
+      users to watch the system call invocation behavior of processes. See ktrace(1) 
+      for details.</td>
+  </tr>
+</table>
+<p>Example Use:</p>
+<pre>
+mvme88k/conf/M197:
+		option        	DDB             # Kernel debugger
+sun3/conf/SMD_TEST:
+		option       	PMAP_DEBUG
+mvme88k/conf/XT:
+		#option         DEBUG           # Add debugging statements
+mvme88k/conf/XT:
+		#option         SYSCALL_DEBUG   # debug all syscalls.</pre>
+<p><a name="optionsFileSystems"></a>As can be seen from the above examples, there 
+  are more DEBUG options available for the kernel configuration that may be dependent 
+  on the hardware-platform. For more information please browse through the samle 
+  kernel configurations for your hardware-platform and potentially the #ifdef's 
+  in the source codes for your hardware-platform.</p>
+<h5>File Systems</h5>
+<p>These options specify which file systems the kernel will support. You must 
+  include at least support for the device you boot from. A custom kernel can be 
+  smaller if you do not include support for those File Systems you are certain 
+  you will not be using.</p>
+<table width="88%" border="0" class="kernelO">
+  <tr valign="top"> 
+    <td width="17%" class="kernelO"><b>Option</b></td>
+    <td width="83%" class="kernelO"><b>Purpose</b></td>
+  </tr>
+  <tr valign="top"> 
+    <td width="17%" class="kernelO">FFS</td>
+    <td width="83%" class="kernelO">Berkeley Fast File System (FFS). 
+      Most machines need this if they are not running diskless.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="17%" class="kernelO">EXT2FS</td>
+    <td width="83%" class="kernelO">Second Extended File System 
+      (EXT2FS). This is the most commonly used file system on the Linux operating 
+      system, and is provided here for compatibility. Some specific features of 
+      EXT2FS like the "behavior on errors" are not implemented. This file system 
+      can't be used with uid_t or gid_t values greater than 65535. Also, the filesystem 
+      will not function correctly on architectures with differing byte-orders. 
+      That is, a big-endian machine will not be able to read an ext2fs filesystem 
+      created on an i386 or other little-endian machine. See mount_ext2fs(8) for 
+      details. </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="17%" class="kernelO">MFS</td>
+    <td width="83%" class="kernelO">memory file system (MFS). This file system stores 
+      files in swappable memory, and produces notable performance improvements 
+      when it is used as the file store for /tmp or similar mount points. See 
+      mount_mfs(8) for details.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="17%" class="kernelO">NFSCLIENT</td>
+    <td width="83%" class="kernelO">client side of the NFS (Network File System) remote 
+      file sharing protocol. Although the bulk of the code implementing NFS is 
+      kernel based, several user level daemons are needed for it to work. See 
+      mount_nfs(8) for details on NFS.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="17%" class="kernelO">CD9660</td>
+    <td width="83%" class="kernelO">ISO 9660 + Rock Ridge file system, which is 
+      the standard file system used on many CD-ROMs. It also supports Joliet extensions. 
+      See mount_cd9660(8) for details.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="17%" class="kernelO">MSDOSFS</td>
+    <td width="83%" class="kernelO">MS-DOS FAT file system. The kernel also implements 
+      the Windows 95 extensions which permit the use of longer, mixedcase file 
+      names. See mount_msdos(8) and fsck_msdos(8) for details.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="17%" class="kernelO">FDESC</td>
+    <td width="83%" class="kernelO">A file system which can be mounted on /dev/fd. 
+      This filesystem permits access to the per-process file descriptor space 
+      via special files in the file system. See mount_fdesc(8) for details. Note 
+      that this facility is redundant, and thus unneeded on most OpenBSD systems, 
+      since the fd(4) pseudodevice driver already provides identical functionality. 
+      On most systems, instances of fd(4) are mknoded under /dev/fd/ and on /dev/stdin, 
+      /dev/stdout, and /dev/stderr.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="17%" class="kernelO">KERNFS</td>
+    <td width="83%" class="kernelO">A special file system (normally mounted on 
+      /kern) in which files representing various kernel variables and parameters 
+      may be found. See mount_kernfs(8) for details.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="17%" class="kernelO">NULLFS</td>
+    <td width="83%" class="kernelO">A loopback file system. This permits portions 
+      of the file hierarchy to be re-mounted in other places. The code really 
+      exists to provide an example of a stackable file system layer. See mount_null(8) 
+      for details.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="17%" class="kernelO">PORTAL</td>
+    <td width="83%" class="kernelO">Experimental portal filesystem. This permits 
+      interesting tricks like opening TCP sockets by opening files in the file 
+      system. The portal file system is conventionally mounted on /p and is partially 
+      implemented by a special daemon. See mount_portal(8) for details.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="17%" class="kernelO">PROCFS</td>
+    <td width="83%" class="kernelO">A special file system (conventionally mounted 
+      on /proc) in which the process space becomes visible in the file system. 
+      Among other things, the memory spaces of processes running on the system 
+      are visible as files, and signals may be sent to processes by writing to 
+      ctl files in the procfs namespace. See mount_procfs(8) for details.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="17%" class="kernelO">UMAPFS</td>
+    <td width="83%" class="kernelO">A loopback file system in which user and group 
+      IDs may be remapped this can be useful when mounting alien file systems 
+      with different uids and gids than the local system (eg, remote NFS). See 
+      mount_umap(8) for details.</td>
+  </tr>
+  <tr valign="top">
+    <td width="17%" class="kernelO">UNION</td>
+    <td width="83%" class="kernelO">Union file system, which permits directories 
+      to be mounted on top of each other in such a way that both file systems 
+      remain visible this permits tricks like allowing writing (and the deleting 
+      of files) on a read-only file system like a CD-ROM by mounting a local writable 
+      file system on top of the read-only file system. This filesystem is still 
+      experimental and is known to be somewhat unstable. See mount_union(8) for 
+      details.</td>
+  </tr>
+</table>
+<p>Example Use on /arch/sparc/conf/SUN4C:</p>
+<pre>
+option          FFS
+option          NFSSERVER       # Sun NFS-compatible filesystem
+option          NFSCLIENT       # Sun NFS-compatible filesystem
+option          KERNFS          # kernel data-structure filesystem
+option          FIFO            # POSIX fifo support (in all filesystems)
+option          QUOTA           # fast filesystem with user and group quotas
+option          MFS             # memory-based filesystem
+option          LOFS            # Loop-back filesystem
+option          FDESC           # user file descriptor filesystem
+option          NULLFS          # null fs, required by umapfs
+option          UMAPFS          # uid/gid remapping filesystem
+option          PORTAL          # portal filesystem (still experimental)
+option          PROCFS          # /proc
+option          CD9660          # ISO 9660 + Rock Ridge file system
+option          UNION           # union file system</pre>
+<pre>arc/conf/ARCTIC:option  FFS,QUOTA   # fast filesystem with user and group quotas
+</pre>
+<p>MFS.</p>
+<p>an example of an /etc/fstab specification for using MFS as a RAM disk for the 
+  temporary storage directory /tmp. </p>
+<p class="pScreenOutput">/dev/wds2b /tmp mfs auto,rw 0 0</p>
+<h5><a name="optionsFileSystemOptions"></a>File System Options</h5>
+<table width="88%" border="0" class="kernelO">
+  <tr valign="top"> 
+    <td width="24%" class="kernelO"><b>Option</b></td>
+    <td width="76%" class="kernelO"><b>Purpose</b></td>
+  </tr>
+  <tr valign="top"> 
+    <td width="24%" class="kernelO">FFS_SOFTUPDATES</td>
+    <td width="76%" class="kernelO"> 
+      <p class="kernelO">Enables a scheme that uses partial ordering of buffer 
+        cache operations to allow metadata updates in FFS to happen asynchronously, 
+        increasing write performance significantly. Normally, the FFS filesystem 
+        writes metadata updates synchronously which exacts a performance penalty 
+        in favor of filesystem integrity. With soft updates, you gain the performance 
+        of asynchronous writes while retaining the safety of synchronous metadata 
+        updates. </p>
+      <p class="kernelO">Soft updates must be enabled on a per-filesystem basis. 
+        To do this, boot into single user mode and run tunefs -s enable special 
+        on each character special device you want to enable soft updates on, then 
+        run reboot -n. </p>
+      <p class="kernelO">Processors with a small kernel address space, such as 
+        the sun4 and sun4c, do not have enough kernel memory to support soft updates. 
+        Attempts to use this option with these CPUs will cause a kernel hang or 
+        panic after a short period of use as the kernel will quickly run out of 
+        memory. This is not related to the amount of physical memory present in 
+        the machine it is a limitation of the CPU architecture itself.</p>
+    </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="24%" class="kernelO">BUFCACHEPERCENT=integer</td>
+    <td width="76%" class="kernelO">Percentage of RAM to use as a file system buffer. It defaults 
+      to 5.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="24%" class="kernelO">NFSSERVER</td>
+    <td width="76%" class="kernelO">server side of the NFS (Network File System) remote 
+      file sharing protocol. Although the bulk of the code implementing NFS is 
+      kernel based, several user level daemons are needed for it to work. See 
+      mountd(8) and nfsd(8) for details.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="24%" class="kernelO">QUOTA</td>
+    <td width="76%" class="kernelO">Enables kernel support for file system quotas. See quotaon(8), 
+      edquota(8), repquota(8), and quota(1) for details. Note that quotas only 
+      work on &quot;ffs&quot; file systems, although rpc.rquotad(8) permits them to be 
+      accessed over NFS.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="24%" class="kernelO">FIFO</td>
+    <td width="76%" class="kernelO">Adds support for AT&T System V UNIX style FIFOs (i.e., &quot;named 
+      pipes&quot;). This option is recommended in almost all cases as many programs 
+      use these.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="24%" class="kernelO">NVNODE=integer</td>
+    <td width="76%" class="kernelO">
+      <p class="kernelO">This option sets the size of the cache used by the name-to-inode 
+        translation routines, (a.k.a. the namei() cache, though called by many 
+        other names in the kernel source). By default, this cache has NPROC (set 
+        as 20 + 16 * MAXUSERS) * (80 + NPROC / 8) entries. A reasonable way to 
+        derive a value of NVNODE, should a large number of namei cache misses 
+        be noticed with a tool such as systat(1), is to examine the system's current 
+        computed value with sysctl(1), (which calls this parameter "kern.maxvnodes") 
+        and to increase this value until either the namei cache hit rate improves 
+        or it is determined that the system does not benefit substantially from 
+        an increase in the size of the namei cache. </p>
+      <p class="kernelO">Above definition is in param.c and the kernel option 
+        allows us to modify this specification.</p>
+    </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="24%" class="kernelO">EXT2FS_SYSTEM_FLAGS</td>
+    <td width="76%" class="kernelO">This option changes the behavior of the APPEND and IMMUTABLE 
+      flags for a file on an EXT2FS filesystem. Without this option, the superuser 
+      or owner of the file can set and clear them. With this option, only the 
+      superuser can set them, and they can't be cleared if the securelevel is 
+      greater than 0. See also chflags(1).</td>
+  </tr>
+  <tr valign="top">
+    <td width="24%" class="kernelO">&nbsp;</td>
+    <td width="76%" class="kernelO">&nbsp;</td>
+  </tr>
+</table>
+<p>Example Use:</p>
+<pre>i386/conf/PETRA:
+			option     	BUFCACHEPERCENT=50 # how much for the buffer cache?
+i386/conf/LUCIFIER:
+			option  	BUFCACHEPERCENT=20
+
+</pre>
+<p>&nbsp;</p>
+<h5><a name="optionsNetworking"></a>Networking</h5>
+<table width="88%" border="0" class="kernelO">
+  <tr valign="top"> 
+    <td width="23%" class="kernelO"><b>Option</b></td>
+    <td width="77%" class="kernelO"><b>Purpose</b></td>
+  </tr>
+  <tr valign="top"> 
+    <td width="23%" class="kernelO">GATEWAY</td>
+    <td width="77%" class="kernelO">Enables IPFORWARDING and (on most ports) increases the size 
+      of NMBCLUSTERS. In general, GATEWAY is used to indicate that a system should 
+      act as a router, and IPFORWARDING is not invoked directly. (Note that GATEWAY 
+      has no impact on protocols other than IP, such as CLNP or XNS.)</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="23%" class="kernelO">IPFORWARDING</td>
+    <td width="77%" class="kernelO">Enables IP routing behavior. With this option enabled, the 
+      machine will forward IP datagrams between its interfaces that are destined 
+      for other machines. Note that even without this option, the kernel will 
+      still forward some packets (such as source routed packets) removing 
+      GATEWAY and IPFORWARDING is insufficient to stop all routing through a bastion 
+      host on a firewall source routing is controlled independently. Note that 
+      IP forwarding may be turned on and off independently of the setting of the 
+      IPFORWARDING option through the use of the net.inet.ip.forwarding sysctl 
+      variable. If net.inet.ip.forwarding is 1, IP forwarding is on. See sysctl(8) 
+      and sysctl(3) for details.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="23%" class="kernelO">MROUTING</td>
+    <td width="77%" class="kernelO">Includes support for IP multicast routers. INET should be 
+      set along with this. Multicast routing is controlled by the mrouted(8) daemon.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="23%" class="kernelO">INET</td>
+    <td width="77%" class="kernelO">Includes support for the TCP/IP protocol stack. This option 
+      is currently required. See inet(4) for details</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="23%" class="kernelO">INET6</td>
+    <td width="77%" class="kernelO">Includes support for the IPv6 protocol stack. See inet6(4) 
+      for details. Unlike INET, INET6 enables multicast routing code as well. 
+      This option requires INET at this moment, but it should not.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="23%" class="kernelO">NS</td>
+    <td width="77%" class="kernelO">Include support for the Xerox XNS protocol stack. See ns(4) 
+      for details.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="23%" class="kernelO">ISO,TPIP</td>
+    <td width="77%" class="kernelO"> Include support for the ubiquitous OSI protocol stack. See 
+      iso(4) for details.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="23%" class="kernelO">EON</td>
+    <td width="77%" class="kernelO">Include support for OSI tunneling over IP.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="23%" class="kernelO">CCITT,LLC,HDLC</td>
+    <td width="77%" class="kernelO">Include support for the X.25 protocol stack. The state of 
+      this code is currently unknown. It probably contains bugs.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="23%" class="kernelO">IPX, IPXIP</td>
+    <td width="77%" class="kernelO">Include support for Internetwork Packet Exchange protocol 
+      commonly in use by Novell NetWare. </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="23%" class="kernelO">NETATALK</td>
+    <td width="77%" class="kernelO">Include kernel support for the AppleTalk family of protocols. 
+      This suite of supporting code is sometimes called netatalk support.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="23%" class="kernelO">TCP_COMPAT_42</td>
+    <td width="77%" class="kernelO">Use of this option is extremely discouraged, so it should 
+      not be enabled. If any other machines on the network require enabling this, 
+      it's recommended that they be disconnected from the network. TCP bug compatibility 
+      with 4.2BSD. In 4.2BSD, TCP sequence numbers were 32-bit signed values. 
+      Modern implementations of TCP use unsigned values. This option clamps the 
+      initial sequence number to start in the range 2^31 rather than the full 
+      unsigned range of 2^32. Also, under 4.2BSD, keepalive packets must contain 
+      at least one byte or else the remote end will not respond.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="23%" class="kernelO">TCP_SACK</td>
+    <td width="77%" class="kernelO">Turns on selective acknowledgements. Additional information 
+      about segments already received can be transmitted back to the sender, 
+      thus indicating segments that have been lost and allowing for a swifter 
+      recovery. Both communication endpoints need to support SACK. The fallback 
+      behaviour is NewReno fast recovery phase, which allows one lost segment 
+      to be recovered per round trip time. When more then one segment has been 
+      dropped per window, the transmission can continue without waiting for a 
+      retranmission timeout.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="23%" class="kernelO">TCP_FACK</td>
+    <td width="77%" class="kernelO">Turns on forward acknowledgements allowing a more precise 
+      estimate of outstanding data during the fast recovery phase by using SACK 
+      information. This option can only be used together with TCP_SACK.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="23%" class="kernelO">TCP_SIGNATURE</td>
+    <td width="77%" class="kernelO">Turns on support for the TCP MD5 Signature option (RFC 2385). 
+      This is used by Internet backbone routers to provide per-packet authentication 
+      for the TCP packets used to communicate BGP routing information. You will 
+      also need a routing daemon that supports this option in order to actually 
+      use it.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="23%" class="kernelO">IPFILTER</td>
+    <td width="77%" class="kernelO">This option enables the IP filtering on the packet level using 
+      Darren Reed's ip-filter package.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="23%" class="kernelO">IPFILTER_LOG</td>
+    <td width="77%" class="kernelO">This option, in conjunction with option IPFILTER, enables 
+      logging of IP packets using ip-filter.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="23%" class="kernelO">IPFILTER_DEFAULT_BLOCK</td>
+    <td width="77%" class="kernelO">This option sets the default policy of ip-filter to block 
+      packets that exit the rule-set unmatched. Otherwise they are silently passed. 
+      See ipf(1) for details.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="23%" class="kernelO">PPP_FILTER</td>
+    <td width="77%" class="kernelO">This option turns on pcap(3) based filtering for ppp connections. 
+      This option is used by pppd(8) which needs to be compiled with PPP_FILTER 
+      defined (the current default).</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="23%" class="kernelO">PPP_BSDCOMP</td>
+    <td width="77%" class="kernelO">Enables BSD compressor for PPP connections.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="23%" class="kernelO">PPP_DEFLATE</td>
+    <td width="77%" class="kernelO">For use in conjunction with PPP_BSDCOMP; provides an interface 
+      to zlib for PPP for deflate compression/decompression.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="23%" class="kernelO">IPSEC</td>
+    <td width="77%" class="kernelO">This option enables IP security protocol support. See ipsec(4) 
+      for more details.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="23%" class="kernelO">ENCDEBUG</td>
+    <td width="77%" class="kernelO">This option enables debugging information to be conditionally 
+      logged in case IPSEC encounters errors. The option IPSEC is required along 
+      with this option. Debug logging can be turned on/off through the use of 
+      the net.ipsec.encap.encdebug sysctl variable. If net.ipsec.encap.encdebug 
+      is 1, debug logging is on. See sysctl(8) and sysctl(3) for details. </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="23%" class="kernelO">KEY</td>
+    <td width="77%" class="kernelO">Enables PFKEYv2 (RFC 2367) support. While not IP specific, 
+      this option is usually used in conjunction with option IPSEC. </td>
+  </tr>
+  <tr valign="top">
+    <td width="23%" class="kernelO">&nbsp;</td>
+    <td width="77%" class="kernelO">&nbsp;</td>
+  </tr>
+</table>
+<p>&nbsp;</p>
+<h5><a name="optionsOperation"></a><a name="OptionsOperation"></a>Operation Related 
+  Options</h5>
+<table width="88%" border="0" class="kernelO">
+  <tr valign="top"> 
+    <td width="25%" class="kernelO"><b>Option</b></td>
+    <td width="61%" class="kernelO"><b>Purpose</b></td>
+  </tr>
+  <tr valign="top"> 
+    <td width="25%" class="kernelO">SWAPPAGER</td>
+    <td width="61%" class="kernelO">Turns on paging. (To be specific, this enables 
+      the virtual memory module responsible for handling page faults for &quot;anonymous&quot; 
+      objects (i.e., BSS pages)). MANDATORY the system cannot actually run 
+      without this &quot;option&quot;.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="25%" class="kernelO">DEVPAGER</td>
+    <td width="61%" class="kernelO">Support for mmap()ing of devices. (Specifically, 
+      this enables the virtual memory module responsible for handling page faults 
+      on mapped devices (&quot;cdev&quot; vnodes)). MANDATORY the system cannot actually 
+      run without this &quot;option&quot;.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="25%" class="kernelO">NMBCLUSTERS=value</td>
+    <td width="61%" class="kernelO">
+      <p class="kernelO">Size of kernel mbuf cluster map, mb_map, in CLBYTES-sized 
+        logical pages. Default on most ports is 256 (512 with &quot;option GATEWAY&quot;). 
+        See /usr/include/machine/param.h for exact default information. Increase 
+        this value if &quot;mb_map full&quot; messages appear.</p>
+      <p class="kernelO">Machine specific configurations are #defines in arch/[machine]/</p>
+    </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="25%" class="kernelO">NKMEMCLUSTERS=value</td>
+    <td width="61%" class="kernelO">Size of kernel malloc area in CLBYTES-sized 
+      logical pages. This area is covered by the kernel submap kmem_map. See /usr/include/machine/param.h 
+      for the default value, which is port specific. Increase this value if &quot;out 
+      of space in kmem_map&quot; panics happen.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="25%" class="kernelO">NBUF=value</td>
+    <td width="61%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="25%" class="kernelO">BUFPAGES=value</td>
+    <td width="61%" class="kernelO">These options set the number of pages available 
+      for the buffer cache. Their default value is a machine dependent value, 
+      often calculated as between 5% and 10% of total available RAM.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="25%" class="kernelO">NTP</td>
+    <td width="61%" class="kernelO">Modify the scheduler code to add hooks necessary 
+      for running an NTP daemon. xntpd(8) is available as part of the port collection.</td>
+  </tr>
+  <tr valign="top">
+    <td width="25%" class="kernelO">APM_NOPRINT</td>
+    <td width="61%" class="kernelO">This option is supported on the i386 architecture. 
+      When enabled kernel messages regarding the status of the automatic power 
+      management system (APM) are suppressed. APM status can still be obtained 
+      using apm(8) and/or apmd(8).</td>
+  </tr>
+</table>
+<p>Example of using NMBCLUSTERS</p>
+<pre>option "NMBCLUSTERS=8192"</pre>
+<p>Note that the only examples I've seen use quotations, so I follow the trend 
+  although there doesn't seem to be any particular reason to use quotations</p>
+<h5><a name="OptionsSCSI"></a>SCSI Subsystem Options</h5>
+<table width="88%" border="0" class="kernelO">
+  <tr valign="top"> 
+    <td width="25%" class="kernelO"><b>Option</b></td>
+    <td width="61%" class="kernelO"><b>Purpose</b></td>
+  </tr>
+  <tr valign="top"> 
+    <td width="25%" class="kernelO">SCSITERSE</td>
+    <td width="61%" class="kernelO">Terser SCSI error messages. This omits the 
+      table for decoding ASC/ASCQ info, saving about 8 bytes or so.</td>
+  </tr>
+  <tr valign="top">
+    <td width="25%" class="kernelO">SCSIDEBUG</td>
+    <td width="61%" class="kernelO">Prints extra debugging info for the SCSI subsystem 
+      to the console.</td>
+  </tr>
+</table>
+<h5><a name="OptionsPCVT"></a>PCVT Options (i386 Architecture) </h5>
+<p class="pFileReference">[ref: pcvt(4)]</p>
+<table width="88%" border="0" class="kernelO">
+  <tr valign="top"> 
+    <td width="25%" class="kernelO"><b>Option</b></td>
+    <td width="61%" class="kernelO"><b>Purpose</b></td>
+  </tr>
+  <tr valign="top"> 
+    <td width="25%" class="kernelO">PCVT_NSCREENS = number</td>
+    <td width="61%" class="kernelO">Defines the number of virtual screens. Default: 
+      8</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="25%" class="kernelO">PCVT_SCREENSAVER</td>
+    <td width="61%" class="kernelO">Enables the built-in screensaver feature. 
+      Default: on</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="25%" class="kernelO">PCVT_PRETTYSCRNS</td>
+    <td width="61%" class="kernelO">If enabled, a blinking-star screensaver is 
+      used. If disabled, the screen is simply blanked (which might be useful for 
+      energysaving monitors). Default: off</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="25%" class="kernelO">PCVT_CTRL_ALT_DEL</td>
+    <td width="61%" class="kernelO">If enabled, the key combination invokes a CPU reset. Default: off (To change this, check sysctl.conf 
+      , set value of machdep.kbdreset to 1)</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="25%" class="kernelO">PCVT_USEKBDSEC</td>
+    <td width="61%" class="kernelO"> Do NOT override a security lock for the keyboard. 
+      Default: on</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="25%" class="kernelO">PCVT_24LINESDEF</td>
+    <td width="61%" class="kernelO"> If enabled, the 25-line modi (VT emulation 
+      with 25 lines) defaults to 24 lines only to provide a better compatibility 
+      to the original DEV VT220 (TM). Thus it should be possible to use the terminal 
+      information for those terminals without further changes. Note that this 
+      is a startup option; it is possible to toggle between the 24and 25-lines' 
+      display by the scon(1) utility. Default: off</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="25%" class="kernelO">PCVT_META_ESC</td>
+    <td width="61%" class="kernelO"> If enabled, a sequence composed of <esc>, 
+      followed by the normal key code is emitted if a key is pressed with the 
+      <alt> key modifier. If disabled, then normal key code with the value 0x80 
+      added is sent. Default: off</td>
+  </tr>
+</table>
+<p> The pcvt driver provides a virtual screen system with several additional features 
+  not available in pc(4) standard console device driver. Besides the ability of 
+  handling multiple virtual screens, probably the most important is an emulation 
+  of a wide range of DEC VT-220 (TM) functionality. See Features for a detailed 
+  description. </p>
+<p>Note: As of OpenBSD 2.6, pcvt does not do character mapping by default in favor 
+  of a traditional PC display where 16 colors are available and the standard IBM 
+  font is used. See the -o flag in scon(1) to toggle between this mode and the 
+  old mode.</p>
+<p>Refer to the file <span class="pFileReference">arch/i386/isa/pcvt/[README.FIRST 
+  &amp;&amp; pcvt_hdr.h]</span> in the kernel source tree for detailed documentation. 
+</p>
+<h5><a name="OptionsSystemV"></a>System V IPC Options</h5>
+<table width="88%" border="0" class="kernelO">
+  <tr valign="top"> 
+    <td width="18%" class="kernelO"><b>Option</b></td>
+    <td width="82%" class="kernelO"><b>Purpose</b></td>
+  </tr>
+  <tr valign="top"> 
+    <td width="18%" class="kernelO">SYSVMSG</td>
+    <td width="82%" class="kernelO"> Includes support for AT&T System V UNIX style 
+      message queues. See msgctl(2), msgget(2), msgrcv(2), msgsnd(2).</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="18%" class="kernelO"> SYSVSEM</td>
+    <td width="82%" class="kernelO">Includes support for AT&T System V UNIX style 
+      semaphores. See semctl(2), semget(2), semop(2).</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="18%" class="kernelO">SYSVSHM </td>
+    <td width="82%" class="kernelO">Includes support for AT&T System V UNIX style 
+      shared memory. See shmat(2), shmctl(2), shmdt(2), shmget(2).</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="18%" class="kernelO">SHMPAXPGS=value</td>
+    <td width="82%" class="kernelO">Sets the maximum number of AT&T System V UNIX 
+      style shared memory pages that are available through the shmget(2) system 
+      call. Default value is 1024 on most ports. See /usr/include/machine/vmparam.h 
+      for the default.</td>
+  </tr>
+</table>
+<p>&nbsp;</p>
+<h5><a name="OptionsPseudoDevices"></a>Pseudo-Devices</h5>
+<p class="pFileReference">[ref: The Complete FreeBSD Book]</p>
+<p>Pseudo-device drivers are parts of the kernel that act like device drivers 
+  but do not correspond to any actual hardware in the machine.</p>
+<table width="88%" border="0" class="kernelO">
+  <tr valign="top"> 
+    <td width="25%" class="kernelO"><b>pseudo-device</b></td>
+    <td width="61%" class="kernelO"><b>Purpose</b></td>
+  </tr>
+  <tr valign="top"> 
+    <td width="25%" class="kernelO">loop</td>
+    <td width="61%" class="kernelO">network loop-back</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="25%" class="kernelO">bpfilter</td>
+    <td width="61%" class="kernelO">packet filter</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="25%" class="kernelO">sl</td>
+    <td width="61%" class="kernelO">CSLIP</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="25%" class="kernelO">ppp</td>
+    <td width="61%" class="kernelO">PPP</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="25%" class="kernelO">tun</td>
+    <td width="61%" class="kernelO">network tunnelling over tty</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="25%" class="kernelO">enc</td>
+    <td width="61%" class="kernelO">encryption device</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="25%" class="kernelO">strip</td>
+    <td width="61%" class="kernelO">Starmode Radio IP Interface</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="25%" class="kernelO">pty</td>
+    <td width="61%" class="kernelO">Pseudo-Terminals</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="25%" class="kernelO">tb</td>
+    <td width="61%" class="kernelO">Tablet Line Discipline</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="25%" class="kernelO">vnd</td>
+    <td width="61%" class="kernelO">Paging to Files</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="25%" class="kernelO">ccd</td>
+    <td width="61%" class="kernelO">Concatenated Disk Devices</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="25%" class="kernelO">ksyms</td>
+    <td width="61%" class="kernelO">Kernel Symbol Device</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="25%" class="kernelO">pctr</td>
+    <td width="61%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="25%" class="kernelO">mtrr</td>
+    <td width="61%" class="kernelO">memory range attribute control (686 range 
+      PCs, PPro + &amp; AMD K6-2 + (?)</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="25%" class="kernelO">sequencer</td>
+    <td width="61%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top">
+    <td width="25%" class="kernelO">raid</td>
+    <td width="61%" class="kernelO">&nbsp;</td>
+  </tr>
+</table>
+<p>&nbsp;</p>
+<h5><a name="OptionsBootConfig"></a>Boot Config</h5>
+<table width="88%" border="0" class="kernelO">
+  <tr valign="top"> 
+    <td width="40%" class="kernelO"><b>Directive</b></td>
+    <td width="60%" class="kernelO"><b>Purpose</b></td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO" height="14">option COMCONSOLE</td>
+    <td width="60%" class="kernelO" height="14">(needs revision-probably in a 
+      man page somewhere) according to the FreeBSD documentation &quot;Setting 
+      serial port flag 0x20 specifies that you would prefer to have the system 
+      console on a serial line. This replaces old COMCONSOLE option.&quot;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">maxusers</td>
+    <td width="60%" class="kernelO">Specify generalised number of users to provide 
+      services for. Check man pages for more details on this option.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">config bsd root on</td>
+    <td width="60%" class="kernelO">Specify boot devices ?</td>
+  </tr>
+</table>
+<p><a name="OptionsBusControllers"></a>I think the &quot;<i>config bsd root</i>&quot; 
+  allows you to specify in the kernel where your boot, swap, and kernel dumps 
+  are to be placed (specify the drive and partition.) Otherwise you can use &quot;<i>config 
+  bsd swap generic</i>&quot; and the configuration is determined by the disk layout 
+  (disklabel.) Note in the examples below you can specify the root and swap on 
+  a remote file system.</p>
+<p class="pFileReference">Examples from arch/i386/conf:</p>
+<table width="80%" border="1">
+  <tr> 
+    <td nowrap> 
+      <pre>DISKLESS:	config   bsd  root on nfs swap on nfs
+ELBERETH:	config   bsd  root on wd0 swap on wd0 and sd0 and sd1 dumps on sd0
+GANDALF:	config   bsd  root on sd0a swap on sd0b and sd1b and sd3b dumps on sd0b
+GENERIC:	config   bsd  swap generic
+HERMES:	config   bsd  root on sd0 swap on sd0 and wd0 dumps on sd0
+LUCIFIER:	config   bsd  swap generic
+NETTAN:	config   bsd  swap generic
+OPRAH:		config   bsd  swap generic
+PETRA:		config   bsd  root on sd0a swap on ccd0b dumps on sd1a
+RAMDISK:	config   bsd  root on rd0a swap on rd0b and wd0b and sd0b
+RAMDISKB:	config   bsd  root on rd0a swap on rd0b and wd0b and sd0b
+RAMDISKC:	config   bsd  root on rd0a swap on rd0b and wd0b and sd0b
+RAMDISK_CD: config   bsd  root on rd0a swap on rd0b and wd0b and sd0b
+SARUMAN:	config   bsd  root on wd0a swap on wd0b dumps on wd0b
+WALDORF:	config   bsd  swap generic</pre>
+    </td>
+  </tr>
+</table>
+<p>&nbsp;</p>
+<p>The specifications seems to be equivalent over most platforms, differences 
+  may be in the root or swap devices and in a few cases the config is &quot;netbsd&quot; 
+  instead of bsd.</p>
+<h5>Bus Controllers</h5>
+<p>Bus Controllers</p>
+<p>Format: </p>
+<p>&nbsp;&nbsp;<i>BUSn</i> <b>at</b> <i>bus</i> <b>[bus ?][dev</b> <i>?</i> <b>function</b> 
+  <i>? </i><b>] [port </b><i>port_addr</i><b> iomem </b><i>io_addr</i><b> iosiz 
+  </b><i>io_size</i><b> </b><i>]</i></p>
+<table class="kernelO">
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">mainbus()</td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">bios()</td>
+    <td width="60%" class="kernelO">BIOS</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">apm()</td>
+    <td width="60%" class="kernelO">Advanced Power Management</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">isa()</td>
+    <td width="60%" class="kernelO">ISA Bus. This was the original BUS in the 
+      IBM PC and evolved until it was replaced by the PCI BUS. ON IBM PC Compatible 
+      equipment continue to use the ISA directove.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">eisa()</td>
+    <td width="60%" class="kernelO">EISA Bus. If you have an EISA motherboard 
+      (an upgrade to the ISA motherboard that is not as proliferant as the PCI 
+      bus) then you should specify this.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">pci</td>
+    <td width="60%" class="kernelO">PCI Bus. This enables auto-detection of PCI 
+      boards and allows pcib to bridge between PCI bus and ISA bus.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">pchb</td>
+    <td width="60%" class="kernelO">PCI-Host bridges</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">ppb</td>
+    <td width="60%" class="kernelO">PCI-PCI bridges</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">pcib</td>
+    <td width="60%" class="kernelO"> PCI-ISA bridges (do nothing)</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">pcic</td>
+    <td width="60%" class="kernelO">ISA PCMCIA controllers</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">pcmcia</td>
+    <td width="60%" class="kernelO">PCMCIA Support</td>
+  </tr>
+</table>
+<p>Example use from arch/i386/conf/PETRA</p>
+<table class="kernelO">
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">mainbus() at root</td>
+    <td width="60%" class="kernelO">This seems to be the common invocation of 
+      mainbus() on all platforms with sample kernel configurations.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">bios() at mainbus()</td>
+    <td width="60%" class="kernelO">I only see this on i386 configurations, and 
+      other platforms I've looked at their sample configurations indicate the 
+      use of cpu() at mainbus()</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">apm() at bios() flags 0x0000</td>
+    <td width="60%" class="kernelO"> 
+      <p class="kernelO">flags 0x0000 to use protocol version 1.0<br>
+        flags 0x0101 to force protocol version 1.1</p>
+      <p class="kernelO">I only see this on i386 configurations, and other platforms 
+        I've looked at their sample configurations indicate the use of apm(). 
+        This may be related to a platform specific hardware feature, not currently 
+        available (or coded) onto other hardware-platforms.</p>
+    </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">isa() at mainbus()</td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">isa() at pcib?</td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">eisa() at mainbus()</td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">pci* at mainbus() bus ?</td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">pchb* at pci? dev ? function ? </td>
+    <td width="60%" class="kernelO">PCI-Host bridges</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">ppb* at pci? dev ? function ? </td>
+    <td width="60%" class="kernelO">PCI-PCI bridges</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">pci* at ppb? bus ?</td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">pci* at pchb? bus ?</td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">pcib* at pci? dev ? function ?</td>
+    <td width="60%" class="kernelO"> PCI-ISA bridges (do nothing)</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">&nbsp;</td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">&nbsp;</td>
+    <td width="60%" class="kernelO">ISA PCMCIA controllers</td>
+  </tr>
+  <tr valign="top"> 
+    <td colspan="2" class="kernelO">pcic0 at isa? port 0x3e0 iomem 0xd0000 iosiz 
+      0x4000</td>
+  </tr>
+  <tr valign="top"> 
+    <td colspan="2" class="kernelO">pcic1 at isa? port 0x3e2 iomem 0xd4000 iosiz 
+      0x4000</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">&nbsp;</td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">&nbsp;</td>
+    <td width="60%" class="kernelO">PCMCIA Support</td>
+  </tr>
+  <tr valign="top"> 
+    <td colspan="2" class="kernelO">pcmcia* at pcic? controller ? socket ?</td>
+  </tr>
+</table>
+<h5><a name="OptionsUSB"></a>USB and Universal Communication Devices</h5>
+<p>USB Devices</p>
+<p>Format: </p>
+<p>&nbsp;&nbsp;<i>DEVICEn</i> <b>at</b> <i>bus</i> <b>[port</b> <i>port_addr</i> 
+  <b>configuration</b> <i>? </i><b>interface </b><i>?]</i></p>
+<table class="kernelO">
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">uhci</td>
+    <td width="60%" class="kernelO">Universal Host Controller (Intel) </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">ohci</td>
+    <td width="60%" class="kernelO">Open Host Controller</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">usb</td>
+    <td width="60%" class="kernelO">USB Support</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">uhid</td>
+    <td width="60%" class="kernelO">USB Generic HID devices</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">uaudio</td>
+    <td width="60%" class="kernelO">USB Audio</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">ugen</td>
+    <td width="60%" class="kernelO">USB Generic driver</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">puc</td>
+    <td width="60%" class="kernelO"> PCI "universal" communication device</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">npx</td>
+    <td width="60%" class="kernelO">math coprocessor</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">isadma</td>
+    <td width="60%" class="kernelO">DMA on ISA bus</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">isapnp</td>
+    <td width="60%" class="kernelO">PNP on ISA bus</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">pc</td>
+    <td width="60%" class="kernelO"> generic PC console device</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">vt</td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">pcppi0 at isa? </td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">sysbeep0 at pcppi?</td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+</table>
+<p>Example use from arch/i386/conf/PETRA</p>
+<table class="kernelO">
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">&nbsp;</td>
+    <td width="60%" class="kernelO">PCI USB Controllers</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">uhci* at pci? </td>
+    <td width="60%" class="kernelO">Universal Host Controller (Intel) </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">ohci* at pci?</td>
+    <td width="60%" class="kernelO">Open Host Controller</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">&nbsp;</td>
+    <td width="60%" class="kernelO">USB Bus Support</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">usb* at uhci? </td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">usb* at ohci?</td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">&nbsp;</td>
+    <td width="60%" class="kernelO">USB Generic HID devices</td>
+  </tr>
+  <tr valign="top"> 
+    <td colspan="2" class="kernelO">uhid* at uhub? port ? configuration ? interface 
+      ?</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">&nbsp;</td>
+    <td width="60%" class="kernelO">USB Audio</td>
+  </tr>
+  <tr valign="top"> 
+    <td colspan="2" class="kernelO">uaudio* at uhub? port ? configuration ?</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">&nbsp;</td>
+    <td width="60%" class="kernelO">USB Generic driver</td>
+  </tr>
+  <tr valign="top"> 
+    <td colspan="2" class="kernelO">ugen* at uhub? port ? configuration ? interface 
+      ?</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">&nbsp;</td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">puc* at pci? </td>
+    <td width="60%" class="kernelO"> PCI "universal" communication device</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">npx0 at isa? port 0xf0 irq 13 </td>
+    <td width="60%" class="kernelO">math coprocessor</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">isadma0 at isa?</td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">isapnp0 at isa?</td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">pc0 at isa? port 0x60 irq 1</td>
+    <td width="60%" class="kernelO"> generic PC console device</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">vt0 at isa? port 0x60 irq 1</td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">pcppi0 at isa? </td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">sysbeep0 at pcppi?</td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+</table>
+<h5><a name="OptionsSerialParallel"></a>Serial &amp; Parallel Ports</h5>
+<p>Format: </p>
+<p>&nbsp;&nbsp;<i>DEVICEn</i> <b>at</b> <i>bus</i> <b>port</b> <i>port_addr</i> 
+  <b>irq</b> <i>irq_no</i></p>
+<table class="kernelO">
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">com</td>
+    <td width="60%" class="kernelO">Standard PC serial ports</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">ast</td>
+    <td width="60%" class="kernelO">AST 4-port serial card </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">boca</td>
+    <td width="60%" class="kernelO">BOCA 8-port serial cards </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">rtfps</td>
+    <td width="60%" class="kernelO">RT 4-port serial cards </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">com* at pcmcia? function ?</td>
+    <td width="60%" class="kernelO">PCMCIA modems/serial ports </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">cy</td>
+    <td width="60%" class="kernelO">Cyclom serial card </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">&nbsp; </td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">lpt</td>
+    <td width="60%" class="kernelO">standard PC parallel ports</td>
+  </tr>
+</table>
+<p><i>On my system, the serial ports are accessed as /dev/tty00 and /dev/tty01 
+  so this means I can't see it in the below example. The tty devices are referenced 
+  in ...i386/conf/files.i386 and created in /dev/MAKEDEV</i></p>
+<p>Example use from arch/i386/conf/PETRA</p>
+<table class="kernelO">
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">com0 at isa? port 0x3f8 irq 4</td>
+    <td width="60%" class="kernelO">standard PC serial ports MS-DOS COM1</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">com1 at isa? port 0x2f8 irq 3 </td>
+    <td width="60%" class="kernelO">MS-DOS COM2</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">com2 at isa? port 0x3e8 irq 5 </td>
+    <td width="60%" class="kernelO">MS-DOS COM3</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">com3 at isa? port 0x2e8 irq 9</td>
+    <td width="60%" class="kernelO">(note that this can conflict with some video 
+      cards)</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">ast0 at isa? port 0x1a0 irq 5</td>
+    <td width="60%" class="kernelO">AST 4-port serial card </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">#ast1 at isa? port 0x2a0 irq 6</td>
+    <td width="60%" class="kernelO">2nd AST 4-port serial card </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">com* at ast? slave ?</td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO"> #boca0 at isa? port 0x100 irq 5 </td>
+    <td width="60%" class="kernelO">BOCA 8-port serial cards </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">#com* at boca? slave ? </td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">#rtfps0 at isa? port 0x1230 irq 10</td>
+    <td width="60%" class="kernelO">RT 4-port serial cards </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">#com* at rtfps? slave ? </td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">com* at pcmcia? function ?</td>
+    <td width="60%" class="kernelO">PCMCIA modems/serial ports </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">com* at isapnp?</td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">com* at puc? port ?</td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">&nbsp;</td>
+    <td width="60%" class="kernelO">option for using CD1400 handshaking for 
+      incoming data requires a special cable that exchanges the RTS and DTR 
+      lines options CY_HW_RTS</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">cy0 at isa? iomem 0xd4000 irq 12 </td>
+    <td width="60%" class="kernelO">ISA cyclom serial card </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">#cy* at pci? </td>
+    <td width="60%" class="kernelO">PCI cyclom serial card</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">&nbsp; </td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">lpt0 at isa? port 0x378 irq 7 </td>
+    <td width="60%" class="kernelO">standard PC parallel ports</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO"> lpt1 at isa? port 0x278</td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO"> lpt2 at isa? port 0x3bc</td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">&nbsp;</td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+</table>
+<h5><a name="OptionsMouse"></a>Mouse/Mice</h5>
+<p>The following are device settings for mice </p>
+<p>Format:</p>
+<p>&nbsp;&nbsp;<i>DEVICEn</i> <b>at</b> <i>bus</i> <b>[port</b> <i>port_addr]</i> 
+  <b>irq</b> <i>irq_no</i></p>
+<table class="kernelO">
+  <tr valign="top"> 
+    <td width="40%" class="kernelO"><b>Device</b></td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">lm</td>
+    <td width="60%" class="kernelO">Logitech bus mouse. Use this device if you 
+      have a Logitech (and potentially an ATI Inport) bus mouse board.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">mms</td>
+    <td width="60%" class="kernelO">Microsoft InPort mouse. Use this device if 
+      you have a Microsoft Bus Mouse card.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">pms</td>
+    <td width="60%" class="kernelO">PS/2 auxiliary port mouse. Note that this 
+      is different from the psm0 device used by FreeBSD (but designating the same 
+      thing.) </td>
+  </tr>
+</table>
+<p>My PS/2 port mouse is accessed as /dev/pms0 which synchs with how the kernel 
+  is configured below. Note that documentation for FreeBSD uses the same port 
+  as /dev/psm0 which previously caused problems for me trying to learn OpenBSD 
+  with FreeBSD documentation.</p>
+<p class="pFileReference">Example use from arch/i386/conf/PETRA</p>
+<table class="kernelO">
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">lms0 at isa? port 0x23c irq 5 </td>
+    <td width="60%" class="kernelO">Logitech bus mouse </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">lms1 at isa? port 0x238 irq 5</td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">&nbsp;</td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">mms0 at isa? port 0x23c irq 5 </td>
+    <td width="60%" class="kernelO">Microsoft InPort mouse </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">mms1 at isa? port 0x238 irq 5</td>
+    <td width="60%" class="kernelO">specifying port address and irq #</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">&nbsp;</td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">pms0 at pckbd? irq 12 </td>
+    <td width="60%" class="kernelO">PS/2 auxiliary port mouse</td>
+  </tr>
+</table>
+<h5><a name="OptionsSCSIdevices"></a>SCSI devices</h5>
+<p>SCSI devices are first configured as the controller, and then mapping the generic 
+  scsibus to the controller. After this, we map the scsi device to the scsibus.</p>
+<table class="kernelO">
+  <tr valign="top"> 
+    <td width="47%" class="kernelO"><b>Device</b></td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">sd</td>
+    <td width="53%" class="kernelO">SCSI disk drives </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">st</td>
+    <td width="53%" class="kernelO">SCSI tape drives </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">cd</td>
+    <td width="53%" class="kernelO">SCSI CD-ROM drives </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">ch</td>
+    <td width="53%" class="kernelO">SCSI autochangers </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">ss</td>
+    <td width="53%" class="kernelO">SCSI scanners </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">uk</td>
+    <td width="53%" class="kernelO"> unknown SCSI</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO"><b>Controllers</b></td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">bt</td>
+    <td width="53%" class="kernelO">BusLogic [57]4X SCSI controllers </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">aha</td>
+    <td width="53%" class="kernelO">Adaptec 154[02] SCSI controllers </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">ahb</td>
+    <td width="53%" class="kernelO">Adaptec 174[024] SCSI controllers </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">ahc</td>
+    <td width="53%" class="kernelO">Adaptec 284x, 274x, aic7770, 2940 SCSI controllers 
+    </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">isp</td>
+    <td width="53%" class="kernelO">Qlogic ISP [12]0x0 SCSI/FibreChannel </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">aic</td>
+    <td width="53%" class="kernelO">Adaptec 152[02] SCSI controllers</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">ncr</td>
+    <td width="53%" class="kernelO"> NCR 538XX SCSI controllers </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">adv</td>
+    <td width="53%" class="kernelO">AdvanSys 1200A/B and ULTRA SCSI</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">adw</td>
+    <td width="53%" class="kernelO">AdvanSys ULTRA WIDE SCSI </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">sea</td>
+    <td width="53%" class="kernelO">Seagate ST0[12] SCSI controllers </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">uha</td>
+    <td width="53%" class="kernelO">UltraStor [123]4f SCSI controllers </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">wds</td>
+    <td width="53%" class="kernelO">WD7000 and TMC-7000 controllers </td>
+  </tr>
+</table>
+<p>&nbsp;</p>
+<p class="pFileReference">Example use from arch/i386/conf/PETRA</p>
+<table class="kernelO">
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">bt0 at isa? port 0x330 irq ? drq ? </td>
+    <td width="53%" class="kernelO">BusLogic [57]4X SCSI controllers </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">bt1 at isa? port 0x334 irq ? drq ? </td>
+    <td width="53%" class="kernelO">BusLogic [57]4X SCSI controllers </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">bt2 at isa? port ? irq ? </td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">scsibus* at bt?</td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">&nbsp;</td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">aha0 at isa? port 0x330 irq ? drq ? </td>
+    <td width="53%" class="kernelO">Adaptec 154[02] SCSI controllers </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">aha1 at isa? port 0x334 irq ? drq ? </td>
+    <td width="53%" class="kernelO">Adaptec 154[02] SCSI controllers </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">aha* at isapnp? </td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">scsibus* at aha?</td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">&nbsp;</td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">ahb* at eisa? slot ? </td>
+    <td width="53%" class="kernelO">Adaptec 174[024] SCSI controllers </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">scsibus* at ahb?</td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">&nbsp;</td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">ahc0 at isa? port ? irq ? </td>
+    <td width="53%" class="kernelO">Adaptec 284x SCSI controllers </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">ahc* at eisa? slot ? </td>
+    <td width="53%" class="kernelO">Adaptec 274x, aic7770 SCSI controllers </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">ahc* at pci? dev ? function ? </td>
+    <td width="53%" class="kernelO">Adaptec 2940 SCSI controllers </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">scsibus* at ahc?</td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">&nbsp;</td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">isp* at pci? dev ? function ? </td>
+    <td width="53%" class="kernelO">Qlogic ISP [12]0x0 SCSI/FibreChannel </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">scsibus* at isp?</td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">&nbsp;</td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">aic0 at isa? port 0x340 irq 11 </td>
+    <td width="53%" class="kernelO">Adaptec 152[02] SCSI controllers</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">aic* at pcmcia? function ? </td>
+    <td width="53%" class="kernelO"> PCMCIA based aic SCSI controllers </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">scsibus* at aic?</td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">&nbsp;</td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">ncr* at pci? dev ? function ?</td>
+    <td width="53%" class="kernelO"> NCR 538XX SCSI controllers </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">scsibus* at ncr?</td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">&nbsp;</td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">adv* at pci? dev ? function ? </td>
+    <td width="53%" class="kernelO">AdvanSys 1200A/B and ULTRA SCSI</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO"> scsibus* at adv?</td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">&nbsp;</td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">adw* at pci? dev ? function ? </td>
+    <td width="53%" class="kernelO">AdvanSys ULTRA WIDE SCSI </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">scsibus* at adw?</td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">&nbsp;</td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">sea0 at isa? iomem 0xc8000 irq 5 </td>
+    <td width="53%" class="kernelO">Seagate ST0[12] SCSI controllers </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">scsibus* at sea?</td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">&nbsp;</td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">uha0 at isa? port 0x330 irq ? drq ? </td>
+    <td width="53%" class="kernelO">UltraStor [13]4f SCSI controllers </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">uha1 at isa? port 0x334 irq ? drq ? </td>
+    <td width="53%" class="kernelO">UltraStor [13]4f SCSI controllers </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">uha* at eisa? slot ? </td>
+    <td width="53%" class="kernelO">UltraStor 24f SCSI controllers </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">scsibus* at uha?</td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">&nbsp;</td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">wds0 at isa? port 0x350 irq 15 drq 6 </td>
+    <td width="53%" class="kernelO">WD7000 and TMC-7000 controllers </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">#wds1 at isa? port 0x358 irq 11 drq 5 </td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">scsibus* at wds?</td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">&nbsp;</td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">sd* at scsibus? target ? lun ? </td>
+    <td width="53%" class="kernelO">SCSI disk drives </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">st* at scsibus? target ? lun ? </td>
+    <td width="53%" class="kernelO">SCSI tape drives </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">cd* at scsibus? target ? lun ? </td>
+    <td width="53%" class="kernelO">SCSI CD-ROM drives </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">ch* at scsibus? target ? lun ? </td>
+    <td width="53%" class="kernelO">SCSI autochangers </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">ss* at scsibus? target ? lun ? </td>
+    <td width="53%" class="kernelO">SCSI scanners </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">uk* at scsibus? target ? lun ?</td>
+    <td width="53%" class="kernelO"> unknown SCSI</td>
+  </tr>
+</table>
+<h5><a name="OptionsIDE"></a>IDE FD & HD Interfaces</h5>
+<p>The floppy and hdd interface</p>
+<p>format:</p>
+<p>&nbsp;&nbsp;<i>DEVICEn</i> <b>at</b> <i>bus</i> <b>port</b> <i>port_addr</i> 
+  <b>irq</b> <i>irq_no</i> <b>drq</b> <i>drq_no</i></p>
+<table class="kernelO">
+  <tr valign="top"> 
+    <td width="47%" class="kernelO"><b>Device</b></td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">fdc </td>
+    <td width="53%" class="kernelO">standard PC floppy controllers </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">pciide</td>
+    <td width="53%" class="kernelO">IDE controllers </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">wdc </td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO"> atapiscsi</td>
+    <td width="53%" class="kernelO">ATAPI<>SCSI</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO"> wt</td>
+    <td width="53%" class="kernelO">Archive and Wangtek QIC tape drives</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">&nbsp;</td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">mcd</td>
+    <td width="53%" class="kernelO">Mitsumi CD-ROM drives</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">fd </td>
+    <td width="53%" class="kernelO">Floppy drives are designated with fd0a, fd0b</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">wd </td>
+    <td width="53%" class="kernelO">IDE hard drives are designated wd#letter</td>
+  </tr>
+</table>
+<p>fdc and wdc are the controllers and you access the specific floppy with either 
+  fd0a or fd0b (floppy drive a and b.) You an access the IDE Hard-Disk with wd0a-b 
+  on the primary controlleror wd1a-b on the secondary controller.</p>
+<p class="pFileReference">Example use from arch/i386/conf/PETRA</p>
+<table class="kernelO">
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">fdc0 at isa? port 0x3f0 irq 6 drq 2 </td>
+    <td width="53%" class="kernelO">standard PC floppy controllers </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">#fdc1 at isa? port 0x370 irq ? drq ? </td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">fd* at fdc? drive ?</td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">&nbsp;</td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">&nbsp;</td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">&nbsp;</td>
+    <td width="53%" class="kernelO">IDE controllers </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">pciide* at pci ? dev ? function ? flags 0x0000</td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">wdc0 at isa? port 0x1f0 irq 14 flags 0x00 
+    </td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">wdc1 at isa? port 0x170 irq 15 flags 0x00 
+    </td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">wdc* at pcmcia? function ? </td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">wdc* at isapnp?</td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">&nbsp;</td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">&nbsp;</td>
+    <td width="53%" class="kernelO">IDE hard drives </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">wd* at wdc? channel ? drive ? flags 0x0000 
+    </td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">wd* at pciide? channel ? drive ? flags 0x0000</td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">&nbsp;</td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">&nbsp;</td>
+    <td width="53%" class="kernelO">ATAPI<>SCSI</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO"> atapiscsi* at wdc? channel ? </td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">atapiscsi* at pciide? channel ? </td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">scsibus* at atapiscsi?</td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">&nbsp;</td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO"> #wt0 at isa? port 0x308 irq 5 drq 1 </td>
+    <td width="53%" class="kernelO">Archive and Wangtek QIC tape drives</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">&nbsp;</td>
+    <td width="53%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="47%" class="kernelO">#mcd0 at isa? port 0x300 irq 10 </td>
+    <td width="53%" class="kernelO">Mitsumi CD-ROM drives</td>
+  </tr>
+</table>
+<h5><a name="OptionsNetworkingDevices"></a>Networking Devices</h5>
+<p>Supported Ethernet Devices on i386 architecture as extracted from the i386/conf/PETRA 
+  sample kernel configuration.</p>
+<p>You should be able to comment out the network devices you are not using, or 
+  include one which is not in your kernel.</p>
+<p>The card support, in my understanding, actually supports the chipset on that 
+  card. Where another card uses the same chipset it is likely the driver for the 
+  1st card will work with the 2nd card.</p>
+<h6>New Network Card not detected ?</h6>
+<p>If you have a new network card that is not supported by your kernel, one option 
+  is to rebuild a kernel with support for all the network cards, find out which 
+  chipset it detects the new card as, and then build your custom kernel with the 
+  newly discovered card specification.</p>
+<p>Of course using loadable kernel modules (lkm) is probably a better solution, 
+  but I haven't figured that one out, yet.</p>
+<p>Another reason your network card may not be detected is potentially the port 
+  address, or the IO memory address, or the IRQ selected by the Kernel configuration. 
+  Check your board settings by looking at the board, or with configuration software 
+  that may have come with the board and then reconfigure either the board, or 
+  the kernel.</p>
+<p>format: <i><br>
+  &nbsp; &nbsp;deviceN</i> <b>at</b> <i>bus</i> <b>[port</b> <i>port_no</i>] <b>[iomem</b> 
+  <i>iomem_no</i> <b>irq</b> <i>irq_no</i>] <b>[drq</b> <i>drq_no</i>]</p>
+<table class="kernelO" width="80%">
+  <tr valign="top"> 
+    <td width="12%" class="kernelO"><b>Device</b></td>
+    <td width="88%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="12%" class="kernelO">we </td>
+    <td width="88%" class="kernelO">WD/SMC 80x3 ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="12%" class="kernelO">ec </td>
+    <td width="88%" class="kernelO">3COM 3C503 ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="12%" class="kernelO">ne</td>
+    <td width="88%" class="kernelO">NE[12]000 ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="12%" class="kernelO">eg</td>
+    <td width="88%" class="kernelO"> 3COM 3C505/Etherlink+ ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="12%" class="kernelO">el</td>
+    <td width="88%" class="kernelO">3COM 3C501 ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="12%" class="kernelO">ef</td>
+    <td width="88%" class="kernelO">3COM 3C515 PnP ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="12%" class="kernelO">ie</td>
+    <td width="88%" class="kernelO">Intel (?) EtherExpress, StarLAN and 3C507 
+    </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="12%" class="kernelO"> le</td>
+    <td width="88%" class="kernelO">(lowercase &quot;elle&quot;) IsoLan, NE2100, 
+      and DEPCA </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="12%" class="kernelO">ex</td>
+    <td width="88%" class="kernelO">Intel EtherExpress PRO/10 </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="12%" class="kernelO">ep</td>
+    <td width="88%" class="kernelO">3COM 3C579 ethernet</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="12%" class="kernelO"> fea</td>
+    <td width="88%" class="kernelO">DEC DEFEA FDDI </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="12%" class="kernelO">lmc</td>
+    <td width="88%" class="kernelO">Lan Media Corp SSI/T3/HSSI</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="12%" class="kernelO"> le</td>
+    <td width="88%" class="kernelO">PCnet-PCI based ethernet</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="12%" class="kernelO">de</td>
+    <td width="88%" class="kernelO">DC21X4X-based ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="12%" class="kernelO">fxp</td>
+    <td width="88%" class="kernelO">Intel EtherExpress 10/100B ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="12%" class="kernelO">ne</td>
+    <td width="88%" class="kernelO">NE2000-compatible ethernet cards</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="12%" class="kernelO">ne</td>
+    <td width="88%" class="kernelO">PCMCIA based NE2000 ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="12%" class="kernelO">ep</td>
+    <td width="88%" class="kernelO">3COM 3C59x ethernet, and PCMCIA based 3C5xx 
+      ethernet</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="12%" class="kernelO"> sm</td>
+    <td width="88%" class="kernelO"> PCMCIA based sm ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="12%" class="kernelO">xe</td>
+    <td width="88%" class="kernelO">Xircom ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="12%" class="kernelO">wi</td>
+    <td width="88%" class="kernelO">WaveLAN IEEE 802.11 </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="12%" class="kernelO">fpa</td>
+    <td width="88%" class="kernelO">DEC DEFPA FDDI </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="12%" class="kernelO">xl</td>
+    <td width="88%" class="kernelO"> 3c9xx ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="12%" class="kernelO">rl</td>
+    <td width="88%" class="kernelO">RealTek 81[23]9 ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="12%" class="kernelO">tx</td>
+    <td width="88%" class="kernelO">SMC 83C170 EPIC ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="12%" class="kernelO">tl</td>
+    <td width="88%" class="kernelO">Compaq Thunderlan ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="12%" class="kernelO">vr</td>
+    <td width="88%" class="kernelO"> VIA Rhine ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="12%" class="kernelO">dc</td>
+    <td width="88%" class="kernelO">21143, "tulip" clone ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="12%" class="kernelO">wb</td>
+    <td width="88%" class="kernelO">Winbond W89C840F ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="12%" class="kernelO">ti</td>
+    <td width="88%" class="kernelO">Alteon Tigon 1Gb ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="12%" class="kernelO">al</td>
+    <td width="88%" class="kernelO">ADMtek AL981/AN985 ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="12%" class="kernelO">sf</td>
+    <td width="88%" class="kernelO">Adaptec AIC-6915 ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="12%" class="kernelO">skc</td>
+    <td width="88%" class="kernelO">SysKonnect GEnesis 984x</td>
+  </tr>
+</table>
+<p>&nbsp;</p>
+<table class="kernelO">
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">&nbsp;</td>
+    <td width="60%" class="kernelO">Media Independent Device (mii) drivers</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">exphy* at mii? phy ?</td>
+    <td width="60%" class="kernelO">3Com internal PHYs </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">inphy* at mii? phy ? </td>
+    <td width="60%" class="kernelO">Intel 82555 PHYs</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">iophy* at mii? phy ?</td>
+    <td width="60%" class="kernelO">Intel 82553 PHYs</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">icsphy* at mii? phy ?</td>
+    <td width="60%" class="kernelO">ICS 1890 PHYs</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">#lxtphy* at mii? phy ?</td>
+    <td width="60%" class="kernelO">Level1 LXT970 PHYs </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">nsphy* at mii? phy ?</td>
+    <td width="60%" class="kernelO">NS and compatible PHYs</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">#qsphy* at mii? phy ?</td>
+    <td width="60%" class="kernelO">Quality Semi QS6612 PHYs</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO"> sqphy* at mii? phy ?</td>
+    <td width="60%" class="kernelO">Seeq 8x220 PHYs </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">rlphy* at mii? phy ?</td>
+    <td width="60%" class="kernelO">RealTek 8139 internal PHYs</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">#mtdphy* at mii? phy ?</td>
+    <td width="60%" class="kernelO">Myson MTD972 PHYs </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">dcphy* at mii? phy ?</td>
+    <td width="60%" class="kernelO">Digital Clone PHYs</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">xmphy* at mii? phy ?</td>
+    <td width="60%" class="kernelO">XaQti XMAC-II PHYs</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">brgphy* at mii? phy ?</td>
+    <td width="60%" class="kernelO">Broadcom Gigabit PHYs </td>
+  </tr>
+</table>
+<p>&nbsp;</p>
+<p class="pFileReference">Example use from arch/i386/conf/PETRA</p>
+<table class="kernelO" width="80%">
+  <tr valign="top"> 
+    <td width="58%" class="kernelO">we0 at isa? port 0x280 iomem 0xd0000 irq 9 
+    </td>
+    <td width="42%" class="kernelO">WD/SMC 80x3 ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="58%" class="kernelO">we1 at isa? port 0x300 iomem 0xcc000 irq 10</td>
+    <td width="42%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="58%" class="kernelO"> we* at isapnp? </td>
+    <td width="42%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="58%" class="kernelO">ec0 at isa? port 0x250 iomem 0xd8000 irq 9 
+    </td>
+    <td width="42%" class="kernelO">3C503 ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="58%" class="kernelO">ne0 at isa? port 0x240 irq 9 </td>
+    <td width="42%" class="kernelO">NE[12]000 ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="58%" class="kernelO">ne1 at isa? port 0x300 irq 10 </td>
+    <td width="42%" class="kernelO">NE[12]000 ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="58%" class="kernelO">ne2 at isa? port 0x280 irq 9 </td>
+    <td width="42%" class="kernelO">NE[12]000 ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="58%" class="kernelO">ne* at isapnp? </td>
+    <td width="42%" class="kernelO">NE[12]000 PnP ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="58%" class="kernelO">eg0 at isa? port 0x310 irq 5</td>
+    <td width="42%" class="kernelO"> 3C505/Etherlink+ ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="58%" class="kernelO">el0 at isa? port 0x300 irq 9 </td>
+    <td width="42%" class="kernelO">3C501 ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="58%" class="kernelO">ep0 at isa? port ? irq ?</td>
+    <td width="42%" class="kernelO"> 3C509 ethernet</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="58%" class="kernelO"> ep* at isapnp? </td>
+    <td width="42%" class="kernelO">3C509 PnP ethernet</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="58%" class="kernelO">ep* at isa? port ? irq ?</td>
+    <td width="42%" class="kernelO">3C509 ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="58%" class="kernelO">ef* at isapnp? </td>
+    <td width="42%" class="kernelO">3C515 PnP ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="58%" class="kernelO">ie0 at isa? port 0x360 iomem 0xd0000 irq 7 
+    </td>
+    <td width="42%" class="kernelO">StarLAN and 3C507 </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="58%" class="kernelO">ie1 at isa? port 0x300 irq 10</td>
+    <td width="42%" class="kernelO"> EtherExpress</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="58%" class="kernelO"> le0 at isa? port 0x360 irq 15 drq 6 </td>
+    <td width="42%" class="kernelO">IsoLan, NE2100, and DEPCA </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="58%" class="kernelO">ex0 at isa? port 0x320 irq 5 </td>
+    <td width="42%" class="kernelO">Intel EtherExpress PRO/10 </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="58%" class="kernelO">ep0 at eisa? slot ? </td>
+    <td width="42%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="58%" class="kernelO">ep* at eisa? slot ? </td>
+    <td width="42%" class="kernelO">3C579 ethernet</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="58%" class="kernelO"> fea* at eisa? slot ? </td>
+    <td width="42%" class="kernelO">DEC DEFEA FDDI </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="58%" class="kernelO">lmc* at pci? dev ? function ? </td>
+    <td width="42%" class="kernelO">Lan Media Corp SSI/T3/HSSI</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="58%" class="kernelO"> le* at pci? dev ? function ? </td>
+    <td width="42%" class="kernelO">PCnet-PCI based ethernet</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="58%" class="kernelO"> le* at isapnp? </td>
+    <td width="42%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="58%" class="kernelO">de* at pci? dev ? function ? </td>
+    <td width="42%" class="kernelO">DC21X4X-based ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="58%" class="kernelO">fxp* at pci? dev ? function ? </td>
+    <td width="42%" class="kernelO">EtherExpress 10/100B ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="58%" class="kernelO">ne* at pci? dev ? function ? </td>
+    <td width="42%" class="kernelO">NE2000-compat ethernet</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="58%" class="kernelO"> ep0 at pci? dev ? function ? </td>
+    <td width="42%" class="kernelO">3C59x ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="58%" class="kernelO">ep* at pci? dev ? function ? </td>
+    <td width="42%" class="kernelO">3C59x ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="58%" class="kernelO">ne* at pcmcia? function ? </td>
+    <td width="42%" class="kernelO">PCMCIA based NE2000 ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="58%" class="kernelO">ep* at pcmcia? function ? </td>
+    <td width="42%" class="kernelO">PCMCIA based 3C5xx ethernet</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="58%" class="kernelO"> sm* at pcmcia? function ?</td>
+    <td width="42%" class="kernelO"> PCMCIA based sm ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="58%" class="kernelO">xe* at pcmcia? function ? </td>
+    <td width="42%" class="kernelO">Xircom ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="58%" class="kernelO">wi* at pcmcia? function ? </td>
+    <td width="42%" class="kernelO">WaveLAN IEEE 802.11 </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="58%" class="kernelO">fpa* at pci? dev ? function ? </td>
+    <td width="42%" class="kernelO">DEC DEFPA FDDI </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="58%" class="kernelO">xl* at pci? dev ? function ?</td>
+    <td width="42%" class="kernelO"> 3c9xx ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="58%" class="kernelO">rl* at pci? dev ? function ? </td>
+    <td width="42%" class="kernelO">RealTek 81[23]9 ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="58%" class="kernelO">tx* at pci? dev ? function ? </td>
+    <td width="42%" class="kernelO">SMC 83C170 EPIC ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="58%" class="kernelO">tl* at pci? dev ? function ? </td>
+    <td width="42%" class="kernelO">Compaq Thunderlan ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="58%" class="kernelO">vr* at pci? dev ? function ?</td>
+    <td width="42%" class="kernelO"> VIA Rhine ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="58%" class="kernelO">dc* at pci? dev ? function ? </td>
+    <td width="42%" class="kernelO">21143, "tulip" clone ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="58%" class="kernelO">wb* at pci? dev ? function ? </td>
+    <td width="42%" class="kernelO">Winbond W89C840F ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="58%" class="kernelO">ti* at pci? dev ? function ? </td>
+    <td width="42%" class="kernelO">Alteon Tigon 1Gb ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="58%" class="kernelO">al* at pci? dev ? function ? </td>
+    <td width="42%" class="kernelO">ADMtek AL981/AN985 ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="58%" class="kernelO">sf* at pci? dev ? function ? </td>
+    <td width="42%" class="kernelO">Adaptec AIC-6915 ethernet </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="58%" class="kernelO">skc* at pci? dev ? function ? </td>
+    <td width="42%" class="kernelO">SysKonnect GEnesis 984x</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="58%" class="kernelO">sk* at skc? </td>
+    <td width="42%" class="kernelO">each port of above</td>
+  </tr>
+</table>
+<h5><a name="OptionsMultimedia"></a>Multimedia Audio Devices</h5>
+<p>&nbsp;</p>
+<table class="kernelO">
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">&nbsp;</td>
+    <td width="60%" class="kernelO">&nbsp; </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">ukphy* at mii? phy ? </td>
+    <td width="60%" class="kernelO">"unknown" PHYs</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">pss0 at isa? port 0x220 irq 7 drq 6</td>
+    <td width="60%" class="kernelO">Personal Sound System </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">sp0 at pss0 port 0x530 irq 10 drq 0 </td>
+    <td width="60%" class="kernelO">sound port driver</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">eap* at pci? dev ? function ?</td>
+    <td width="60%" class="kernelO">Ensoniq AudioPCI S5016</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">eso* at pci? dev ? function ? </td>
+    <td width="60%" class="kernelO">ESS Solo-1 PCI AudioDrive</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">sv* at pci? dev ? function ? </td>
+    <td width="60%" class="kernelO">S3 SonicVibes (S3 617)</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">sb0 at isa? port 0x220 irq 5 drq 1</td>
+    <td width="60%" class="kernelO">SoundBlaster</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">sb* at isapnp? ess* at isapnp?</td>
+    <td width="60%" class="kernelO">ESS Tech ES188[78], ES888</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">wss0 at isa? port 0x530 irq 10 drq 0</td>
+    <td width="60%" class="kernelO">Windows Sound System </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">wss* at isapnp? pas0 at isa? port 0x220 irq 
+      7 drq 1 </td>
+    <td width="60%" class="kernelO">ProAudio Spectrum </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">gus0 at isa? port 0x220 irq 7 drq 1 drq2 6 
+    </td>
+    <td width="60%" class="kernelO">Gravis UltraSound (drq2 is record drq)</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">ym* at isapnp? </td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">mpu* at isapnp?</td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">&nbsp;</td>
+    <td width="60%" class="kernelO"> OPL[23] FM syntheziers </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">#opl0 at isa? port 0x388 </td>
+    <td width="60%" class="kernelO">use only if not attached to sound card </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">opl* at eso? </td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">opl* at sb? </td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">opl* at ess?</td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">&nbsp;</td>
+    <td width="60%" class="kernelO">MIDI support</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO"> midi* at pcppi? </td>
+    <td width="60%" class="kernelO">MIDI interface to the PC speaker </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">midi* at sb? </td>
+    <td width="60%" class="kernelO">SB MPU401 port </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">midi* at opl? </td>
+    <td width="60%" class="kernelO">OPL FM synth </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">midi* at ym? </td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">midi* at mpu?</td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">&nbsp;</td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">&nbsp;</td>
+    <td width="60%" class="kernelO"> The spkr driver provides a simple tone interface 
+      to the built in speaker. </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">#spkr0 at pcppi? </td>
+    <td width="60%" class="kernelO">PC speaker</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">&nbsp;</td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">&nbsp;</td>
+    <td width="60%" class="kernelO">#Audio Support </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">audio* at sb? </td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">audio* at gus? </td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">audio* at pas? </td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">audio* at sp? </td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">audio* at ess? </td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">audio* at wss? </td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">audio* at ym? </td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">audio* at eap? </td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">audio* at eso?</td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">audio* at sv?</td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">#audio* at uaudio?</td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">&nbsp;</td>
+    <td width="60%" class="kernelO">&nbsp; </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">bktr0 at pci? dev ? function ?</td>
+    <td width="60%" class="kernelO">BrookTree family video capture and TV tuner 
+      board? (reference to FreeBSD <i>http://www.freebsd.org/~fsmp/HomeAuto/Bt848.html)</i></td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">&nbsp;</td>
+    <td width="60%" class="kernelO">Joystick driver. Probe is a little strange; 
+      add only if you have one. </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">#joy0 at isa? port 0x201 </td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">joy* at isapnp?</td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">&nbsp;</td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO"> #wdt0 at pci? dev ? function ? </td>
+    <td width="60%" class="kernelO">Ind Computer Source PCI-WDT50x driver</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">&nbsp;</td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">&nbsp;</td>
+    <td width="60%" class="kernelO">crypto support</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">#aeon* at pci? dev ? function ? </td>
+    <td width="60%" class="kernelO">Aeon crypto card</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">&nbsp;</td>
+    <td width="60%" class="kernelO">&nbsp;</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="40%" class="kernelO">&nbsp;</td>
+    <td width="60%" class="kernelO">&nbsp; </td>
+  </tr>
+</table>
+<p>&nbsp;</p>
+<h5></h5>
+<h5><a name="OptionsMiscellaneous"></a>Miscellaneous</h5>
+<h5></h5>
+<table width="88%" border="0" class="kernelO">
+  <tr valign="top"> 
+    <td width="18%" class="kernelO"><b>Option</b></td>
+    <td width="82%" class="kernelO"><b>Purpose</b></td>
+  </tr>
+  <tr valign="top"> 
+    <td width="18%" class="kernelO">PCIVERBOSE</td>
+    <td width="82%" class="kernelO">Makes the boot process more verbose for PCI peripherals (vendor 
+      names and other information is printed, etc.).</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="18%" class="kernelO">EISAVERBOSE</td>
+    <td width="82%" class="kernelO">Makes the boot process more verbose for EISA peripherals.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="18%" class="kernelO">PCMCIAVERBOSE</td>
+    <td width="82%" class="kernelO">Makes the boot process more verbose for PCMCIA peripherals.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="18%" class="kernelO">APERTURE</td>
+    <td width="82%" class="kernelO">Provide in-kernel support for VGA framebuffer mapping by user-processes 
+      (such as an X windows server). This option is supported in the i386 architecture. </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="18%" class="kernelO">XSERVER</td>
+    <td width="82%" class="kernelO">Support for X windows in the console driver.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="18%" class="kernelO">LKM</td>
+    <td width="82%" class="kernelO">Enable support for loadable kernel modules. See lkm(4) for 
+      details. Note: This option is not yet available on all architectures.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="18%" class="kernelO">INSECURE</td>
+    <td width="82%" class="kernelO">Hardwires the kernel security level at -1. This means that 
+      the system always runs in securelevel 0 mode, even when running multiuser. 
+      See init(8) for details on the implications of this. The kernel secure level 
+      may be manipulated by the superuser by altering the kern.securelevel sysctl 
+      variable. (It should be noted that the securelevel may only be lowered by 
+      a call from process ID 1, i.e., init(8).) See also sysctl(8) and sysctl(3).</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="18%" class="kernelO">MACHINE_NONCONTIG</td>
+    <td width="82%" class="kernelO">This option changes part of the VM/pmap interface, to allow 
+      for non-contiguous memory. On some ports it is not an option. These ports 
+      typically only use one of the interfaces. </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="18%" class="kernelO">RAM_DISK_HOOKS</td>
+    <td width="82%" class="kernelO">This option allows for some machine dependent functions to 
+      be called when the ramdisk driver is configured. This can result in automatically 
+      loading a ramdisk from floppy on open (among other things). </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="18%" class="kernelO">RAM_DISK_IS_ROOT</td>
+    <td width="82%" class="kernelO">Forces the ramdisk to be the root device. This can only be 
+      overridden when the kernel is booted in the &quot;ask-for-root&quot; mode. </td>
+  </tr>
+  <tr valign="top"> 
+    <td width="18%" class="kernelO">CCDNBUF=integer</td>
+    <td width="82%" class="kernelO">The ccd(4) device driver uses &quot;component buffers&quot; to distribute 
+      I/O requests to the components of a concatenated disk. It keeps a freelist 
+      of buffer headers in order to reduce use of the kernel memory allocator. 
+      CCDNBUF is the number of buffer headers allocated on the freelist for each 
+      component buffer. It defaults to 8.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="18%" class="kernelO">KMEMSTATS</td>
+    <td width="82%" class="kernelO">The kernel memory allocator, malloc(9), will keep statistics 
+      on its performance if this option is enabled. Unfortunately, this option 
+      therefore essentially disables MALLOC() and FREE() forms of the memory allocator, 
+      which are used to enhance the performance of certain critical sections of 
+      code in the kernel. This option therefore can lead to a significant decrease in the performance of certain code in the kernel if enabled. Examples of such code namei() routine, the ccd(4) driver, the 
+      ncr(4) driver, and much of the networking code. Note that this option is 
+      silently turned on by the DEBUG option.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="18%" class="kernelO">BOOT_CONFIG</td>
+    <td width="82%" class="kernelO">Adds support for the -c boot option (User Kernel Config). 
+      Allows modification of kernel settings (i.e., device parameters) before 
+      booting the system.</td>
+  </tr>
+  <tr valign="top"> 
+    <td width="18%" class="kernelO">UVM_SWAP_ENCRYPT</td>
+    <td width="82%" class="kernelO">Enables kernel support for encrypting pages that are written 
+      out to swap storage. Swap encryption prevents sensitive data from remaining 
+      on the disk even after the operating system has been shut down. This option 
+      should be turned on if cryptographic filesystems are used. The sysctl variable 
+      vm.swapencrypt.enable controls its behaviour. See sysctl(8) and sysctl(3) 
+      for details.</td>
+  </tr>
+  <tr valign="top">
+    <td width="18%" class="kernelO">&nbsp;</td>
+    <td width="82%" class="kernelO">&nbsp;</td>
+  </tr>
+</table>
+<p>&nbsp;</p>
+<h2><a name="LKM"></a>LKM - Loadable Kernel Modules</h2>
+<p class="pFileReference">[ref: modload(8), lkm(4), modstat(8), modunload(8)]</p>
+<p>LKM is the answer to that error in your configuration file (or the overzealous, 
+  took to many things out, problem.) LKM as its name tells us, allows the administrator 
+  to dynamically load kernel modules without rebooting.</p>
+<p>Most useful when your designed kernel does not include drivers for a new piece 
+  of hardware just attached to your machine. Test it by dynamically loading the 
+  kernel module before doing a recompile.</p>
+<p>&quot;modload&quot; is used to install the module, an object file (.o file). 
+  &quot;modstat&quot; lets you find out what modules are currently loaded, and 
+  modunload lets you remove loadable modules the running kernel.</p>
+<p></p>
+<h2><a name="author"></a>Author and Copyright</h2>
+<p>Copyright (c) 2000/1/2 Samiuela LV Taufa. All Rights Reserved.</p>
+
+<p>I reserve the right to be totally incorrect even at the best advice of betters. In other words, I'm probably wrong in enough places for you to call me an idiot, but don't 'cause you'll hurt my sensibilities, just tell me where I went wrong and I'll try again.</p>
+
+<p>You are permitted and encouraged to use this guide for fun or for profit as you see fit. If you republish this work in what-ever form, it would be nice (though not enforceable) to be credited.</p>
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+  <tr>
+    <td class="block" valign="MIDDLE" width="100%" bgcolor="#cccccc"><strong> 
+      <p class="block">kernel optimizations</p>
+      </strong></td>
+  </tr>
+</table>
+<p><font color="#808080" face="sans-serif" size="-2"><strong>Copyright&nbsp; &copy; 
+  2000/1/2
+<a href="http://www.nomoa.com">NoMoa.COM</a> All rights reserved.</strong></font></p>
+  
+</body>
+</html>
+

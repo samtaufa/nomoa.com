@@ -1,0 +1,547 @@
+
+<html>
+<head>
+<title>=8> nomoa.com/bsd OpenBSD - twig Group Ware</title><link rel="STYLESHEET" type="text/css" href="openbsd.css">
+<script language="JavaScript">
+<!--
+
+function newImage(arg) {
+	if (document.images) {
+		rslt = new Image();
+		rslt.src = arg;
+		return rslt;
+	}
+}
+
+function changeImages() {
+	if (document.images && (preloadFlag == true)) {
+		for (var i=0; i<changeImages.arguments.length; i+=2) {
+			document[changeImages.arguments[i]].src = changeImages.arguments[i+1];
+		}
+	}
+}
+
+var preloadFlag = false;
+function preloadImages() {
+	if (document.images) {
+		openbsd_over = newImage("mmedia/openbsd-over.gif");
+		openbsd_down = newImage("mmedia/openbsd-down.gif");
+		preloadFlag = true;
+	}
+}
+
+// -->
+</script>
+<!-- End Preload Script -->
+</head>
+
+<body bgcolor="#FFFACD" onLoad="preloadImages();">
+<p class="logo">
+<a class="anchBlue" href="http://www.nomoa.com/bsd" 
+   onMouseOver="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;"
+   onMouseOut="changeImages('openbsd', 'mmedia/openbsd.gif'); return true;"
+   onMouseDown="changeImages('openbsd', 'mmedia/openbsd-down.gif'); return true;"
+   onMouseUp="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;">
+   <img name="openbsd"  align="absMiddle" 
+        alt="OpenBSD ... The Only way to Go ..." border="0" height="50"
+        src="mmedia/openbsd.gif" width="368"></a>
+</p>
+
+<h1>twig - Group Ware Services</h1>
+<hr color="fuchsia">
+<p>Table of Contents: </p>
+<ul>
+  <li><a href="#intro">Introduction</a></li>
+  <li><a href="#requirements">Requirements</a></li>
+  <li><a href="#distr">Extracting the Distribution Files</a></li>
+  <li><a href="#apache">Configuring Apache</a></li>
+  <li><a href="#mysql">Configuring MySQL</a></li>
+  <li><a href="#twig">Configuring TWIG</a></li>
+  <ul>
+    <li><a href="#twig_basic">Basic configuration</a></li>
+    <li><a href="#twig_phplib">PHPLib conflict problems</a></li>
+  </ul>
+  <li><a href="#testing">Testing TWIG</a></li>
+  <li><a href="#facade">Facade Configuration</a></li>
+  <li><a href="#ref">Related References</a></li>
+  <li><a href="#security" class="anchBlue">Security Concerns</a></li>
+  	<ul>
+		
+    <li><a href="#sslRequire" class="anchBlue">SSLRequire</a></li>
+	</ul>
+  <li><a href="#author">Author and Copyright</a></li>
+</ul>
+<hr color="fuchsia">
+<h2><a name="intro"></a>Introduction</h2>
+<p>TWIG (The Web Information Gateway) is a groupware enabling package with integrated 
+  e-mail client, Contact Manager, Scheduling, Usenet News Client, To Do Lists, 
+  and Bookmarks.</p>
+<p class="pFileReference">From the Documentation: ./twig/docs</p>
+<p class="pScreenOutput"><b>WARNING*WARNING*WARNING*WARNING*WARNING*WARNING*WARNING*WARNING*</b></p>
+<p class="pScreenOutput">&nbsp;</p>
+<p class="pScreenOutput">Building a server with a database on it that is publicly 
+  accessible to the Internet can be a LARGE security hole. This document takes 
+  no consideration of this and assumes that you know what your doing about the 
+  security on the server and database.</p>
+<p class="pScreenOutput">&nbsp;</p>
+<p class="pScreenOutput"><b>WARNING*WARNING*WARNING*WARNING*WARNING*WARNING*WARNING*WARNING*</b></p>
+<p>There are a number of Web hosted Mail programs available on the Internet. This 
+  guide in no way implies TWIG as better than the rest. If you are interested 
+  in other Web Hosted Mail services for your users, then take a look at some of 
+  those listed below:</p>
+<p>Since the writing of this guide, OpenBSD has gradually included some webmail 
+  client pieces into the ports tree. Two in particular are Horde/IMP and OpenWebmail. 
+  Please review these if they meet your needs.</p>
+<h2><a name="requirements"></a>Pre-requisites.</h2>
+<p>The following are programs necessary for the operation of TWIG. Each of the 
+  listed required component is linked to pages on this site with instructions 
+  on installation. Systems that can function with the below software will perform similarly with the additional load of TWIG.</p>
+<p><a href="php4_3.3c.htm" class="anchBlue">PHP 4.0</a> or <a href="php3.htm" class="anchBlue">PHP 
+  3.0.16</a><br>
+  <a href="apache.htm" class="anchBlue">Apache</a><br>
+  <a href="mysql.htm" class="anchBlue">MySQL</a> and PostgreSQL<br>
+  <a href="mailServer.htm#imap" class="anchBlue">UW Imap</a> or Cyrus, Courier 
+  IMAP </p>
+<h2><a name="distr"></a>Extracting the Distribution Files</h2>
+<p class="pFileReference">Source File: twig-2.3.2.tar.gz (available from <a href="http://twig.screwdriver.net">http://twig.screwdriver.net</a>)<br>
+  [ref: twig-2.3.2/docs/Setup-Apache-PHP-IMAP-TWIG-MySQL.txt]</p>
+<p>Note: I have recently downloaded 2.6.1 and it looks great, the same instructions 
+  below still work well with the update.</p>
+<p>Extract the twig source files to a directory on your machine, create the directory 
+  of the final destination for TWIG and run the configuration script to copy the 
+  TWIG files to their final destination.</p>
+<table width="80%" border="0" class="Code">
+  <tr>
+    <td># <b>cd /usr/src</b> <br>
+      # <b>tar -zxf /<font color="#0000FF">[path-to-file]</font>/twig-2.3.2.tar.gz</b><br>
+      # <b>cd twig-2.3.2</b><br>
+      # <b>mkdir /var/www/twig</b><br>
+      # <b>sh ./twig-install /var/www/twig</b></td>
+  </tr>
+</table>
+<p class="pFileReference">[ ... Installation will display the following ... ]</p>
+<table width="80%" border="0" class="pScreenOutput">
+  <tr>
+    <td><br>
+      TWIG Install Script<br>
+      ===================<br>
+      <br>
+      Installing feature modules...<br>
+      Installing images...<br>
+      Installing configuration files...<br>
+      Installing library modules...<br>
+      Installing root files...<br>
+      Done! </td>
+  </tr>
+</table>
+<p>We have used /var/www/twig as the destination directory, but of course you 
+  could have selected another directory location.</p>
+<p>I like the documentation, so we'll copy that into our live tree as well.</p>
+<table width="80%" border="0" class="Code">
+  <tr> 
+    <td nowrap class="Code"># <b>cp -R docs /var/www/twig/ </b></td>
+  </tr>
+</table>
+<p>The necessary files for TWIG have been copied and we now just need to modify 
+  them. </p>
+<h2><a name="apache"></a>Configure Apache</h2>
+<p>Modify the Apache configuration file (normally in /var/www/conf/httpd.conf) 
+  to reference the TWIG location.</p>
+<table width="80%" border="0" class="pScreenOutput">
+  <tr> 
+    <td class="pScreenOutput">Alias <b><font color="#0000FF">/twig/ "/var/www/twig/"</font></b><br>
+      &lt;<b><font color="#0000FF">directory "/var/www/twig"</font></b>&gt;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp; Options Indexes Multiviews<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;AllowOverride All<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;Order allow,deny<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;Allow from all<br>
+      &lt;/directory&gt;</td>
+  </tr>
+</table>
+<p>We also need to ensure that index.php3 is part of the Apache Directory Index 
+  directive.</p>
+<table width="80%" border="0" class="pScreenOutput">
+  <tr> 
+    <td class="pScreenOutput" nowrap># Add to the Directory Index the index.php3 <br>
+      DirectoryIndex index.html index.htm <b><font color="#0000FF">index.php3 
+      </font></b> index.php index.phtml </td>
+  </tr>
+</table>
+<p>Restart Apache to re-read the configuration file.</p>
+<p class="Code"># <b>apachectl restart</b></p>
+<h2><a name="mysql"></a>Configure our MySQL Database</h2>
+<p>Save the following <a href="mysql_create.sql">mysql script</a> to a file to 
+  help you configure the MySQL database. For security reasons, you should change 
+  the following settings used in the example.</p>
+<p>Username : <b>twig_user</b><br>
+  Password : <b>twig_password</b><br>
+  Database : <b>twig_db</b></p>
+
+<table border="2" class="dns" width="80%">
+  <tr><td>
+      <pre>
+# mysql_create.sql 
+# derived from the horde/scripts/database/mysql_create.sql
+#
+# You can simply direct this file to mysql as STDIN:
+# > mysql (user/pass/host args) < mysql_create.sql
+
+CONNECT mysql;
+
+INSERT INTO user ( host, user, password )
+   VALUES (
+      'localhost',
+      <font color="#0000FF">'<b>twig_user</b>'</font>,
+      password(<font color="#0000FF">'<b>twig_password</b>'</font>)
+   );
+
+INSERT INTO db (
+      host, db, user,
+         Select_priv, Insert_priv, Update_priv, Delete_priv,
+         Create_priv, Drop_priv )
+      VALUES (
+      'localhost',
+      <font color="#0000FF">'<b>twig_db</b>'</font>,
+      <font color="#0000FF">'<b>twig_user</b>'</font>,
+      'Y', 'Y', 'Y', 'Y',
+      'Y', 'Y'
+        );
+
+CREATE DATABASE <b><font color="#0000FF">twig_db</font></b><font color="#0000FF">;</font>
+
+FLUSH PRIVILEGES;
+
+# done!
+</pre>
+</td></tr>
+</table>
+<p>Configure MySQL with the database that we will use with TWIG. This may require 
+  starting MySQL if we have not yet started it.</p>
+<table width="80%" border="0" class="Code">
+  <tr> 
+    <td nowrap class="Code"> # <b>/usr/local/bin/<font color="#0000FF">safe_mysqld 
+      --user=mysql --log & </font></b><br>
+      # <b>cd /var/www/twig</b><br>
+      # <b>/usr/local/bin/<font color="#0000FF">mysql -u root -p &lt; mysql_create.sql</font></b> 
+      <br>
+      # <b>/usr/local/bin/<font color="#0000FF">mysql -u root </font></b> <b><font color="#0000FF"><yourdbname></font></b><b><font color="#0000FF"> 
+      -p twig_db < setup/twig.table.mysql </font></b></td>
+  </tr>
+</table>
+<h3>Manually Configuring MySQL</h3>
+<p>If you do not want to setup the above script, then you can manually configure 
+  your TWIG information with the following procedures. Warning, the instructions 
+  that ships with twig version 2.3.2 gives complete control of mysql to the twig_user 
+  (this is an insecure approach.)</p>
+<p>1. Start MySQL daemon if it has not already started and login as root</p>
+<table width="80%" border="0" class="Code">
+  <tr> 
+    <td nowrap class="Code"># <b>/usr/local/bin/<font color="#0000FF">safe_mysqld 
+      --user=mysql --log &</font></b><br>
+      # <b>/usr/local/bin/<font color="#0000FF">mysql -u root -p</font> </b></td>
+  </tr>
+</table>
+<p>2. Create the database for TWIG. If you have logged in correctly above you 
+  should now be at the mysql&gt; prompt</p>
+<table width="80%" border="0" class="Code">
+  <tr> 
+    <td nowrap class="Code">mysql&gt; <b>CREATE DATABASE twig_db;</b></td>
+  </tr>
+    <tr> 
+    <td nowrap class="pScreenOutput"> Query OK, 1 row affected (0.03 sec) </td>
+  </tr>
+<tr> 
+    <td nowrap class="Code">mysql&gt; <b>quit</b></td>
+  </tr>
+</table>
+<p>3. Create the Tables by using the script supplied with the distribution source.</p>
+<table width="80%" border="0" class="Code">
+  <tr> 
+    <td nowrap class="Code"># <b>mysql -u root <yourdbname> twig_db < setup/twig.table.mysql 
+      </b></td>
+  </tr>
+</table>
+<p>4. Create and specify (grant) the rights for the TWIG user account, and quit 
+  mysql. </p>
+<table border="0" width="800" class="Code">
+  <tr> 
+    <td nowrap class="Code"> # <b>mysql -u root -p</b><br>
+      mysql&gt; <b>USE mysql;</b><br>
+      mysql&gt; <b>INSERT INTO USER (host, user, password) values ('localhost', 
+      'twig_user', password('twig_password') );<br>
+      </b>mysql&gt; <b>GRANT Select_priv, Insert_priv, Update_priv, Delete_priv, 
+      Create_priv, Drop_priv ON twig_db.* TO twig_user@localhost IDENTIFIED BY 
+      'twig_password';</b><br>
+      mysql&gt; <b>quit</b></td>
+  </tr>
+</table>
+<h2><a name="twig"></a>Configuring TWIG</h2>
+<h3><a name="twig_basic"></a>Basic Configuration Files</h3>
+<p>The major configuration files for TWIG are located in the ./config directory. 
+</p>
+<p>From the documentation: (./INSTALL)</p>
+<table width="93%" border="1" class="pScreenOutput">
+  <tr> 
+    <td colspan="2">There are ten files that you should examine (and possibly 
+      edit) they can be found in the config directory:</td>
+  </tr>
+  <tr> 
+    <td width="26%"><b>config.inc.php3</b></td>
+    <td width="74%">Configure certain global settings.</td>
+  </tr>
+  <tr> 
+    <td width="26%">header.inc.php3</td>
+    <td width="74%">Goes at the top of every page.</td>
+  </tr>
+  <tr> 
+    <td width="26%">footer.inc.php3</td>
+    <td width="74%">Goes at the bottom of every page.</td>
+  </tr>
+  <tr> 
+    <td width="26%">announcements.inc.php3</td>
+    <td width="74%">Announcements for the Main screen.</td>
+  </tr>
+  <tr> 
+    <td width="26%"><b>dbconfig.inc.php3</b></td>
+    <td width="74%">Certain database settings.</td>
+  </tr>
+  <tr> 
+    <td width="26%">defaults.inc.php3</td>
+    <td width="74%">Default settings to use for the site.</td>
+  </tr>
+  <tr> 
+    <td width="26%">images.inc.php3</td>
+    <td width="74%">Images to use in TWIG.</td>
+  </tr>
+  <tr> 
+    <td width="26%">login.footer.inc.php3</td>
+    <td width="74%">The footer of the forms based login.</td>
+  </tr>
+  <tr> 
+    <td width="26%">login.form.inc.php3</td>
+    <td width="74%">The body of the forms based login.</td>
+  </tr>
+  <tr> 
+    <td width="26%">loging.header.inc.php3</td>
+    <td width="74%">The header of the forms based login.</td>
+  </tr>
+  <tr> 
+    <td width="26%">mainmenu.inc.php3</td>
+    <td width="74%">Menu items to be displayed on the main menu.</td>
+  </tr>
+  <tr> 
+    <td width="26%">newusergroups.inc.ph3</td>
+    <td width="74%">If using advanced security this is the default list of groups 
+      to add a new user to.</td>
+  </tr>
+  <tr> 
+    <td width="26%">mailfooter.inc.php3</td>
+    <td width="74%">Footer to include on all outgoing mail messages.</td>
+  </tr>
+</table>
+<p>For our sample configuration (to get things up and running until we know how 
+  it works) we can begin with modifying config.inc.php3, and dbconfig.inc.php3<br>
+</p>
+<p class="pFileReference">File: config/config.inc.php3 </p>
+<table border="0" width="800" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="pScreenOutput"> 
+      <p class="pScreenOutput">$config["fromdomain"] = "<b>foo.com</b>"; // This 
+        is where mail will be sent from<br>
+        $config["basedir"] = "<b>/twig</b>"; // The path of the URL to your TWIG 
+        installation<br>
+        $config["security"] = "<b>basic</b>"; // Type of security to use (basic|advanced)<br>
+        $config["spellcheck"] = "<b>/usr/local/bin/aspell -a</b>"; // Command, 
+        including full path and flags, to run a spellcheck (via pipe) <br>
+      </p>
+      <p class="pScreenOutput"> $config["auth_logout_redirect"] = ""; // Complete 
+        URL to redirect browsers to after they have been logged out<br>
+      </p>
+      <p class="pScreenOutput"> $config["auth"] = "<b>forms</b>"; // Authorization 
+        Type (basic|forms)</p>
+</td>
+  </tr>
+</table>
+<p>Change <b>foo.com</b> to your domain<br>
+  Change<b> /twig</b> to whatever you specified for you Alias in the Apache httpd.conf 
+  file<br>
+  Change <b>forms</b> to basic if twig keeps dropping back to the login screen.<br>
+  Change <b>aspell</b> to ispell which is available as a binary package.</p>
+<p class="pFileReference">File: config/dbconfig.inc.php3 </p>
+<table border="0" width="800" class="pScreenOutput">
+  <tr> 
+    <td nowrap>
+      <p class="pScreenOutput">$dbconfig["sqlusername"] = "<b>twig_user</b>"; 
+        // username<br>
+        $dbconfig["sqlpassword"] = "<b>twig_password</b>"; // password <br>
+        $dbconfig["defaultdb"] = "<b>twig_db</b>"; // database </p>
+      </td>
+  </tr>
+</table>
+<p>Change <b>twig_user</b> to the User You specified above (note the <i>default 
+  is nobody</i>) <br>
+  Change<b> twig_password</b> to the password you specified above (note the <i>default 
+  is &quot;&quot; a blank password</i>)<br>
+  Change <b>twig_db</b> to the database you specified above (note the <i>default 
+  is twig</i>)</p>
+<h2><a name="testing"></a>Testing TWIG</h2>
+<p>You should now be able to test twig by pointing your browser to the site http://mywebsite.com/twig/test.php3</p>
+<p>You should be presented with a screen to let you test 3 different component 
+  modules of TWIG (accessing the IMAP server, accessing an account on the IMAP 
+  server, accessing the MySQL database server, and the result of PHP Information 
+  <i>&lt;?php phpinfo() ?&gt;</i>.)</p>
+<p class="Code"># <b>lynx http://localhost/twig/test.php3</b></p>
+<table border="0" width="800" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="pScreenOutput">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[TWIG]<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;________________________________________________________________________________<br>
+      <br>
+      &nbsp;&nbsp;&nbsp;General&nbsp;Back&nbsp;to&nbsp;top.<br>
+      <br>
+      &nbsp;&nbsp;&nbsp;Welcome&nbsp;to&nbsp;the&nbsp;TWIG&nbsp;test&nbsp;page!<br>
+      &nbsp;&nbsp;&nbsp;If&nbsp;you've&nbsp;executed&nbsp;a&nbsp;test&nbsp;that&nbsp;has&nbsp;failed&nbsp;and&nbsp;can&nbsp;no&nbsp;longer&nbsp;see&nbsp;the&nbsp;complete&nbsp;form<br>
+      &nbsp;&nbsp;&nbsp;click&nbsp;here&nbsp;to&nbsp;get&nbsp;back&nbsp;to&nbsp;a&nbsp;clean&nbsp;form.<br>
+      &nbsp;&nbsp;&nbsp;This&nbsp;page&nbsp;is&nbsp;divied&nbsp;in&nbsp;to&nbsp;several&nbsp;sections:<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;This&nbsp;section<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;An&nbsp;IMAP&nbsp;test<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;A&nbsp;SQL&nbsp;test<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;PHP&nbsp;Version&nbsp;Information </td>
+  </tr>
+</table>
+<h2><a name="facade"></a>Facade Configuration</h2>
+<p>Customising the look of your TWIG environment is readily completed through 
+  the various configuration files, especially the footer, header and announcements. 
+  TWIG does a great job of separating the 'business' logic of providing the groupware 
+  from the 'display' features, putting the web-page on the screen.</p>
+<p>I list here a few things of interest to me in modifying the 'look-n-feel' of 
+  TWIG. </p>
+<table width="90%" border="1" class="pScreenOutput">
+  <tr> 
+    <td width="36%" align="left" valign="top">mailfooter.inc.php3</td>
+    <td width="64%" align="left" valign="top">This is the text sent with each 
+      e-mail message (similar to hotmail, yahoo.) We prefer something about our 
+      organisation here.</td>
+  </tr>
+  <tr> 
+    <td width="36%" align="left" valign="top">login.footer.inc.php3,<br>
+      login.header.inc.php3,<br>
+      login.form.inc.php3</td>
+    <td align="left" valign="top" width="64%">These files determine the look of 
+      the login page. I prefer to place our usage policy on the page to ensure 
+      people are aware of their responsibility when using our services.</td>
+  </tr>
+  <tr> 
+    <td width="36%" align="left" valign="top">announcements.inc.php3</td>
+    <td width="64%" align="left" valign="top">Announcements that are displayed 
+      after you have logged into the system.</td>
+  </tr>
+  <tr> 
+    <td width="36%" align="left" valign="top">header.inc.php3</td>
+    <td width="64%" align="left" valign="top">This contains the 1st part of the 
+      &lt;body&gt; section of the html page.</td>
+  </tr>
+  <tr> 
+    <td width="36%" align="left" valign="top">footer.inc.php3</td>
+    <td width="64%" align="left" valign="top">&nbsp;</td>
+  </tr>
+</table>
+<p>Personalising, Corporatising the look of TWIG is an easy to implement feature, 
+  please remember to reference the project somewhere within this customisation.</p>
+<p></p>
+<h3>Include Errors</h3>
+<p>If you get a lot of <b>include </b>error messages this problem manifested (was 
+  noticed) on a system where I had installed horde/PHPLib. Note: A fresh (machine) 
+  install without horde/PHPLib, did not show the same problems.</p>
+<p>PHPLib requires changing the php3.ini file to specify an auto_prepend file. 
+  The <a href="horde.htm#prepend.inc">changes made</a> to the auto_prepend file 
+  (/var/www/conf/horde/phplib/prepend.inc) cause a pathing problem for twig.</p>
+<p>Two solutions to the problem exist:</p>
+<p><b>Solution 1: </b>Disable the auto_prepend (in file /var/www/conf/php3.ini). 
+  Simply commenting out the line solves the problem on my system.<i> </i></p>
+<p>A more complete solution is to fix the reason why prepend.inc causes the problem.</p>
+<p><b>Solution 2: </b>References to directories config/ and lib/ and features/ 
+  are not resolving correctly on my setup. To cater for this problem I have to 
+  replace config/ with ./config/ and lib/ with ./lib/ and features/ with ./features/</p>
+<p>A number of files are effected so I perfom a global search and replace. Unfortunately 
+  I don't have a Unix script for it as I'm hoping this is not a proper solution 
+  and it will be resolved with further review.</p>
+<table width="75%" border="1">
+  <tr> 
+    <td><b>Change this</b></td>
+    <td><b>To This</b></td>
+  </tr>
+  <tr> 
+    <td>&quot;config/</td>
+    <td>&quot;./config/</td>
+  </tr>
+  <tr> 
+    <td>&quot;lib/</td>
+    <td>&quot;./lib/</td>
+  </tr>
+  <tr> 
+    <td>&quot;features/</td>
+    <td>&quot;./features/</td>
+  </tr>
+  <tr> 
+    <td>&quot;config&quot;</td>
+    <td>&quot;./config&quot;</td>
+  </tr>
+</table>
+<p>Related References</p>
+<p>Leafnode Netnews Server (distfiles leafnode-1.9.2.tar.gz)</p>
+<h2><a name="security"></a>Security Concerns</h2>
+<p>Remember that what we've discussed above shows you configuring a Web hosted 
+  Groupware application. It does not in any way implement one that is 'secure.' 
+  To be minimally secure, you should review the security features of TWIG and 
+  tighten up the 'basic' configuration.</p>
+<p>Features you should consider reviewing, include (in version 2.6.2) auth_provider, 
+  login_handler and other mechanisms for tightening up security on your database 
+  server. Obviously you should also be looking at implementing <a href="apache.htm#securessl" class="anchMorone">SSL 
+  on your website</a>.</p>
+<h3><a name="sslRequire"></a>SSLRequire</h3>
+<p>Once you have mod_ssl working correctly on your server, then we can require 
+  https to be used by using the SSLRequireSSL directive, as shown below:</p>
+<table width="80%" border="0" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="pScreenOutput"> 
+      <p class="pScreenOutput">Alias /twig/ "/var/www/twig/"<br>
+        &lt;directory "/var/www/twig"&gt;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp; Options Indexes Multiviews<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;AllowOverride All<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;Order allow,deny<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;Allow from all</p>
+    </td>
+  </tr>
+  <tr> 
+    <td nowrap class="Code"> 
+      <p class="Code">&nbsp;&nbsp;&nbsp;&nbsp;<b>SSLRequireSSL</b></p>
+    </td>
+  </tr>
+  <tr> 
+    <td nowrap class="pScreenOutput"> 
+      <p class="pScreenOutput">&lt;/directory&gt;</p>
+    </td>
+  </tr>
+</table>
+<p>&nbsp;</p>
+<p class="Code"></p>
+<p class="Code"></p>
+<p class="Code"></p>
+<h2><a name="author"></a>Author and Copyright</h2> 
+<p>Copyright (c) 2000/1/2 Samiuela LV Taufa. All Rights Reserved.</p>
+<p>I reserve the right to be totally incorrect even at the best advice of betters. In other words, I'm probably wrong in enough places for you to call me an idiot, but don't 'cause you'll hurt my sensibilities, just tell me where I went wrong and I'll try again.</p>
+<p>You are permitted and encouraged to use this guide for fun or for profit as 
+  you see fit. If you republish this work in what-ever form, it would be nice 
+  (though not enforceable) to be credited.</p>
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+  <tr> 
+    <td class="block" valign="MIDDLE" width="100%" bgcolor="#cccccc"><strong> 
+      <p class="block">TWIG - Group Ware through the Web</p>
+      </strong></td>
+  </tr>
+</table>
+<p><font color="#808080" face="sans-serif" size="-2"><strong>Copyright&nbsp; &copy; 
+  2000/1/2 <a href="http://www.nomoa.com">NoMoa Publishers</a> All rights 
+  reserved.  Caveat Emptor</strong></font></p>
+</body>
+</html>

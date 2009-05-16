@@ -1,0 +1,800 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+  <title>=8&gt; nomoa.com/bsd OpenBSD - Serving Mail</title>
+  <link rel="STYLESHEET" type="text/css" href="openbsd.css">
+  <script language="JavaScript">
+<!--
+
+function newImage(arg) {
+	if (document.images) {
+		rslt = new Image();
+		rslt.src = arg;
+		return rslt;
+	}
+}
+
+function changeImages() {
+	if (document.images && (preloadFlag == true)) {
+		for (var i=0; i<changeImages.arguments.length; i+=2) {
+			document[changeImages.arguments[i]].src = changeImages.arguments[i+1];
+		}
+	}
+}
+
+var preloadFlag = false;
+function preloadImages() {
+	if (document.images) {
+		openbsd_over = newImage("mmedia/openbsd-over.gif");
+		openbsd_down = newImage("mmedia/openbsd-down.gif");
+		preloadFlag = true;
+	}
+}
+
+// -->
+  </script><!-- End Preload Script -->
+</head>
+<body onload="preloadImages();" bgcolor="#fffacd">
+<p class="logo">
+<a class="anchBlue" href="http://www.nomoa.com/bsd"
+ onmouseover="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;"
+ onmouseout="changeImages('openbsd', 'mmedia/openbsd.gif'); return true;"
+ onmousedown="changeImages('openbsd', 'mmedia/openbsd-down.gif'); return true;"
+ onmouseup="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;">
+<img name="openbsd" alt="OpenBSD ... The Only way to Go ..."
+ src="mmedia/openbsd.gif" align="middle" border="0" height="50"
+ width="368"></a></p>
+<h1> Mail Service - Server </h1>
+<hr color="fuchsia">
+<p> Table of Contents: </p>
+<ul>
+  <li><a href="#introduction">Introduction</a></li>
+  <li> <a href="#smtp">Process Queued Mail and Recieve incoming Mail</a>
+    <ul>
+      <li><a href="#inetd">the inetd (alternative)</a></li>
+    </ul>
+  </li>
+  <li> <a href="#pop">Processing pop requests </a>
+    <ul>
+      <li><a href="#imap">using the IMAP Toolkit (alternative)</a></li>
+      <li>testing the IMAP Server</li>
+    </ul>
+  </li>
+  <li><a href="#configure">Sendmail Configuration </a>
+    <ul>
+      <li><a href="#whoami">who am i?</a></li>
+      <li><a href="#slow">slow startup - gethostbyname() blocks</a> </li>
+      <li><a href="#relay">Relaying Access Denied</a></li>
+    </ul>
+  </li>
+  <li><a href="#diag">Simple Diagnostics</a>
+    <ul>
+      <li><a href="#diagWhat">What's in the QUEUE</a></li>
+      <li><a href="#diagDebug">Debug and Verbose Mode</a></li>
+      <li><a href="#diagMX">Looking up MX Records</a></li>
+    </ul>
+  </li>
+  <li><a href="#author">Author and Copyright</a></li>
+</ul>
+<hr color="fuchsia">
+<h2><a name="introduction"></a>Introduction</h2>
+<p>E-Mail services on the Internet exchange messages through a
+clients/servers mechanism where the client sends and retrieves mail
+from servers who store these messages for future forwarding (store and
+forward.) Three components of e-mail (as noted above) is the service
+for (a) clients to recieve their mail (b) servers to recieve mail from
+clients 'store', and (c) servers to 'forward' stored mail. </p>
+<p> OpenBSD 2.6 &amp;&amp; 2.7's default configuration for Sendmail is
+to process the mail queue 'forward stored mail' every 30 minutes
+"&ndash;q30m" </p>
+<p> The above does not service client requests for mail, nor provide
+services for clients to send mail. The two internet services for client
+mail services are pop and smtp. </p>
+<p> In this brief we will configure sendmail to process smtp requests.
+We will also install a daemon to process pop requests. </p>
+<p> 1. Setup services to process the SMTP as well as forwarding Mail
+Queues <br>
+2. Setup services for Processing POP </p>
+<h2><a name="smtp"></a>Process Queued Mail and Recieve incoming Mail </h2>
+<table>
+  <tbody>
+    <tr>
+      <td class="pFileReference" valign="top"> File: /etc/rc.conf </td>
+      <td class="pFileReference" valign="top"> enable/disable sendmail
+in this configuration file </td>
+    </tr>
+    <tr>
+      <td class="pFileReference" valign="top"> File: /etc/rc </td>
+      <td class="pFileReference"> launches sendmail using the switches
+specified in /etc/rc.conf </td>
+    </tr>
+  </tbody>
+</table>
+<p> sendmail is installed as part of the base installation of OpenBSD
+2.6 and 2.7. To have sendmail service smtp queries, we make changes to
+the /etc/rc.conf file. </p>
+<p class="pFileReference"> File: /etc/rc.conf </p>
+<p> change the line that reads <br>
+</p>
+<table class="Code" border="0" width="80%">
+  <tbody>
+    <tr>
+      <td class="Code" nowrap="nowrap">sendmail="-q30m"
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; # for normal
+use: "-bd -q30m" </td>
+    </tr>
+  </tbody>
+</table>
+<p> to be <br>
+</p>
+<table class="Code" border="0" width="80%">
+  <tbody>
+    <tr>
+      <td class="Code" nowrap="nowrap">sendmail="<strong>-bd</strong>
+&ndash;q30m"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; # for normal use: "-bd
+-q30m" </td>
+    </tr>
+  </tbody>
+</table>
+<p> The line specifies switches (command line options) that /etc/rc
+will pass sto sendmail during system startup. <b>&ndash;bd</b> tells
+sendmail to run as a daemon, running in the background, listening for
+and handling incoming SMTP connections. As a daemon, sendmail does a
+listen(2) on TCP port 25 for incoming SMTP messages. When another site
+connects to the listening daemon, the daemon performs a fork(2) and the
+child handles receipt of the incoming mail message. This is the
+preferred method for high use (smtp) servers. </p>
+<p> The /etc/rc file checks for the value of the above 'options' and if
+options exist the /etc/rc will execute sendmail with the given options.
+</p>
+<p> Further Documentation ? The Sendmail Operations Manual has a number
+of suggested recommendations, scripts clearly described for starting
+sendmail as an smtp service. </p>
+<p> In a LAN only mail setup the queuing may not be necessary. The
+Sendmail bat book suggests 1h is a good setting for most sites, and for
+sites with few users &ndash;q15m may be appropriate to ensure immediate
+delivery of mail. </p>
+<h3 style="margin-left: 0.5cm;"><a name="inetd"></a>Starting sendmail -
+the inetd alternative </h3>
+<p style="margin-left: 1cm;"> An alternative method for starting
+sendmail to process smtp requests is to use the inetd super server to
+launch sendmail on an as need basis. </p>
+<p style="margin-left: 1cm;">Add a line (or modify an existing line) so
+that smtp requests causes an action by inetd </p>
+<p class="pScreenOutput" style="margin: 0cm -0.05pt 6pt 1cm;"> </p>
+<p class="pFileReference" style="margin-left: 1cm;">File:
+/etc/inetd.conf </p>
+<table class="Code" width="800">
+  <tbody>
+    <tr>
+      <td class="Code" nowrap="nowrap"> smtp&nbsp;&nbsp;
+stream&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tcp&nbsp;&nbsp; nowait root
+/usr/sbin/sendmail sendmail &ndash;bs </td>
+    </tr>
+  </tbody>
+</table>
+<p style="margin-left: 1cm;"> The line tells inetd to launch sendmail
+on smtp requests. Verify that sendmail exists in the /usr/sbin folder.
+The &ldquo;-bs&rdquo; command tells sendmail to (a) be launched in
+&ldquo;SMTP on standard input&rdquo; (b) collect SMTP message over its
+standard input/output (c) deliver the message, and exit </p>
+<p style="margin-left: 1cm;"> Note that the above command does not
+specify when to process queued messages. </p>
+<p style="margin-left: 1cm;"> Force inetd to reload and read the new
+configuration by using the below command. </p>
+<p style="margin-left: 1cm;" class="Code"> &nbsp;# <b>kill &ndash;HUP
+`cat /var/run/inetd.pid` </b> </p>
+<p style="margin-left: 1cm;"> Note (alternative SMTP processor):
+OpenBSD 2.7 (2.6?) ships with the Obtuse Systems SMTPD message storing
+daemon (/usr/libexec/smtpd) and the Obtuse Systems SMTPFWDD message
+forwarding daemon (/usr/libexec/smtpfwdd). I haven't used it but it is
+documented in the man pages and http://www.obtuse.com/smtpd.html </p>
+<h2><a name="pop"></a>Processing pop requests </h2>
+<p class="pFileReference"> Package:
+popa3d-0.3.tgz&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<i>(OpenBSD 2.6 or popa3d-0.4.tgz in OpenBSD 2.7)</i> <br>
+</p>
+<p class="pFileReference"> source-file:
+cucipop-1.31.tar.gz&nbsp;&nbsp;&nbsp; (<i>available from the distfiles
+directory)</i> </p>
+<p> The simplest, fastest way to install the pop daemon is to install
+the popa3d-0.4.tgz package using pkg_add </p>
+<p class="Code"> # <b>pkg_add /<font color="#0000ff">[path-to-package]</font>/popa3d-0.4.tgz
+</b> </p>
+<p> pkg_add&nbsp;extracts the files and documentation from the popa3d
+package and specifically places the binary popa3d into the
+/usr/local/libexec directory. Verify the location of popa3d file. </p>
+<p> Now we need to configure the super server inetd to route pop
+requests to be handled by our installed pop daemon. To do this we make
+the following changes. </p>
+<p class="pFileReference"> File: /etc/services - Make sure there exists
+a line specifying port address 110 as a pop3 service </p>
+<br>
+<table class="Code" width="800">
+  <tbody>
+    <tr>
+      <td class="Code" nowrap="nowrap"> pop3&nbsp;&nbsp;&nbsp;&nbsp;
+110/tcp<span style="">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+# Post Office Protocol 3<br>
+pop3&nbsp;&nbsp;&nbsp;&nbsp; 110/udp</span> </td>
+    </tr>
+  </tbody>
+</table>
+<p class="pFileReference">&nbsp; </p>
+<p class="pFileReference"> File: /etc/inetd.conf - Make sure you have a
+line specifying the pop services (pop3) and the responsibility for
+handling it is popa3d as shown in this example. </p>
+<p class="pFileReference">&nbsp; </p>
+<table class="Code" width="800">
+  <tbody>
+    <tr>
+      <td class="Code" nowrap="nowrap"> pop3&nbsp;&nbsp;&nbsp;&nbsp;
+stream tcp&nbsp; nowait&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; root&nbsp;
+/usr/local/libexec/popa3d popa3d </td>
+    </tr>
+  </tbody>
+</table>
+<p> After making the changes, force inetd to re-read its configuration
+file by sending it the hang up signal. </p>
+<p class="Code"> # <b>kill &ndash;HUP `cat /var/run/inetd.pid` </b> </p>
+<p> We now have a functioning smtp server (sendmail) and a functioning
+pop server (popa3d) Mail should be recieved and delivered on your
+mail-server. </p>
+<h3><a name="imap"></a>pops and handling IMAP requests (alternative) </h3>
+<p class="pFileReference">source-file: imap-4.7c2.tar.Z <i>(available
+from the distfiles directory)</i> </p>
+<table class="pScreenOutput" border="0" cellpadding="0" cellspacing="0"
+ width="80%">
+  <tbody>
+    <tr>
+      <td class="pScreenOutput"> <b>Security Notice.</b><br>
+There are a number of concerns from a number of people, check the list
+archives, but we use UW IMAP because the environments I've built it on
+have largely been for localhost use of IMAP.<br>
+      <br>
+      <b>Recommendation</b><br>
+These instructions work for using the source, not the ports tree or
+packages. The additional security features in ports breaks these
+instructions (which is probably another reason not to use these
+instructions beyond introduction, orientation.)</td>
+    </tr>
+  </tbody>
+</table>
+<p>The UW IMAP Toolkit provides an IMAP server, necessary for advanced
+mailing options required by Web Based Mail services such as IMP and
+TWIG. The following is the process for installing and configuring an
+IMAP server: </p>
+<p> (1) extract the source code, <br>
+(2) compile/make the binaries and <br>
+(3)&nbsp;copy the binaries to where other OpenBSD system tools expect
+the files. <br>
+(4) edit configuration files <br>
+(5) restart the inetd super-server </p>
+<p style="margin-left: 1cm;"> <b>(1) </b>Extract the source code,
+untar the distribution </p>
+<p class="Code" style="margin-left: 1cm;"> # <b>cd /usr/src</b> <br>
+# <b>tar -zxf /<font color="#0000ff">[path-to-tar-source]</font>/imap-4.7c2.tar.Z
+</b><br>
+# <b>cd imap-4.7c2 </b></p>
+<p style="margin-left: 1cm;"> <b>(2)</b> Make/Compile the binaries. <br>
+We use "bso" to specify building for OpenBSD and the make process
+creates sub-directories c-client, ipopd and imapd where it makes the
+binaries to be used. <b><br>
+(3)</b> After building we need to move the daemon files where we want
+to set up processing, I have chosen /usr/local/libexec because that's
+where the package system put the popa3d daemon so I hope I'm following
+some sort of standard with the file placement. </p>
+<p class="Code" style="margin-left: 1cm;"> # <b>make bso</b> <br>
+# <b>mv ipopd/ipop2d /usr/local/libexec</b> <br>
+# <b>mv ipopd/ipop3d /usr/local/libexec</b> <br>
+# <b>mv imapd/imapd /usr/local/libexec</b> </p>
+<p style="margin-left: 1cm;" class="pFileReference">[ref: <a
+ href="http://faq.horde.org">IMP FAQ</a>]</p>
+<p style="margin-left: 1cm;"> <b>Optional</b>: The next part is not
+necessary for mail delivery, but for compiling programs that need
+c-client (IMAP) support. The same results should be achievable by
+installing the c-client packages and copying only the *.h files
+described below.</p>
+<p style="margin-left: 1cm;">Compiling IMAP support into programs will
+require the c-client header files in a 'standard' location and c-client
+library files. An example when these files are needed is if you compile
+php with IMAP support.</p>
+<table class="Code" width="80%">
+  <tbody>
+    <tr>
+      <td class="Code" nowrap="nowrap"> # <b>cp c-client/c-client.a
+/usr/local/lib</b> <br>
+# <b>cp src/c-client/rfc822.h /usr/local/include</b> <br>
+# <b>cp src/c-client/mail.h /usr/local/include</b> <br>
+# <b>cp c-client/linkage.h /usr/local/include </b> <br>
+# <b>ln -s /usr/local/lib/c-client.a /usr/local/lib/libc-client.a</b></td>
+    </tr>
+  </tbody>
+</table>
+<p style="margin-left: 1cm;"> <b>Optional</b>: Documentation for IMAP
+is included with the source distribution and since I regularly clean
+out my /usr/src directories it would be good to manually copy the
+documentation to another location:</p>
+<table class="Code" width="80%">
+  <tbody>
+    <tr>
+      <td class="Code" nowrap="nowrap"># <b>mkdir
+/usr/share/doc/imap-4.7c2</b> <br>
+# <b>mv README* /usr/share/doc/imap-4.7c2</b><br>
+# <b>cd docs</b><br>
+# <b>mv * /usr/share/doc/imap-4.7c2</b> </td>
+    </tr>
+  </tbody>
+</table>
+<p style="margin-left: 1cm;"> <b>(4)</b> Update the files
+/etc/services and /etc/inetd.conf where necessary (the files should be
+something similar to the following files.) </p>
+<p class="pFileReference" style="margin-left: 1cm;"> Review the file:
+/etc/services which should already have lines like the following: </p>
+<table class="pScreenOutput" border="0" width="80%">
+  <tbody>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">
+pop2&nbsp;&nbsp;&nbsp;&nbsp;
+109/tcp&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; #
+Post Office Protocol 2 <br>
+pop2&nbsp;&nbsp;&nbsp;&nbsp; 109/udp <br>
+pop3&nbsp;&nbsp;&nbsp;&nbsp;
+110/tcp&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; #
+Post Office Protocol 3 <br>
+pop3&nbsp;&nbsp;&nbsp;&nbsp; 110/udp <br>
+imap&nbsp;&nbsp;&nbsp;&nbsp;
+143/tcp&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; #
+interactive mail access protocol 2 <br>
+imap&nbsp;&nbsp;&nbsp;&nbsp; 143/udp <br>
+imap3&nbsp;&nbsp;&nbsp;
+220/udp&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; #
+interactive mail access protocol 3 <br>
+imap3&nbsp;&nbsp;&nbsp; 220/tcp </td>
+    </tr>
+  </tbody>
+</table>
+<p class="pFileReference" style="margin-left: 1cm;">Edit the file:
+/etc/inetd.conf and include lines like the following </p>
+<table class="pScreenOutput" border="0" width="80%">
+  <tbody>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">
+pop2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+stream&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tcp&nbsp;&nbsp;
+nowait&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+root&nbsp;/usr/local/libexec/ipop2d&nbsp; ipop2d <br>
+pop3&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+stream&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tcp&nbsp;&nbsp;
+nowait&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+root&nbsp;/usr/local/libexec/ipop3d&nbsp; ipop3d <br>
+imap&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+stream&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tcp&nbsp;&nbsp;
+nowait&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+root&nbsp;/usr/local/libexec/imapd&nbsp;&nbsp; imapd <br>
+imap3&nbsp;&nbsp;&nbsp;&nbsp;
+stream&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tcp&nbsp;&nbsp;
+nowait&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+root&nbsp;/usr/local/libexec/imapd&nbsp;&nbsp; imapd </td>
+    </tr>
+  </tbody>
+</table>
+<p style="margin-left: 1cm;"> <b>(5) </b>restart the inetd daemon </p>
+<table class="pScreenOutput" border="0" width="80%">
+  <tbody>
+    <tr>
+      <td class="Code" nowrap="nowrap"># <b>kill -HUP `cat
+/var/run/inetd.pid` </b></td>
+    </tr>
+  </tbody>
+</table>
+<p style="margin-left: 1cm;">It is very important to restart inetd,
+otherwise inetd will not recognise the changes you placed into the
+/etc/inetd.conf file. There have been more than a few cases of people
+going through the hardwork configuring machines and then spending
+hours/days because trying to figure out why their system doesn't work,
+only to find out they left out this final stage.</p>
+<p style="margin-left: 1cm;">Restart the inetd daemon.</p>
+<h5 style="margin-left: 1cm;">Further Information: </h5>
+<p style="margin-left: 1cm;"> The imap revision I use in this example
+was pulled down from the imap web-site (<a
+ href="http://www.washington.edu/imap/">http://www.washington.edu/imap/</a>)
+An earlier revision of the same release was available on the OpenBSD
+distfile mirrors, and the current release may be there now. </p>
+<p style="margin-left: 1cm;"> For some reason the php compilation fails
+without the '<b>ln -s /usr/local/lib/c-client.a
+usr/local/lib/libc-client.a'</b> The actual file was not found on my
+hard disk and the closest file /usr/local/lib/libc-client4.a seems to
+be the same file ? If the above link is not performed than the
+php3-3.0.16 fails during compilation complaining about problems with
+the non-existent libc-client.a library. </p>
+<p style="margin-left: 1cm;">If someone can give me simplified
+instructions on how to get IMAP working with a better IMAP server, I'll
+replace these instructions. After 3 years of these notes I still
+haven't had a cause to change my IMAP server, and thus have not
+ventured further. (Maybe this year.)</p>
+<h3>Testing the IMAP Server</h3>
+<h4><a id="testimap" name="testimap">How do I test an imap server?</a></h4>
+<p>[ref: <a
+ href="http://aplawrence.com/SCOFAQ/FAQ_scotec4testimap.html">How I
+test an imap server</a> ]<br>
+</p>
+<p>The "abc1" etc at the begining of each command is just a tag you
+make up. Supposedly it should be unique for each line; I've found you
+can actually use the same tag over and over again.</p>
+<div>
+<p><br>
+<b>telnet 10.1.36.248 143</b><br>
+Trying 10.1.36.248...<br>
+Connected to 10.1.36.248 (10.1.36.248).<br>
+Escape character is '^]'.<br>
+* OK e-smith.pcunixx.com IMAP4rev1 v12.264 server ready<br>
+<b>abc1 login linda AFr54Tui8</b><br>
+abc1 OK LOGIN completed<br>
+<b>abc2 select inbox</b><br>
+* 1 EXISTS<br>
+* 2 EXISTS<br>
+* 1 RECENT<br>
+* OK [UIDVALIDITY 1020929003] UID validity status<br>
+* OK [UIDNEXT 1020929444] Predicted next UID<br>
+* FLAGS (\Answered \Flagged \Deleted \Draft \Seen)<br>
+* OK [PERMANENTFLAGS ()] Permanent flags<br>
+* OK [UNSEEN 2] first unseen message in inbox<br>
+abc2 OK [READ-WRITE] SELECT completed<br>
+<b>abc3 fetch 2 body[text]</b><br>
+* 2 FETCH (BODY[TEXT] {25}<br>
+<br>
+This is just a test<br>
+<br>
+)<br>
+* 2 FETCH (FLAGS (\Recent \Seen))<br>
+abc3 OK FETCH completed<br>
+<b>abc4 close</b><br>
+abc4 OK CLOSE completed<br>
+<b>abc5 logout</b><br>
+* BYE e-smith.pcunixx.com IMAP4rev1 server terminating connection<br>
+abc5 OK LOGOUT completed</p>
+</div>
+<p style="margin-left: 1cm;"></p>
+<h2><a name="configure"></a>Sendmail Configuration </h2>
+<p> The following are tweaks to the configuration files to get the
+system working smoothly on my configuration and may be helpful. </p>
+<table cellpadding="0" cellspacing="0">
+  <tbody>
+    <tr>
+      <td class="pFileReference" nowrap="nowrap"> File:
+/etc/mail/sendmail.cf </td>
+      <td class="pFileReference"> </td>
+    </tr>
+    <tr>
+      <td class="pFileReference" nowrap="nowrap"> File:
+/etc/mail/relay-domains </td>
+      <td class="pFileReference"> List of domains for which you allow
+relaying through your server </td>
+    </tr>
+    <tr>
+      <td class="pFileReference" nowrap="nowrap"> File: /etc/hosts </td>
+      <td class="pFileReference"> known hostnames </td>
+    </tr>
+    <tr>
+      <td class="pFileReference" nowrap="nowrap"> File:
+/usr/share/sendmail/cf/ </td>
+      <td class="pFileReference"> Sample Configuration Files for
+Sendmail </td>
+    </tr>
+  </tbody>
+</table>
+<h3><a name="whoami"></a>Who Am I ?</h3>
+<p>Sometimes things may not be happening because you just can't tell
+who you are (as the mail server.) To find out who sendmail things it is
+serving as, use the following commands.</p>
+<table class="Code" width="80%">
+  <tbody>
+    <tr>
+      <td class="Code" nowrap="nowrap"> # sendmail -d0 &lt; /dev/null</td>
+    </tr>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap"> [ . . . stuff cut-out
+. . . ]<br>
+============ SYSTEM IDENTITY (after readcf) ============ <br>
+(short domain name) $w = myhostname <br>
+(canonical domain name) $j = myhostname.mydomain.com <br>
+(subdomain name) $m = mydomain.com <br>
+(node name) $k = myhostname <br>
+======================================================== <br>
+[ . . . stuff cut-out . . . ] </td>
+    </tr>
+  </tbody>
+</table>
+<p>The screen displays a number of useful information that may assist
+you in reviewing your assumptions about what settings have been given
+to sendmail.</p>
+<h3><a name="slow"></a>slow start-up gethostbyname() blocks</h3>
+<p>When Sendmail starts it will try to determine the name of the server
+by using the gethostname and getbyhostname system call. You may also
+need to edit the /etc/hosts file for the reason specified below from
+the IMAP Toolkit FAQ </p>
+<p> From the IMAP Toolkit FAQ</p>
+<table class="pScreenOutput" width="800">
+  <tbody>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap"> Q: Why isn't it
+showing the local host name as a fully-qualified domain name? <br>
+Q: Why is the local host name in the From/Sender/Message-ID headers of
+outgoing mail not coming out as a fully-qualified domain name? <br>
+      <br>
+A: Your UNIX system is misconfigured. The entry for your system in
+/etc/hosts must have the <b>fully-qualified domain name first</b>,
+e.g. <br>
+&nbsp;&nbsp;&nbsp;&nbsp; 105.69.1.234 <b>bombastic.blurdybloop.com</b>
+bombastic<br>
+      <br>
+&nbsp;&nbsp;&nbsp;&nbsp; A common mistake of novice system
+administrators is to have the short name first, e.g. <br>
+&nbsp;&nbsp;&nbsp;&nbsp; 105.69.1.234 bombastic
+bombastic.blurdybloop.com <br>
+      <br>
+or to omit the fully qualified domain name entirely, e.g. <br>
+&nbsp;&nbsp;&nbsp;&nbsp; 105.69.1.234 bombastic </td>
+    </tr>
+  </tbody>
+</table>
+<p> If your system pauses for a length of time when sendmail is
+started, the above situation may be the solution for your problem. </p>
+<p>Make sure we have a fully qualified domain associated with each ip
+address used by the server. With two network cards, OpenBSD install
+will only specify the domain name for one of the network ip addresses.
+[Discovered the same problem with Linux Mandrake 7.1 install] </p>
+<p class="pFileReference"> File: /etc/hosts <br>
+</p>
+<table class="Code" width="800">
+  <tbody>
+    <tr>
+      <td class="Code" nowrap="nowrap"> # The NIC for the external
+connection is: aaa.bbb.ccc.ddd (a legitimate ip address from my ISP) <br>
+# The NIC for the internal connection is: eee.fff.ggg.hhh (using
+private ip address on local lan) <br>
+aaa.bbb.ccc.ddd myhost.mydomain.com myhost <br>
+eee.fff.ggg.hhh myhost.mydomain.com myhost </td>
+    </tr>
+  </tbody>
+</table>
+<h3><a name="relay"></a> Relaying access denied</h3>
+<p class="pFileReference">[Ref OpenBSD <a
+ href="http://www.openbsd.org/faq/faq10.html">FAQ - 10.0 System
+Management</a> -&gt; <a
+ href="http://www.openbsd.org/faq/faq10.html#10.4">10.4 ... Relay
+Access Denied ...</a>]</p>
+<p>I want the server to service all smtp messages sent from users in my
+private-ip network, regardless of where on the network they are sending
+it from. To do this, we create the file /etc/mail/relay-domains and
+include a list of the host domains we will service. For example, if the
+server domain is mydomain.com then including mydomain.com in the
+/etc/mail/relay-hosts file lets me smtp messages from a remote client,
+so long as I specify my user information is @mydomain.com </p>
+<p class="pFileReference"> Create or Edit: /etc/mail/relay-domains</p>
+<p class="pScreenOutput"> mydomain.com </p>
+<p>This, of course, is a serious security hole. Another approach is to
+allow by IP address (ie. local lan only) and use your firewall rules to
+block access by people saying their using your IP addresses coming in
+on your external network cards. <a href="firewalling.htm">But that's
+another story.</a></p>
+<p>What we are doing above assumes the standard /etc/mail/sendmail.cf
+supplied with the OpenBSD 2.7 install. To verify the name of the file
+where we can place relay-domains use:</p>
+<p class="Code"># <b>cat /etc/mail/sendmail.cf | grep relay-domains</b></p>
+<p>and the output would be something like this (if the the sendmail.cf
+supports relaying.)</p>
+<p class="pScreenOutput"> FR-o /etc/mail/relay-domains </p>
+<p>If you do not get something similar to the above, then you will have
+to create another sendmail.cf (cf. /usr/share/sendmail) Sendmail 8.9
+changes the previous behaviour of Sendmail, where it now defaults to
+not forwarding e-mail to combat bulk-mailers/spammers. So, the
+sendmail.cf needs to include some support for relaying mail from other
+domains. Look at using</p>
+<p class="Code"> define(confCR_FILE,`/etc/mail/relay-domains') </p>
+<p>General format for the /etc/mail/relay-domains file is:</p>
+<table border="0" width="95%">
+  <tbody>
+    <tr>
+      <td class="pFileReference" valign="top">.mydomain.com</td>
+      <td class="pFileReference">#Allow relaying for/to any host in
+mydomain.com</td>
+    </tr>
+    <tr>
+      <td class="pFileReference" valign="top">sub.mydomain.com</td>
+      <td class="pFileReference">#Allow relaying for/to
+sub.mydomain.com and any host in that domain</td>
+    </tr>
+    <tr>
+      <td class="pFileReference" valign="top">10.2</td>
+      <td class="pFileReference">#Allow relaying from all hosts in the
+IP net 10.2.*.*</td>
+    </tr>
+  </tbody>
+</table>
+<h2><a name="diag"></a>Simple Diagnostics</h2>
+<p>Although sendmail is hard to grasp, there is an abundance of
+documentation on how to use, configure, and validate your sendmail
+configuration. This abundant information is available online and in
+print. The following tidbits are some of the commands I've used to
+check my sendmail configurations, they are in no special order and in
+many cases not cleverly written. For a list of reference resoureces
+visit the Sendmail site <a href="http://www.sendmail.org">http//www.sendmail.org</a></p>
+<h3><a name="diagWhat"></a>What's in the Queue</h3>
+<p>To get a listing of mail stuck in the queue (not yet delivered and
+for what reason) then you can use the "-bp" option of sendmail. For
+example:</p>
+<table class="Code" border="0" width="800">
+  <tbody>
+    <tr>
+      <td class="Code" nowrap="nowrap">
+      <p>#<b> sendmail -bp</b></p>
+      </td>
+    </tr>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/var/spool/mqueue
+(1 request)<br>
+----Q-ID---- --Size-- -----Q-Time-----
+------------Sender/Recipient------------<br>
+e6UBU7B02385&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 24 Mon Jul 31 00:30
+anat@myserver.com<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+(host map: lookup (externalserver.com): deferred)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+samt@externalserver.com </td>
+    </tr>
+  </tbody>
+</table>
+<h3><a name="diagDebug"></a>Debugging &amp; Verbose Mode</h3>
+<p>-v (verbose) -d (debug) are two modes which print extra diagnostic
+information on the screen while processing.</p>
+<p class="pScreenOutput">sendmail -v user-id &lt; info-to-send </p>
+<p>The -v (verbose) option will display sendmail's activities in trying
+to send mail to user-id. I find this especially useful when trying to
+understand why sendmail fails trying to send to an external host. You
+can use a user-id on another machine to watch what sendmail's doing in
+trying to send your mail to that external host. For example:</p>
+<p class="pScreenOutput">sendmail -v user-id@remotehost.com &lt;
+info-to-send</p>
+<p>The above will display the sendmail session trying to connect to the
+SMTP port at remotehost.com. With the details of the connection you can
+see any rejection messages from the external host.</p>
+<p class="pScreenOutput">sendmail -d## user-id &lt; info-to-send</p>
+<p>The -d (debug) option (as it should) can generate a lot of
+information and it is up to you to select the level of information that
+is useful for isolating the cause of your problem. Further
+documentation should be available at http://www.sendmail.org otherwise
+I have seen the use of -d40 (limit output to information about the
+queue) -d0 (produce general debugging information, as shown in earlier
+example above.)</p>
+<p>To get a comprehensive listing from sendmail of the current
+settings, use the -d option without qualifiers.</p>
+<p class="Code"><b># sendmail -d &lt; /dev/null</b></p>
+<p>The screen output will display the compiled in options and some of
+the settings configured for sendmail. This is not a comprehensive list
+of settings.</p>
+<h3><a name="diagMX"></a>Looking Up MX records</h3>
+<p class="pFileReference">[ref: dig(1)]</p>
+<p>sendmail prioritises mail using the MX records given by your DNS
+server. It may be useful sometimes to verify your assumptions of what
+the MX records are saying by interrogating the MX records with <i>dig</i>,
+and to follow a mail message using <i>sendmail -v</i>. </p>
+<table class="pScreenOutput" border="0" width="800">
+  <tbody>
+    <tr>
+      <td class="Code" nowrap="nowrap"> #<b> dig mydomain.com mx </b> </td>
+    </tr>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">; &lt;&lt;&gt;&gt; DiG
+2.2 &lt;&lt;&gt;&gt; samnet.com mx<br>
+;; res options: init recurs defnam dnsrch<br>
+;; got answer:<br>
+;; -&gt;&gt;HEADER&lt;&lt;- opcode: QUERY, status: NOERROR, id: 40547<br>
+;; flags: qr aa rd ra; Ques: 1, Ans: 2, Auth: 2, Addit: 2<br>
+;; QUESTIONS:<br>
+;;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mydomain.com, type = MX, class =
+IN<br>
+      <br>
+;; ANSWERS:<br>
+mydomain.com.&nbsp;&nbsp;&nbsp;&nbsp; 86000&nbsp;&nbsp;
+MX&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;50 mail2.mydomain.com.<br>
+mydomain.com.&nbsp;&nbsp;&nbsp;&nbsp; 86000&nbsp;&nbsp;
+MX&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;20 mail.mydomain.com.<br>
+      <br>
+;; AUTHORITY RECORDS:<br>
+mydomain.com.&nbsp;&nbsp;&nbsp;&nbsp; 86000&nbsp;&nbsp;
+NS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dns.mydomain.com.<br>
+mydomain.com.&nbsp;&nbsp;&nbsp;&nbsp; 86000&nbsp;&nbsp;
+NS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dns2.mydomain.com.<br>
+      <br>
+;; ADDITIONAL RECORDS:<br>
+mail2.mydomain.com.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+86000&nbsp;&nbsp; A&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 192.168.101.130<br>
+mail.mydomain.com.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;86000&nbsp;&nbsp;
+A&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 192.168.101.1<br>
+      <br>
+;; Total query time: 3 msec<br>
+;; FROM: iwill to SERVER: default -- 192.168.101.1<br>
+;; WHEN: Tue Aug&nbsp;&nbsp;1 09:06:47 2000<br>
+;; MSG SIZE&nbsp;&nbsp;sent: 28&nbsp;&nbsp;rcvd: 140</td>
+    </tr>
+  </tbody>
+</table>
+<h2>Dial-Up Mail Serving?</h2>
+<p>A few of the places we're working in do not have a live Internet
+connection, or prefers to process the world mail queue on a scheduled
+basis. On a dial-up class machine, we do not want the mail server
+attempting to send mail on every message and the below is one
+configuration that may be useful.</p>
+<p>Essentially, we want the mail server to deliver local mail
+immediately, but hold all external mail until we process the queue. The
+concept is to define mail as expensive. For more details on
+implementation, consult the HOWTO Sendmail and dial-up modem internet
+by Wouter Hanegraaff</p>
+<p class="pScreenOutput">define(SMTP_MAILER_FLAGS, e)<br>
+define(`confTO_QUEUEWARN', `16h')<br>
+define(`SMART_HOST', `myISP')<br>
+MAILER(local)dnl<br>
+MAILER(smtp)dnl</p>
+<p>I think from the above, smtp of local mail will get sent straight
+away. The<br>
+queue will only need to be processed when external mail needs to be<br>
+delivered (ie. when online)</p>
+<p class="pScreenOutput">From the docs:</p>
+<p class="pScreenOutput"><b>Mailer Flag</b><br>
+<b>e</b> This mailer is expensive to connect to, so try to avoid
+connecting normally; any necessary connection will occur during a queue
+run.</p>
+<p class="pScreenOutput">&nbsp;</p>
+<p class="pScreenOutput"><b>Options:</b><br>
+There are a number of global options that can be set from a
+configuration file. Options are represented by full words; some are
+also representable as single characters for back compatibility.</p>
+<p class="pScreenOutput">&nbsp;</p>
+<p class="pScreenOutput">The syntax of this line is:<br>
+<b>O option=value</b></p>
+<p class="pScreenOutput">&nbsp;</p>
+<p class="pScreenOutput">This sets option option to be value. Note that
+there must be a space between <br>
+the letter 'O' and the name of the option. An older version is:<br>
+<b>Oo value </b></p>
+<p class="pScreenOutput">&nbsp;</p>
+<p class="pScreenOutput">where the option o is a single character.
+Depending on the option, value may be a string, an integer, a boolean
+(with legal values "t", "T", "f", or "F"; the default is TRUE), or a
+time interval.</p>
+<p class="pScreenOutput">&nbsp;</p>
+<p class="pScreenOutput">The options supported (with the old, one
+character names in brackets) are:</p>
+<p class="pScreenOutput"><span class="pScreenOutput">HoldExpensive [c]
+If an outgoing mailer is marked as being expensive, don't connect
+immediately. This requires that queueing be compiled in, since it will
+depend on a queue run process to actual</span>ly send the mail.</p>
+<h2>Other Security Items</h2>
+<p>ESMTP</p>
+<p>Authenticated Mail Relay. </p>
+<h2><a name="author"></a>Author and Copyright</h2>
+<p>Copyright (c) 2000/1/2 Samiuela LV Taufa. All Rights Reserved.</p>
+<p>I reserve the right to be totally incorrect even at the best advice
+of betters. In other words, I'm probably wrong in enough places for you
+to call me an idiot, but don't 'cause you'll hurt my sensibilities,
+just tell me where I went wrong and I'll try again.</p>
+<p>You are permitted and encouraged to use this guide for fun or for
+profit as you see fit. If you republish this work in what-ever form, it
+would be nice (though not enforceable) to be credited.</p>
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+  <tbody>
+    <tr>
+      <td class="block" bgcolor="#cccccc" valign="middle" width="100%"><strong>
+      <p class="block">&nbsp;Serving Up Mail - sendmail, pop, imap
+OpenBSD</p>
+      </strong></td>
+    </tr>
+  </tbody>
+</table>
+<p><font color="#808080" face="sans-serif" size="-2"><strong>Copyright&nbsp;
+&copy; 2000/1/2
+<a href="http://www.nomoa.com">NoMoa.COM</a> All rights reserved.</strong></font></p>
+</body>
+</html>

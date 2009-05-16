@@ -1,0 +1,498 @@
+
+<!doctype html public "-//W3C//DTD HTML 4.0 Transitional//EN">
+<!--      Shameless Design ripped from Zope.org     -->
+<!--   The stuff is installed, but still need works.-->
+<html>
+<head>
+<title>=8&gt; NoMoa.com/bsd OpenBSD Table of Contents</title>
+<meta content="text/html; charset=windows-1252" http-equiv="Content-Type">
+<link rel="STYLESHEET" type="text/css" href="openbsd.css">
+<script language="JavaScript">
+<!--
+
+function newImage(arg) {
+	if (document.images) {
+		rslt = new Image();
+		rslt.src = arg;
+		return rslt;
+	}
+}
+
+function changeImages() {
+	if (document.images && (preloadFlag == true)) {
+		for (var i=0; i<changeImages.arguments.length; i+=2) {
+			document[changeImages.arguments[i]].src = changeImages.arguments[i+1];
+		}
+	}
+}
+
+var preloadFlag = false;
+function preloadImages() {
+	if (document.images) {
+		openbsd_over = newImage("mmedia/openbsd-over.gif");
+		openbsd_down = newImage("mmedia/openbsd-down.gif");
+		preloadFlag = true;
+	}
+}
+
+// -->
+</script>
+<!-- End Preload Script -->
+</head>
+
+<body bgcolor="#FFFACD" background="mmedia/head_light.gif" bgproperties="FIXED" onLoad="preloadImages();">
+<basefont face="Verdana, Arial, Helvetica, sans-serif" size="2"> 
+<table border="0" cellpadding="0" cellspacing="0">
+	<tr>
+		
+    <td align="middle" bgcolor="#000000" width="1">&nbsp;</td>
+		
+    <td bgcolor="#6699cc" colspan="2" valign="top">
+<a class="anchBlue" href="http://www.nomoa.com/bsd" 
+   onMouseOver="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;"
+   onMouseOut="changeImages('openbsd', 'mmedia/openbsd.gif'); return true;"
+   onMouseDown="changeImages('openbsd', 'mmedia/openbsd-down.gif'); return true;"
+   onMouseUp="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;">
+   <img name="openbsd"  align="absMiddle" 
+        alt="OpenBSD ... The Only way to Go ..." border="0" height="50"
+        src="mmedia/openbsd.gif" width="368"></a>
+</td>
+		
+    <td align="right" valign="top" nowrap bgcolor="#6699CC"><font style="BACKGROUND-COLOR: #6699cc">	
+      NoMoa? | Tonga </font></td>
+		
+    <td width="115" height="50" align="right" valign="bottom" bgcolor="#6699cc"><img alt="" border=0 height=50 src="mmedia/corner-rounder_blue1.gif" width=14></td>
+	</tr>
+	<tr>
+		
+    <td align="middle" bgcolor="#000000" width="1">&nbsp;</td>
+		
+    <td bgcolor="#6699cc" valign="top" width="184"> 
+      <h3> &nbsp;OpenBSD </h3>
+      <p><a class=anchBlue href="installation.htm">Installing</a><br>
+        <a class=anchBlue href="x-windows3.htm">X-Windows</a><br>
+        <a class=anchBlue href="samba_openbsd3.2.htm">File &amp; Print Services</a><br>
+        <a class=anchBlue href="mailServer.htm">Mail Services</a><br>
+        <a class=anchBlue href="mysql.htm">MySQL Server</a><br>
+        <a class=anchBlue href="ftpServer.htm">FTP Server</a><br>
+		<a class=anchBlue href="dns.htm">DNS Server</a><br>
+		</p>
+      <hr noshade size="0" width="95%">
+      <h5>Dynamic Web</h5>
+      <p><a class=anchBlue href="apache.htm">Web Services</a><br>
+        <a class=anchBlue href="php3.htm">Server Scripts PHP</a><br>
+        <a class=anchBlue href="horde.htm">Horde PHPLib</a><br>
+        <a class=anchBlue href="imp.htm"> webMail </a><br>
+        <a class=anchBlue href="imp-c.htm">Customizing IMP</a><br>
+        <a class=anchBlue href="twig.htm"> Group Ware</a><br>
+ </p>
+      <hr noshade size="0" width="95%">
+      <h5>Works In Progress</h5>
+      <p><a class=anchBlue href="firewalling.htm">Firewalling</a><br>
+        <a class="anchBlue2" href="sudo.htm">Restricted SuperUser</a><br>
+        <a class="anchBlue2" href="openssl.htm">Secured Communications</a><br>
+        <a class="anchBlue2" href="squid.htm">Web Caching/Proxy</a></p>
+<hr noshade size="0" width="95%">
+      <p>Please e-mail me at <a class="anchBlue2" href="mailto:samt@cafe.afe.to">samt@cafe.afe.to</a> when 
+        you find errors in the instructions on these pages. I prefer not to mislead 
+        people unknowingly let alone being ignorant of the truth.</p>
+      <p>Note: Use of OpenBSD logos in this publication in no way implies that 
+        the OpenBSD project or any member of the OpenBSD team sanctions nor approves 
+        of such use. I like the graphic. </p>
+    </td>
+		<td colspan="2" valign="top">
+			
+      <table border="0" cellpadding="0" cellspacing="0" width="100%">
+        <tr valign="top" align="left"> 
+          <td width="400"> 
+            <h1>Table of Contents</h1>
+            <h2><a name="up"></a>Up and Running</h2>
+            <p>
+			<ol>
+              <li><a class=anchBlue href="installation.htm">First Time Install 
+                Aids</a> - OpenBSD &amp; GNU 
+                <ul>
+                  <li><a class="anchBlue2" href="installation.htm#introduction">Introduction</a></li>
+                  <li><a class="anchBlue2" href="installation.htm#removable">Configuring Removable 
+                    Storage Devices (CDs, Zip Drives, etc.)</a></li>
+                  <li><a class="anchBlue2" href="installation.htm#pkg_add">Adding additional Packages</a></li>
+                  <li><a class="anchBlue2" href="installation.htm#adduser">Adding a New User with 
+                    root access privileges</a></li>
+                  <li><a class="anchBlue2" href="installation.htm#chpass">Changing details of a 
+                    User</a></li>
+                  <li><a class="anchBlue2" href="installation.htm#bash">Configuring&nbsp;bash&nbsp;</a></li>
+                  <li><a class="anchBlue2" href="installation.htm#afterboot">Afterboot Install </a> 
+                    <ul>
+                      <li><a class="anchBlue2" href="installation.htm#ab_date">Date. Setting the 
+                        Date &amp; Time</a></li>
+                      <li><a class="anchBlue2" href="installation.htm#ab_timezone">TimeZone. Setting 
+                        the Time Zone</a></li>
+                      <li><a class="anchBlue2" href="installation.htm#ab_network">Network. Setting 
+                        the basic network services.</a></li>
+                      <li><a class="anchBlue2" href="installation.htm#ab_daily">Daily, Weekly, Monthly 
+                        Scripts</a></li>
+                      <li><a class="anchBlue2" href="installation.htm#ab_rootbackup">Root Backup</a></li>
+                      <li><a class="anchBlue2" href="installation.htm#ab_cron">Cron - scheduled 
+                        commands</a></li>
+                    </ul>
+                  </li>
+                  <li><a class="anchBlue2" href="installation.htm#misc">Miscellaneous</a></li>
+                </ul>
+                <ul>
+                  <li><a class="anchBlue2" href="installation.htm#findfile">Making it easier to 
+                    find files</a></li>
+                  <li><a class="anchBlue2" href="installation.htm#singleuser">Booting in Single 
+                    User Mode</a></li>
+                  <li><a class="anchBlue2" href="installation.htm#movdir">Moving Directories Safely</a></li>
+                  <li><a class="anchBlue2" href="installation.htm#gentools">General Tools I install</a> 
+                  </li>
+                </ul>
+              <li><a class=anchBlue href="x-windows3.htm">X a friendly Window 
+                on Unix</a> - XFree86, KDE, &amp; vnc 
+                <ul>
+                  <li><a class="anchBlue2" href="x-windows3.htm#introduction">Introduction</a></li>
+                  <li><a class="anchBlue2" href="x-windows3.htm#files">Installing 
+                    needed X-Files</a></li>
+                  <li><a class="anchBlue2" href="x-windows3.htm#allowX">Allowing 
+                    X to run (kernel config)</a></li>
+                  <li><a class="anchBlue2" href="x-windows3.htm#determine">Determining 
+                    your System Configuration </a></li>
+                  <li><a class="anchBlue2" href="x-windows3.htm#configure">Configuring 
+                    the base X environment </a> 
+                    <ul>
+                      <li><a class="anchBlue2" href="x-windows3.htm#mouse">Quick 
+                        Troubleshoot - mouse not working</a></li>
+                    </ul>
+                  </li>
+                  <li><a class="anchBlue2" href="x-windows3.htm#boot">Booting 
+                    OpenBSD straight into X </a></li>
+                  <li><a class="anchBlue2" href="x-windows3.htm#kde">KDE X window 
+                    manager and OpenBSD 2.7</a> 
+                    <ul>
+                      <li><a class="anchBlue2" href="x-windows3.htm#bootkde">Setting 
+                        KDE as default desktop</a></li>
+                    </ul>
+                  <li><a class="anchBlue2" href="x-windows3.htm#vnc">vnc Remote 
+                    Administration - in X11</a> </li>
+                </ul>
+              <li><a class="anchBlue2" href="dualboot.htm">Multibooting</a> - Living with another 
+                OS on the drive 
+                <ul>
+                  <li><a class="anchBlue2" href="dualboot.htm#introduction">Introduction</a></li>
+                  <li><a class="anchBlue2" href="dualboot.htm#partition">Partitioning the Hard Disk</a></li>
+                  <li><a class="anchBlue2" href="dualboot.htm#fdisk">Installing OpenBSD - fdisk</a> 
+                    <ul>
+                      <li><a class="anchBlue2" href="dualboot.htm#disklabel">disklabel</a></li>
+                    </ul>
+                  </li>
+                  <li><a class="anchBlue2" href="dualboot.htm#osbs1">Installing OS Boot Selector</a></li>
+                  <li><a class="anchBlue2" href="dualboot.htm#osbs2b8">OS-BS 2.0Beta8</a></li>
+                  <li><a class="anchBlue2" href="dualboot.htm#mattsoft">mattsoft Boot Manager</a></li>
+                  <li><a class="anchBlue2" href="dualboot.htm#pm5">Partition Magic 5.0</a></li>
+                  <li><a class="anchBlue2" href="dualboot.htm#ntfs">NTFS - Windows NT 4 / 2000 and 
+                    OpenBSD</a></li>
+                  <li><a class="anchBlue2" href="dualboot.htm#relref">Relative Reference</a></li>
+                </ul>
+              <li><a class=anchBlue href="mailServer.htm">Mail Services</a> - 
+                Sendmail, pop, imap 
+                <ul>
+                  <li><a class="anchBlue2" href="mailServer.htm#introduction">Introduction</a></li>
+                  <li> <a class="anchBlue2" href="mailServer.htm#smtp">Process Queued Mail and Recieve 
+                    incoming Mail</a> 
+                    <ul>
+                      <li><a class="anchBlue2" href="mailServer.htm#inetd">the inetd (alternative)</a></li>
+                    </ul>
+                  </li>
+                  <li> <a class="anchBlue2" href="mailServer.htm#pop">Processing pop requests </a> 
+                    <ul>
+                      <li><a class="anchBlue2" href="mailServer.htm#imap">using the IMAP Toolkit 
+                        (alternative)</a></li>
+                    </ul>
+                  </li>
+                  <li><a class="anchBlue2" href="mailServer.htm#configure">Sendmail Configuration 
+                    </a> 
+                    <ul>
+                      <li><a class="anchBlue2" href="mailServer.htm#whoami">who am i?</a></li>
+                      <li><a class="anchBlue2" href="mailServer.htm#slow">slow startup - gethostbyname() 
+                        blocks</a> </li>
+                      <li><a class="anchBlue2" href="mailServer.htm#relay">Relaying Access Denied</a></li>
+                    </ul>
+                  </li>
+                  <li><a class="anchBlue2" href="mailServer.htm#diag">Simple Diagnostics</a> 
+                    <ul>
+                      <li><a class="anchBlue2" href="mailServer.htm#diagWhat">What's in the QUEUE</a></li>
+                      <li><a class="anchBlue2" href="mailServer.htm#diagDebug">Debug and Verbose 
+                        Mode</a></li>
+                      <li><a class="anchBlue2" href="mailServer.htm#diagMX">Looking up MX Records</a> 
+                      </li>
+                    </ul>
+                  </li>
+                </ul>
+            </ol>
+            <h2><a name="serverservices"></a>Server Services</h2>
+            <ol>
+              <li><a class=anchBlue href="samba_openbsd3.2.htm">File &amp; Printer sharing, 
+                MS Windows</a> - Samba 
+                <ul>
+                  <li><a class="anchBlue2" href="samba_openbsd3.2.htm#introduction">Introduction</a></li>
+                  <li><a class="anchBlue2" href="samba_openbsd3.2.htm#packaged">Installing the Packaged Version</a></li>
+                  <li><a class="anchBlue2" href="samba_openbsd3.2.htm#service">Starting samba with each reboot</a></li>
+                  <ul>
+                    <li><a class="anchBlue2" href="samba_openbsd3.2.htm#inetd">Starting through inetd</a></li>
+                  </ul>
+                  <li><a class="anchBlue2" href="samba_openbsd3.2.htm#test">Testing the installation</a></li>
+                  <li><a class="anchBlue2" href="samba_openbsd3.2.htm#swat">SWAT - The Samba Web Administration Tool</a></li>
+                  <li><a class="anchBlue2" href="samba_openbsd3.2.htm#smbadduser">Adding Users</a></li>
+                  <li><a class="anchBlue2" href="samba_openbsd3.2.htm#rolling">Rolling your own Samba Server</a></li>
+                  <li><a class="anchBlue2" href="samba_openbsd3.2.htm#winNT">Co-habiting with Windows NT PDC</a></li>
+                  <ul>
+                    <li><a class="anchBlue2" href="samba_openbsd3.2.htm#winNTadd">Adding the Samba Server to the Primary 
+                      Domain Controller</a></li>
+                    <li><a class="anchBlue2" href="samba_openbsd3.2.htm#winNTjoin">Joining the Samba server to the Primary 
+                      Domain Controller</a></li>
+                    <li><a class="anchBlue2" href="samba_openbsd3.2.htm#winNTupdate">Updating the /etc/samba/smb.conf</a></li>
+                  </ul>
+                  <li><a class="anchBlue2" href="samba_openbsd3.2.htm#stunnel">Using stunnel to secure SWAT password 
+                    communications</a> </li>
+                </ul>
+              <li><a class=anchBlue href="mysql.htm">Database Server</a> - mySQL 
+                <ul>
+                  <li><a class="anchBlue2" href="mysql.htm#introduction">Introduction</a></li>
+                  <li><a class="anchBlue2" href="mysql.htm#mysql">Installing</a></li>
+                  <li><a class="anchBlue2" href="mysql.htm#testing">Testing the Installation</a></li>
+                  <li><a class="anchBlue2" href="mysql.htm#starting">Starting MySQL</a></li>
+                  <li><a class="anchBlue2" href="mysql.htm#stopping">Stopping MySQL</a></li>
+                  <li><a class="anchBlue2" href="mysql.htm#usability">Usability Assistance Tip</a></li>
+                  <li><a class="anchBlue2" href="mysql.htm#ref">Related Reference</a></li>
+                </ul>
+              <li><a class=anchBlue href="ftpServer.htm">FTP - Setting up a secure 
+                ftp server</a> - ftpd 
+                <ul>
+                  <li><a class="anchBlue2" href="ftpServer.htm#introduction">Introduction</a></li>
+                  <li><a class="anchBlue2" href="ftpServer.htm#shell">Configure ftp Login</a></li>
+                  <li><a class="anchBlue2" href="ftpServer.htm#directory">Configure Directory ownership, permissions</a></li>
+                  <li><a class="anchBlue2" href="ftpServer.htm#restrict">Restrict User Access</a></li>
+                  <li><a class="anchBlue2" href="ftpServer.htm#enable">Enable ftpd through /etc/rc.conf</a> </li>
+                </ul>
+              <li><a class=anchBlue href="dns.htm">DNS Server</a> - named</li>
+              <ul>
+                <li><a class="anchBlue2" href="dns.htm#intro">Introduction</a></li>
+                <li><a class="anchBlue2" href="dns.htm#preliminary">Preliminary Information</a></li>
+                <li><a class="anchBlue2" href="dns.htm#starting">Starting named</a></li>
+                <li><a class="anchBlue2" href="dns.htm#configure">named.boot - Configuring DNS</a></li>
+                <li><a class="anchBlue2" href="dns.htm#resolv">resolv.conf - name resolution path</a></li>
+                <li><a class="anchBlue2" href="dns.htm#mydomain.com.zone">db.mydomain.com.zone - Authoritative 
+                  forward lookup</a></li>
+                <li><a class="anchBlue2" href="dns.htm#mydomain.com.rev">db.mydomain.com.rev - Authoritative 
+                  reverse name lookup</a></li>
+                <li><a class="anchBlue2" href="dns.htm#localhost.zone">db.localhost.zone - The special 
+                  localhost ip</a></li>
+                <li><a class="anchBlue2" href="dns.htm#localhost.rev">db.localhost.rev - reverse name lookup 
+                  on localhost</a></li>
+                <li><a class="anchBlue2" href="dns.htm#all-zero">db.all-zero.rev - reverse name lookup 
+                  on 0.0.0.0 address</a></li>
+                <li><a class="anchBlue2" href="dns.htm#all-one">db.all-one.rev - reverse name lookup no 
+                  255.255.255.255 address</a></li>
+                <li><a class="anchBlue2" href="dns.htm#cache">root.cache</a> </li>
+              </ul>
+            </ol>
+            <h2><a name="dynamicweb"></a>Creating Dynamic Web Services</h2>
+            <p>
+<ol>
+            <li><a class=anchBlue href="apache.htm">Web Services</a> - Apache 
+                <ul>
+                  <li><a class="anchBlue2" href="apache.htm#intro">Introduction</a> 
+                  <li><a class="anchBlue2" href="apache.htm#setup">Setting Apache to start every time the 
+                    system is started/restarted </a> 
+                  <li><a class="anchBlue2" href="apache.htm#apachectl">Manually starting Apache </a> 
+                  <li><a class="anchBlue2" href="apache.htm#test">Testing that it works </a> 
+                  <li><a class="anchBlue2" href="apache.htm#mod_status">Setting some status configurations 
+                    </a> 
+                  <li><a class="anchBlue2" href="apache.htm#mod_userdir">Creating User personal web pages 
+                    </a> 
+                    <ul>
+                      <li><a class="anchBlue2" href="apache.htm#restart"> Restart apache </a> 
+                      <li><a class="anchBlue2" href="apache.htm#public_html"> Create public_html in user accounts 
+                        </a> 
+                      <li><a class="anchBlue2" href="apache.htm#userid"> Access user accounts with the URL 
+                        form http://server-name/~user-id/ </a></li>
+                    </ul>
+                  <li><a class="anchBlue2" href="apache.htm#securessl">Securing the Site with SSL</a> </li>
+                </ul>
+              <li><a class=anchBlue href="php3.htm">Server Scripting PHP </a> 
+                - php3 
+                <ul>
+                  <li><a class="anchBlue2" href="php3.htm#introduction">Introduction</a></li>
+                  <li><a class="anchBlue2" href="php3.htm#php3">Installing php3 </a></li>
+                  <li><a class="anchBlue2" href="php3.htm#compiling">compiling from source</a></li>
+                  <li><a class="anchBlue2" href="php3.htm#configuring">configuring apache</a></li>
+                  <li><a class="anchBlue2" href="php3.htm#testing">testing the installation</a></li>
+                </ul>
+              <li><a class=anchBlue href="horde.htm">Horde/PHPLib</a> - horde,&nbsp;PHPLib 
+                <ul>
+                  <li><a class="anchBlue2" href="horde.htm#introduction">Introduction</a></li>
+                  <li><a class="anchBlue2" href="horde.htm#install"> Installing </a> </li>
+                  <li><a class="anchBlue2" href="horde.htm#configureH">Configuring horde/PHPLib </a></li>
+                  <li><a class="anchBlue2" href="horde.htm#configureA">Configuring Apache </a></li>
+                  <li><a class="anchBlue2" href="horde.htm#testingH">Testing the horde installation </a></li>
+                  <li><a class="anchBlue2" href="horde.htm#testingP">Testing the PHPLib installation</a> 
+                  </li>
+                </ul>
+              <li><a class=anchBlue href="imp.htm">webMail </a>- IMP 
+                <ul>
+                  <li><a class="anchBlue2" href="imp.htm#shell">Introduction</a></li>
+                  <li><a class="anchBlue2" href="imp.htm#prereq">Pre-requisites</a></li>
+                  <li><a class="anchBlue2" href="imp.htm#imp">Installing</a></li>
+                  <li><a class="anchBlue2" href="imp.htm#configure">Configuring IMP</a></li>
+                  <li><a class="anchBlue2" href="imp.htm#security">Securing the Installation</a> </li>
+                </ul>
+              <li><a class=anchBlue href="imp-c.htm">Customizing IMP</a> 
+                <ul>
+                  <li><a class="anchBlue2" href="imp-c.htm#introduction">Introduction</a></li>
+                  <li><a class="anchBlue2" href="imp-c.htm#cover">The Cover Page</a></li>
+                  <li><a class="anchBlue2" href="imp-c.htm#title">The Page Title</a> </li>
+                </ul>
+              <li><a class=anchBlue href="twig.htm">Web - Group Ware</a> - TWIG 
+
+              <ul>
+                <li><a class="anchBlue2" href="twig.htm#intro">Introduction</a></li>
+                <li><a class="anchBlue2" href="twig.htm#requirements">Requirements</a></li>
+                <li><a class="anchBlue2" href="twig.htm#distr">Extracting the Distribution Files</a></li>
+                <li><a class="anchBlue2" href="twig.htm#apache">Configuring Apache</a></li>
+                <li><a class="anchBlue2" href="twig.htm#mysql">Configuring MySQL</a></li>
+                <li><a class="anchBlue2" href="twig.htm#twig">Configuring TWIG</a></li>
+              <ul>
+
+                <li><a class="anchBlue2" href="twig.htm#twig_basic">Basic configuration</a></li>
+                <li><a class="anchBlue2" href="twig.htm#twig_phplib">PHPLib conflict problems</a></li>
+              </ul>
+              <ul>
+                <li><a class="anchBlue2" href="twig.htm#testing">Testing TWIG</a></li>
+              </ul>
+                <li><a class="anchBlue2" href="twig.htm#ref">Related References</a> </li>
+              </ul>
+</ol>
+            <h2><a name="inprogress"></a>Works in Progress </h2>
+            <ul>
+              <li><a class=anchBlue href="firewalling.htm">Firewalls - Keeping 
+                the bad sorts out</a> - ipf &amp; ipnat 
+                <ul>
+                  <li> 
+                </ul>
+              <li> <a class=anchBlue href="sudo.htm">Restricted SuperUser access</a> 
+                - sudo 
+                <ul>
+                  <li> 
+                </ul>
+              <li><a class="anchBlue2" href="openssl.htm">ssh &amp; ssl</a> - Secured Communications 
+                <ul>
+                  <li><a class="anchBlue2" href="openssl.htm#intro">Introduction</a></li>
+                  <li><a class="anchBlue2" href="openssl.htm#createcerts">Self-signed Certificates</a></li>
+                  <li><a class="anchBlue2" href="openssl.htm#ssh">Remote Access with ssh</a> 
+                    <ul>
+                      <li><a class="anchBlue2" href="openssl.htm#sshconfig">Configuring ssh</a></li>
+                    </ul>
+                  </li>
+                  <li><a class="anchBlue2" href="openssl.htm#sshd">Configuring sshd</a></li>
+                  <li><a class="anchBlue2" href="openssl.htm#scp">Copying a file through SSH</a></li>
+                </ul>
+              <li><a class=anchBlue href="squid.htm">Web Caching/Proxying</a> 
+                - squid 
+                <ul>
+                  <li><a class="anchBlue2" href="squid.htm#introduction">Introduction</a> 
+                  <li><a class="anchBlue2" href="squid.htm#squid"> Installation</a> 
+                  <li><a class="anchBlue2" href="squid.htm#starting">Starting Squid</a> 
+                  <li>Transparent Proxy 
+                  <li>Access Controls (ACLS) 
+                  <li>Cache Utilisation Analysis Tools 
+                </ul>
+              </li>
+            </ul>
+
+            </td>
+				</tr>
+			</table></td>
+		
+    <td align="left" valign="top" width="115"> 
+      <h3> U R Ls</h3>
+      <p><b>The OS</b><br>
+        <a class="anchMorone" href="http://www.openbsd.org">OpenBSD</a><br>
+        <a class="anchMorone" href="http://www.openbsd.org/faq/">OpenBSD FAQ</a><br>
+        <a class="anchMorone" href="http://www.deadly.org">OpenBSD Journal</a> 
+      </p>
+      <p><b>General BSD</b><br>
+        <a class="anchMorone" href="http://www.bsdsearch.com">BSD Search</a><br>
+        <a class="anchMorone" href="http://www.bsdtoday.com">BSD Today</a><br>
+        <a class="anchMorone" href="http://daily.daemonnews.org">Daily Daemon</a><br>
+        <a class="anchMorone" href="http://www.daemonnews.org">DaemonNews</a><br>
+        <a class="anchMorone" href="http://www.greasydaemon.com">Greasy Daemon</a><br>
+      </p>
+
+      <p><b>Other BSDs</b><br>
+        <a class="anchMorone" href="http://www.freebsd.com">FreeBSD</a><br>
+        <a class="anchMorone" href="http://www.netbsd.com">NetBSD</a><br>
+        <a class="anchMorone" href="http://www.bsdi.org">BSDi</a><br>
+      </p>
+	  	  
+	  <p><b>Net Services</b><br>
+	  <a class="anchMorone" href="http://www.samba.org">Samba</a><br>
+	  <a class="anchMorone" href="http://www.apache.org">Apache</a><br>
+	  <a class="anchMorone" href="http://www.php.net">PHP</a><br>
+	  <a class="anchMorone" href="http://www.horde.org">Horde/PHPLib</a><br>
+	  <a class="anchMorone" href="http://coombs.anu.edu.au/˜avalon/ipfilter.html">ipf / ipnat</a><br>
+	  
+	  </p>
+	  <p><b>Mail</b><br>
+	  <a class="anchMorone" href="http://www.sendmail.org">Sendmail</a><br>
+        <a class="anchMorone" href="http://www.washington.edu/imap/">UW IMAP</a><br>
+	  <a class="anchMorone" href="http://www.horde.org">IMP</a><br>
+	  <a class="anchMorone" href="http://twig.screwdriver.net">Twig</a><br>
+	  <br>
+	  </p>
+	  
+	  <p><b>The GUI</b><br>
+        <a class="anchMorone" href="http://www.xfree86.org">XFree86</a><br>
+        <a class="anchMorone" href="http://www.kde.org">KDE</a><br>
+        <a class="anchMorone" href="http://www.uk.research.att.com/vnc/">vnc </a><br>
+        <a class="anchMorone" href="http://www.kde.org"><img src="mmedia/knbutton.gif" width="88" height="31" border="0"></a></p>
+	  
+	  <p><b>The GNU</b><br>
+	  <a class="anchMorone" href="http://www.gnu.org">GNU</a></p>
+	  
+	  <p><b>Opinions</b><br>
+        <a class="anchMorone" href="http://www.slashdot.org">Slashdot</a><br>
+        <a class="anchMorone" href="http://www.osopinion.com">OS Opinion</a><br>
+        <a class="anchMorone" href="http://"></a></p>
+
+      <p><b>Databases</b><br>
+        <a class="anchMorone" href="http://www.tcx.se">MySQL</a> </p>
+      <p><b>Oz Shopping</b><br>
+        <a class="anchMorone" href="http://www.lsl.com.au">Linux SL</a></p>
+      </td>
+	</tr>
+	<tr>
+		
+    <td align="middle" bgcolor="#000000" width="1">&nbsp;</td>
+		
+    <td align="right" valign="bottom" bgcolor="#6699cc"> <img alt="" border=0 height=20 src="mmedia/corner-rounder_blue2.gif" width=184 align="right"> 
+      <p></p></td>
+		<td align="middle" class="plain" colspan="2"></td>
+		
+    <td align="left" valign="top" width="115">&nbsp;</td>
+	</tr>
+	<tr>
+		
+    <td width="1">&nbsp;</td>
+		
+    <td width="184">&nbsp;</td>
+		
+    <td width="276">&nbsp;</td>
+		
+    <td width="25">&nbsp;</td>
+		
+    <td width="115">&nbsp;</td>
+	</tr>
+</table>
+<p class="copyright">© <a  class="anchBlue" href="http://www.nomoa.com">NoMoa Publishers</a> 2000,&nbsp;All rights reserved. Caveat Emptor</p>
+</body>
+</html>

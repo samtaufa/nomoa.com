@@ -1,0 +1,100 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+  <title>=8&gt; nomoa.com/bsd OpenBSD - Serving Mail</title>
+  <link rel="STYLESHEET" type="text/css" href="openbsd.css">
+  <script language="JavaScript">
+<!--
+
+function newImage(arg) {
+	if (document.images) {
+		rslt = new Image();
+		rslt.src = arg;
+		return rslt;
+	}
+}
+
+function changeImages() {
+	if (document.images && (preloadFlag == true)) {
+		for (var i=0; i<changeImages.arguments.length; i+=2) {
+			document[changeImages.arguments[i]].src = changeImages.arguments[i+1];
+		}
+	}
+}
+
+var preloadFlag = false;
+function preloadImages() {
+	if (document.images) {
+		openbsd_over = newImage("mmedia/openbsd-over.gif");
+		openbsd_down = newImage("mmedia/openbsd-down.gif");
+		preloadFlag = true;
+	}
+}
+
+// -->
+  </script><!-- End Preload Script -->
+</head>
+<body onload="preloadImages();" bgcolor="#fffacd">
+<p class="logo">
+<a class="anchBlue" href="http://www.nomoa.com/bsd"
+ onmouseover="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;"
+ onmouseout="changeImages('openbsd', 'mmedia/openbsd.gif'); return true;"
+ onmousedown="changeImages('openbsd', 'mmedia/openbsd-down.gif'); return true;"
+ onmouseup="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;">
+<img name="openbsd" alt="OpenBSD ... The Only way to Go ..."
+ src="mmedia/openbsd.gif" align="middle" border="0" height="50"
+ width="368"></a></p>
+<h1> Serving Mail with Postfix, Dovecot</h1>
+<hr color="fuchsia">
+<p> Table of Contents: </p>
+<ul>
+  <li><a href="#introduction">Introduction</a></li>
+	<li>Postfix</li>
+	<li>Postfixadmin</li>
+	<li>Dovecot</li>
+  <li><a href="#author">Author and Copyright</a></li>
+</ul>
+<hr color="fuchsia">
+<h2><a name="introduction"></a>Introduction</h2>
+<p class="pFileReference">[Revised using OpenBSD 4.0] </p>
+<p>E-Mail services on the Internet exchange messages through a
+  clients/servers mechanism where the client sends and retrieves mail
+  from servers who store these messages for future forwarding (store and
+  forward.) Three components of e-mail (as noted above) is the service
+  for (a) clients to receive their mail (b) servers to receive mail from
+  clients 'store', and (c) servers to 'forward' stored mail. </p>
+<p> The OpenBSD base install provides a functioning Mail Server from the
+<a href="http://www.sendmail.org">http://www.sendmail.org</a> project and our 
+documentation is at <a href="sendmail.htm">sendmail.htm</a>.</p>
+<p> &nbsp;</p>
+<h2>Postfix</h2>
+<p><a href="postfix.htm">postfix.htm</a></p>
+<h2>Postfixadmin</h2>
+<p><a href="postfixadmin.htm">postfixadmin.htm</a></p>
+<h2>Dovecot</h2>
+<p><a href="dovecot.htm">dovecot.htm</a></p>
+<p>&nbsp;</p>
+<h2><a name="author"></a>Author and Copyright</h2>
+<p>Copyright (c) 20007 Samiuela LV Taufa. All Rights Reserved.</p>
+<p>I reserve the right to be totally incorrect even at the best advice
+of betters. In other words, I'm probably wrong in enough places for you
+to call me an idiot, but don't 'cause you'll hurt my sensibilities,
+just tell me where I went wrong and I'll try again.</p>
+<p>You are permitted and encouraged to use this guide for fun or for
+profit as you see fit. If you republish this work in what-ever form, it
+would be nice (though not enforceable) to be credited.</p>
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+  <tbody>
+    <tr>
+      <td class="block" bgcolor="#cccccc" valign="middle" width="100%"><strong>
+      <p class="block">&nbsp;Serving Up Mail - sendmail, pop, imap
+OpenBSD</p>
+      </strong></td>
+    </tr>
+  </tbody>
+</table>
+<p><font color="#808080" face="sans-serif" size="-2"><strong>Copyright&nbsp;
+&copy; 2000/1/2
+<a href="http://www.nomoa.com">NoMoa.COM</a> All rights reserved.</strong></font></p>
+</body>
+</html>

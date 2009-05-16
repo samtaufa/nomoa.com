@@ -1,0 +1,1626 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0//EN">
+<html>
+<head>
+  <title>=8&gt; nomoa.com/bsd OpenBSD - General Configuration Aids for
+newbies</title>
+  <link rel="STYLESHEET" type="text/css" href="openbsd.css">
+  <script language="JavaScript">
+<!--
+
+function newImage(arg) {
+	if (document.images) {
+		rslt = new Image();
+		rslt.src = arg;
+		return rslt;
+	}
+}
+
+function changeImages() {
+	if (document.images && (preloadFlag == true)) {
+		for (var i=0; i<changeImages.arguments.length; i+=2) {
+			document[changeImages.arguments[i]].src = changeImages.arguments[i+1];
+		}
+	}
+}
+
+var preloadFlag = false;
+function preloadImages() {
+	if (document.images) {
+		openbsd_over = newImage("mmedia/openbsd-over.gif");
+		openbsd_down = newImage("mmedia/openbsd-down.gif");
+		preloadFlag = true;
+	}
+}
+
+// -->
+  </script><!-- End Preload Script -->
+</head>
+<body onload="preloadImages();" bgcolor="#fffacd">
+<p class="logo">
+<a class="anchBlue" href="http://www.nomoa.com/bsd"
+ onmouseover="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;"
+ onmouseout="changeImages('openbsd', 'mmedia/openbsd.gif'); return true;"
+ onmousedown="changeImages('openbsd', 'mmedia/openbsd-down.gif'); return true;"
+ onmouseup="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;">
+<img name="openbsd" alt="OpenBSD ... The Only way to Go ..."
+ src="mmedia/openbsd.gif" align="middle" border="0" height="50"
+ width="368"></a></p>
+<h1> First Time - General Configuration Aids</h1>
+<p>Table of Contents</p>
+<ul>
+  <li><a href="#introduction">Introduction</a></li>
+  <li><a href="#removable">Configuring Removable Storage Devices</a></li>
+  <ul>
+    <li><a href="#instFSTable" class="anchBlue">The File System Table
+(/etc/fstab)</a></li>
+    <li><a href="#instMountPoints" class="anchBlue">Mount Points for
+Removable Media (nodes)</a></li>
+    <li><a href="#instEX" class="anchBlue">Example CDs, and SCSI</a></li>
+    <ul>
+      <li><a href="#instEXMountPoints" class="anchBlue">The Mount
+Points / nodes</a></li>
+      <li><a href="#instEXManualTest">Manually Testing for a Connection</a></li>
+      <li><a href="#instEXupdateFSTable" class="anchBlue">Updating the
+File System Table</a><br>
+      </li>
+    </ul>
+  </ul>
+  <li><a href="#instPackageManagement" class="anchBlue">Package
+Management - adding programs</a></li>
+  <ul>
+    <li><a href="#installPMpico" class="anchBlue">Example: Installing a
+nice little editor</a></li>
+    <li><a href="#instPMbash2" class="anchBlue">Example: Installing
+Bash 2 - local</a></li>
+    <li><a href="#instPMbash2ftp" class="anchBlue">Example: Installing
+Bash 2 - ftp</a></li>
+    <ul>
+      <li><a href="#instPMdontknow" class="anchBlue">Example: Don't
+know the package or ftp directory ?</a></li>
+    </ul>
+  </ul>
+  <li><a href="#instUserAdmin" class="anchBlue">User Administration</a></li>
+  <ul>
+    <li><a href="#instAddUser">Adding a New User</a></li>
+    <li><a href="#instRootAccess">Specifying root access privileges</a></li>
+    <li><a href="#instchpass">Changing details of a User</a></li>
+  </ul>
+  <li><a href="#instSHELL">Shell Profile (bash example)</a></li>
+  <li><a href="#afterboot">Afterboot Install </a>
+    <ul>
+      <li><a href="#ab_date">Date. Setting the Date &amp; Time</a></li>
+      <li><a href="#ab_timezone">TimeZone. Setting the Time Zone</a></li>
+      <li><a href="#ab_network">Network. Setting the basic network
+services.</a></li>
+      <ul>
+        <li><a href="#net_host">host configuration,</a></li>
+        <li><a href="#net_network">network interface configuration,</a>
+and</li>
+        <li><a href="#net_routing">network routing.</a></li>
+      </ul>
+    </ul>
+    <ul>
+      <li><a href="#ab_daily">Daily, Weekly, Monthly Scripts</a></li>
+      <li>Root Backup</li>
+      <li>Cron - scheduled commands</li>
+    </ul>
+  </li>
+  <li><a href="#misc">Miscellaneous</a></li>
+  <ul>
+    <li><a href="#findfile">Making it easier to find files</a></li>
+    <li><a href="#singleuser">Booting in Single User Mode</a></li>
+    <li><a href="#movdir">Moving Directories Safely</a></li>
+    <li><a href="#gentools">General Tools I install</a></li>
+  </ul>
+  <li><a href="#author">Author and Copyright</a></li>
+</ul>
+<hr color="Fuchsia">
+<h2><a name="introduction"></a>Introduction</h2>
+<p class="pFileReference"> [ref: <a
+ href="http://andrsn.stanford.edu/FreeBSD/newuser.html" class="anchBlue">http://andrsn.stanford.edu/FreeBSD/newuser.html</a>]</p>
+<p>The installation instructions that comes with OpenBSD is pretty much
+straight forward. If you bought the CD then it will be a nicely printed
+CD sleeve, clear instructions. If you've downloaded the files from the
+Internet then read the <i>INSTALL</i>.<i><font color="#0000ff">$ARCH</font></i>
+file (for example if you are installing it on an Intel class machine,
+then the file to read is INSTALL.386)</p>
+<p>Outlined here are additional installation items that is likely to be
+helpful for someone new to OS installations or has come from another
+Unix. For those really new to Unix I suggest you read the complete
+section you are interested in before attempting to follow the
+instructions.</p>
+<p><b>Warning</b>: If you are not familiar with using the vi text
+editor, or similar variants on unix (ex, view) I would suggest that it
+will make life much easier for you if you find a tutorial on "vi"
+somewhere on the 'net and get familiar. Most things in Unix requires
+editing text files, and it takes a while to get a graphical system up
+and running so editing usually requires a character based editor (like
+vi).</p>
+<p>There is a real nice introductory, short, tutorial for those totally
+new to Unix at <a
+ href="http://andrsn.stanford.edu/FreeBSD/newuser.html" class="anchBlue">http://andrsn.stanford.edu/FreeBSD/newuser.html</a>
+You should at least read through the tutorial for a guide to what you
+will do here (and reference.)</p>
+<p>For the 1st time installer, I suggest either installing from a CD or
+by downloading the main installation files onto a local network machine
+or local hard-disk. Of course you can burn your own CD after
+downloading, at this stage it just wont be bootable but it can be
+easier to use?</p>
+<h2><a name="removable"></a>Configuring Removable Storage Devices </h2>
+<p>(e.g. CD Drives, Zip Drives, etc.) </p>
+<p class="pFileReference"> [Configuration in /etc/fstab]<br>
+[Ref: mount(8) mount file systems; <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mount_msdos(8) mount an
+MS-DOS file system, <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mount_cd9660(8) mount
+an ISO-9660 filesystem]<br>
+[Ref: fstab(5) - static information about the filesystems]</p>
+<p> To simplify my installation process (low bandwidth people) I need
+to configure access to my CD-ROM drive. Use <b>dmesg | less</b> to
+look for the device name detected as the cdrom drive. CD drives are
+often detected as device cd# (like cd0 or cd1). 'dmesg' is a
+command-line program in OpenBSD that lists boot-time information (such
+as what OpenBSD detects as devices on your system during startup.) less
+is another command-line program, this program lets you browse through a
+file by using space (next page) up-arrow, down-arrow, and "q" for quit.
+</p>
+<h3><a name="instFSTable"></a>The File System Table</h3>
+<p> I edit the /etc/fstab file to tell OpenBSD that I have the cdrom
+drive setup and this helps simplify my mounting command. The /etc/fstab
+file contains information about the filesystem.</p>
+<p class="pFileReference"> File: /etc/fstab </p>
+<table class="pScreenOutput" border="0" width="359">
+  <tbody>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">
+      <p class="pScreenOutput">&nbsp; </p>
+      <p class="pScreenOutput"># "#" starts comments<br>
+# <br>
+# device &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; mount-point fs_type
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; mnt
+options check priority <br>
+# <br>
+      </p>
+      <p class="pScreenOutput"><b>/dev/wd0a
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ffs
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;auto,rw
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1<br>
+      </b> &nbsp; <br>
+# The following is an example of what you may need to add <br>
+# <br>
+      <b>/dev/cd0a &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; /mnt/cdrom
+&nbsp;
+cd9660&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+noauto,ro &nbsp;&nbsp; &nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0 <br>
+/dev/fd0a &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+/mnt/floppy&nbsp;&nbsp;msdos
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+noauto,rw &nbsp;&nbsp; &nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0 </b></p>
+      <p class="pScreenOutput">&nbsp;</p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p>The general format, as show above, is: </p>
+<table class="Code" border="0" width="80%">
+  <tbody>
+    <tr>
+      <td class="pScreenOutput" height="19" nowrap="nowrap"><b>device</b>
+      <i> &nbsp;&nbsp;&nbsp;&nbsp;<font color="#0000ff"><strong>mount-point</strong></font></i>
+      <b>&nbsp;&nbsp;&nbsp;&nbsp;filesystem</b>&nbsp;&nbsp;&nbsp;&nbsp;
+      <i><font color="#0000ff"><strong>mount_options</strong></font></i>&nbsp;&nbsp;&nbsp;&nbsp;
+      <b>check-priority</b></td>
+    </tr>
+  </tbody>
+</table>
+<p>The device, is obviously the disk device we want to mount. The
+mount-point refers to where on our filesystem we wish to 'mount' the
+device. The filesystem type refers to what file-system mount will use
+to mount the device. The list of supported file-systems are available
+from fstab(5). The mnt-options refers to whether we wish to
+automatically mount the file system on startup (auto or noauto) and
+whether the device will be read-write, or read-only. The check-priority
+field is used by dump and fsck. Keep at zero for removable devices
+unless you know something other than I do.</p>
+<p>Although the CDROM device is detected by the kernel during each
+boot, and during installation the device is not automatically
+configured for use. I have also included above how to configure floppy
+disk access (assuming /dev/fd0 is the controller and /dev/fd0a is the a
+drive.) I specify msdos file format since I mostly work with msdos
+floppy drives (Winx) and have no need to transfer any other format
+floppies. </p>
+<h3> <a name="instMountPoints"></a>Mount Points for Removable Media
+(nodes)</h3>
+<p>I now create the nodes (mount points) for where the file systems can
+be mounted by issuing the following commands:</p>
+<table class="Code" border="0" width="80%">
+  <tbody>
+    <tr>
+      <td class="Code" nowrap="nowrap"># <b>mkdir /mnt </b></td>
+    </tr>
+    <tr>
+      <td class="Code" nowrap="nowrap"># <b>mkdir /mnt/cdrom</b> </td>
+    </tr>
+    <tr>
+      <td class="Code" nowrap="nowrap"># <b>mkdir /mnt/floppy</b> </td>
+    </tr>
+  </tbody>
+</table>
+<p> I can now access the CD-ROM drive by entering the below command at
+the system prompt.</p>
+<table class="Code" border="0" width="80%">
+  <tbody>
+    <tr>
+      <td class="Code" nowrap="nowrap"># <b>mount /mnt/cdrom</b></td>
+    </tr>
+  </tbody>
+</table>
+<p> Note that you will receive a read error if a CD is not in the
+drive. This is because mount doesn't actually configure the device, but
+attempts to find the file-system on the device, and mount the
+filesystem. To correctly mount on any device, we require a valid
+file-system on that device.</p>
+<p>Similarly you can access the floppy drive. I've selected the above
+mounting location (/mnt) because I have a background in RedHat Linux
+distributions and am used to this convention, whereas some BSD
+documentations I have read prefer the /cdrom layout. </p>
+<h3><a name="instEX"></a>Example : CDs, and SCSI </h3>
+<p class="pFileReference">[Reference System: iwill motherboard with
+ATAPI IDE CD, SCSI CDR and SCSI Zip drive]</p>
+<p>dmesg outputs a lot of junk with the below information included that
+seems valid for removable drives.</p>
+<table class="pScreenOutput" border="0" width="359">
+  <tbody>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">
+      <p class="pScreenOutput">cd0 at scsibus0 targ 1 lun 0: &lt;E-IDE,
+CD-ROM 45X, 32&gt; SCSI0 5/cdrom removable<br>
+cd1 at scsibus1 targ4 lun 0: &lt;PLEXTOR, CD-R PX-R412C, 1.04&gt; SCSI2
+5/cdrom removable<br>
+sd0: 96MB, 96 cyl, 64 head, 32 sec, 512 bytes/sec, 196608 sec total<br>
+fd0 at fdc0 drive 0: 1.44MB 80 cyl, 2 head, 18 sec </p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p>The command "<b>dmesg | less</b>" lets us navigate up and down the
+list (using arrow keys) and I can quit "less" by typing in "q" to quit.</p>
+<h4><a name="instEXMountPoints"></a>The Mount Points / nodes</h4>
+<p>I test the ability to access the devices by first creating the
+'node' or directory to mount the devices and using the mount command to
+check where the device 'special' is located.</p>
+<table class="Code" border="0" width="80%">
+  <tbody>
+    <tr>
+      <td class="Code" nowrap="nowrap">
+      <p class="Code">/mnt/cdrom &nbsp;- for the E-IDE CDROM
+(filesystem: cd9660)<br>
+/mnt/cdr &nbsp;&nbsp;&nbsp;- for the CDR (filesystem: cd9660) <br>
+/mnt/floppy - for the floppy drive (filesystem: msdos) <br>
+/mnt/zip &nbsp;&nbsp;&nbsp;- for the Iomega SCSI ZIP drive (filesystem:
+msdos)</p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p>We're choosing cd9660 as the filesystem for CD drives as this is
+OpenBSD's name for ISO-9660 CDROM filesystem. We use msdos in this
+example since all my other machines sharing zip disks and floppies are
+MSWin platforms which share MSDOS FAT filesystems (fat16, fat32).</p>
+<table class="Code" border="0" width="80%">
+  <tbody>
+    <tr>
+      <td class="Code" nowrap="nowrap"># <b>mkdir /mnt</b></td>
+    </tr>
+    <tr>
+      <td class="Code" nowrap="nowrap"># <b>mkdir /mnt/cdrom</b></td>
+    </tr>
+    <tr>
+      <td class="Code" nowrap="nowrap"># <b>mkdir /mnt/cdr</b></td>
+    </tr>
+    <tr>
+      <td class="Code" nowrap="nowrap"># <b>mkdir /mnt/floppy</b></td>
+    </tr>
+    <tr>
+      <td class="Code" nowrap="nowrap"># <b>mkdir /mnt/zip</b> </td>
+    </tr>
+  </tbody>
+</table>
+<h4><a name="instEXManualTest"></a>Manually Testing for a Connection</h4>
+<p>We start looking at the devices from /dev/???a ... b ... c ... until
+we find it. Where ??? is the device we are reviewing. We need to make
+sure we have a valid media (disk) inside each drive for the mount
+process to find the file-system on the disk we want to mount. Put a CD
+into the CD Drive and/or floppies into floppy etc. We use the "-v"
+option so we can get some debugging information from the mount command.
+</p>
+<table class="Code" border="0" width="80%">
+  <tbody>
+    <tr>
+      <td class="Code" nowrap="nowrap"> # <b>mount -v -t cd9660
+/dev/cd0a /mnt/cdrom</b> </td>
+    </tr>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">/dev/cd0a on /mnt/cdrom
+type cd9660 (local, read-only)</td>
+    </tr>
+    <tr>
+      <td class="Code" nowrap="nowrap"># <b>mount -v -t cd9660
+/dev/cd1a /mnt/cdr</b></td>
+    </tr>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">/dev/cd1a on /mnt/cdr
+type cd9660 (local, read-only) </td>
+    </tr>
+    <tr>
+      <td class="Code" nowrap="nowrap"># <b>mount -v -t msdos
+/dev/fd0a /mnt/floppy </b></td>
+    </tr>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">/dev/fd0a on
+/mnt/floppy type msdos (rw, local, uid=0, gid=0, mask=0755) </td>
+    </tr>
+  </tbody>
+</table>
+<p>The above three devices seemed to work easily with the first
+'device' but the mounted zip took a little while longer to find as
+shown with the testing below.</p>
+<table class="Code" border="0" width="80%">
+  <tbody>
+    <tr>
+      <td class="Code" nowrap="nowrap"> # <b>mount -v -t msdos
+/dev/sd0a /mnt/zip</b> </td>
+    </tr>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">mount_msdos: /dev/sd0a
+on /mnt/zip: Device not configured </td>
+    </tr>
+    <tr>
+      <td class="Code" nowrap="nowrap"># <b>mount -v -t msdos
+/dev/sd0b /mnt/zip </b></td>
+    </tr>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">mount_msdos: /dev/sd0a
+on /mnt/zip: Device not configured </td>
+    </tr>
+    <tr>
+      <td class="Code" nowrap="nowrap"># <b>mount -v -t msdos
+/dev/sd0c /mnt/zip</b> </td>
+    </tr>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">/dev/sd0c on /mnt/zip
+type msdos (rw, local, uid=0, gid=0, mask=0755)</td>
+    </tr>
+  </tbody>
+</table>
+<h4><a name="instEXupdateFSTable"></a>Updating the File System Table</h4>
+<p>We now know where the devices can be located and can confidently
+specify our devices into the /etc/fstab file system table.</p>
+<p class="pFileReference">Edit the file: /etc/fstab</p>
+<table class="Code" border="0" width="80%">
+  <tbody>
+    <tr>
+      <td class="pScreenOutput" height="19" nowrap="nowrap"><b>device</b>
+      <i>&nbsp;&nbsp;mount-point</i> <b>filesystem</b> <i>mount_options</i>
+      <b>check-priority</b></td>
+    </tr>
+    <tr>
+      <td class="Code" nowrap="nowrap">/dev/cd0a&nbsp;/mnt/cdrom&nbsp;cd9660&nbsp;ro,noauto&nbsp;0&nbsp;0</td>
+    </tr>
+    <tr>
+      <td class="Code" nowrap="nowrap">/dev/cd1a&nbsp;/mnt/cdr&nbsp;&nbsp;&nbsp;cd9660&nbsp;rw,noauto&nbsp;0&nbsp;0</td>
+    </tr>
+    <tr>
+      <td class="Code" nowrap="nowrap">/dev/sd0c&nbsp;/mnt/zip&nbsp;&nbsp;&nbsp;&nbsp;msdos&nbsp;rw,noauto&nbsp;0&nbsp;0</td>
+    </tr>
+    <tr>
+      <td class="Code" nowrap="nowrap">/dev/fd0a&nbsp;/mnt/floppy&nbsp;msdos&nbsp;rw,noauto&nbsp;0&nbsp;0
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p>Now, all we need to do to access one of the devices above is to use
+"mount /mnt/????" (where ???? is the directory created above) and mount
+will look up the device setting/file system from the /etc/fstab file.</p>
+<p>As an extra note for those sharing files with the FAT file system
+you may be interested in reading the mount_msdos man pages for more
+information about support for long filenames.</p>
+<h2><a name="instPackageManagement"></a>Package Management - adding
+programs</h2>
+<p class="pFileReference"> [Utility: pkg_add, pkg_info, pkg_delete ]<br>
+[Config location: /usr/src ] <br>
+</p>
+<p class="pFileReference">[ref: <a
+ href="http://www.openbsd.com/faq/faq8.html#8.7">OpenBSD FAQ - Section 8</a>]</p>
+<p> OpenBSD stores binary executables in what is termed 'packages.'
+These packages store the information required to safely install the
+binaries, libraries, and documentation distributed for that program.
+Packages are generally pre-compiled binaries configured for the OpenBSD
+disk layout and database of installed software. The benefits of
+packages include resolving dependencies (on other libraries and
+applications.)</p>
+<p>Three utilities are used for administration (adding [pkg_add],
+deleting [pkg_delete], and query [pkg_info])</p>
+<p> For those new to packages (like me) I change to the directory
+containing the packages before using pkg_add (this is not necessary and
+is explained later in setting environment variables for bash, my
+preferred shell.)</p>
+<p> The general format for using pkg_add is:</p>
+<table class="Code" border="0" width="80%">
+  <tbody>
+    <tr>
+      <td class="Code" height="19" nowrap="nowrap"># pkg_add &ndash;v /<font
+ color="#0000cc">[path-to-package]</font>/filename </td>
+    </tr>
+    <tr>
+      <td class="Code" height="19" nowrap="nowrap"># pkg_add &ndash;v
+ftp.site.com/[path-to-package]/filename </td>
+    </tr>
+  </tbody>
+</table>
+<p> The &ndash;v option is Verbose, which is real helpful in providing
+visual feedback of files it is processing. After you figure out how
+things work, you can leave the "-v" off.</p>
+<h3><a name="installPMpico"></a>Example - Installing pico, a nice
+little editor</h3>
+<p class="pFileReference">[package: pico-4.33.tgz]</p>
+<p>If you are uncomfortable with "vi" or the standard text editors
+found on OpenBSD, then I suggest that you download the pico package and
+follow the installation process below to simplify some of the editing
+work that will be required in configuring your OpenBSD server.</p>
+<table class="Code" border="0" width="80%">
+  <tbody>
+    <tr>
+      <td class="Code" height="19" nowrap="nowrap"># mkdir /usr/packages</td>
+    </tr>
+    <tr>
+      <td class="Code" height="19" nowrap="nowrap"># cd /usr/packages</td>
+    </tr>
+    <tr>
+      <td class="Code" height="19" nowrap="nowrap"># mv
+/[path-to-download]/pico-4.33.tgz .</td>
+    </tr>
+    <tr>
+      <td class="Code" height="19" nowrap="nowrap"># pkg_info
+pico-4.33.tgz </td>
+    </tr>
+  </tbody>
+</table>
+<p> Information for pico-4.33.tgz:</p>
+<table class="pScreenOutput" border="0" width="80%">
+  <tbody>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">
+      <p class="pScreenOutput">Comment:<br>
+small text editor</p>
+      <p class="pScreenOutput">&nbsp;</p>
+      <p class="pScreenOutput">Description:<br>
+Pico is a small text editor distributed as part of the pine mail<br>
+program. It is a separate program that may be installed and used<br>
+without using pine.</p>
+      <p class="pScreenOutput">&nbsp;</p>
+      <p class="pScreenOutput">WWW: http://www.washington.edu/pine/</p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p>In the above example we're just using a location /usr/packages to
+keep packages. We go into this directory and copy into it the
+pico-4.33.tgz file and then query the package to tell us what it
+contains (by using pkg_info.) To install the package we can simply use
+pkg_add.</p>
+<table class="Code" border="0" width="80%">
+  <tbody>
+    <tr>
+      <td class="Code" nowrap="nowrap">
+      <p class="Code">#pkg_add -v pico-4.33.tgz </p>
+      </td>
+    </tr>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">
+      <p class="pScreenOutput">Requested space: 359604 bytes, free
+space: 4294905856 bytes in /var/tmp/instmp.ttTyg31193<br>
+Package `pico-4.33' conflicts with `pine+pico-*'<br>
+extract: Package name is pico-4.33<br>
+extract: CWD to /usr/local<br>
+extract: /usr/local/bin/pico<br>
+extract: /usr/local/man/man1/pico.1<br>
+extract: CWD to .<br>
+Attempting to record package into `/var/db/pkg/pico-4.33'<br>
+Package `pico-4.33' registered in `/var/db/pkg/pico-4.33'</p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p>pkg_add will decompress the file into a temporary location
+(/var/tmp/## above) </p>
+<p>By using the "-v" verbose display, we can tell the binary
+/usr/local/bin/pico has been installed and the man page placed
+/usr/local/man/man1/pico.1</p>
+<p>If you've ever used "pine" as an e-mail manager then pico will be a
+quick and easy editor to learn and use. Make sure you read the man page
+for command-line options, especially the "-w" command line option to
+turn off auto-wordwrap. 'pico -w file' is a quick and easy editor for
+Unix.</p>
+<p></p>
+<h3><a name="instPMbash2"></a>Example - Installing Bash 2</h3>
+<p class="pFileReference">[package: bash-2.04-static.tgz]<br>
+</p>
+<p class="pFileReference">[config file: /etc/shells]</p>
+<p>This is an example of an installation that requires further work
+after the binaries have been installed. This example assumes the
+package file can be found on a mounted OpenBSD cd at /mnt/cdrom.</p>
+<p>For your reference: There is a reason we choose the 'static' version
+of bash, as opposed to other versions of bash.</p>
+<table border="0" width="245">
+  <tbody>
+    <tr>
+      <td class="Code" nowrap="nowrap">
+      <p class="Code"># <b>cd /mnt/cdrom/2.7/packages/i386</b><br>
+# <b>ls -l bash*</b></p>
+      </td>
+    </tr>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">
+      <p class="pScreenOutput">bash-1.14.7-static.tgz
+bash-2.04-static.tgz </p>
+      </td>
+    </tr>
+    <tr>
+      <td class="Code" nowrap="nowrap">
+      <p class="Code"># <b>pkg_add bash-2.04-static.tgz</b></p>
+      </td>
+    </tr>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">
+      <p class="pScreenOutput">Requested space: 4606268 bytes, free
+space: 7432482816 bytes in /var/tmp/instmp.eepTB28148<br>
+Running install with PRE-INSTALL for `bash-2.04-static'<br>
+extract: Package name is bash-2.04-static<br>
+extract: CWD to /usr/local<br>
+extract: /usr/local/bin/bash<br>
+extract: /usr/local/bin/bashbug<br>
+extract: /usr/local/man/man1/bash.1<br>
+extract: /usr/local/man/man1/bashbug.1<br>
+extract: /usr/local/info/bash.info<br>
+extract: execute 'install-info /usr/local/info/bash.info
+/usr/local/info/dir'<br>
+extract: /usr/local/share/doc/bash/article.ps<br>
+extract: /usr/local/share/doc/bash/article.txt<br>
+extract: /usr/local/share/doc/bash/bash.html<br>
+extract: /usr/local/share/doc/bash/bash.ps<br>
+extract: /usr/local/share/doc/bash/bashbug.ps<br>
+extract: /usr/local/share/doc/bash/bashref.html<br>
+extract: /usr/local/share/doc/bash/bashref.ps<br>
+extract: /usr/local/share/doc/bash/builtins.ps<br>
+extract: /usr/local/share/doc/bash/readline.ps<b></b> extract: CWD to .<br>
+Running install with POST-INSTALL for `bash-2.04-static'<br>
+Attempting to record package into `/var/db/pkg/bash-2.04-static'<br>
+Package `bash-2.04-static' registered in `/var/db/pkg/bash-2.04-static'</p>
+      <p class="pScreenOutput">&nbsp;</p>
+      <p class="pScreenOutput">+---------------<br>
+| For proper use of bash-2.04-static you should notify the system<br>
+| that /usr/local/bin/bash is a valid shell by adding it to the<br>
+| the file /etc/shells. If you are unfamiliar with this file<br>
+| consult the shells(5) manual page"<br>
++---------------</p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p>Notice how binary (./bin), man pages have been installed, together
+with info files and more documentation at the shown location
+/usr/local/share/doc/bash.</p>
+<p>If a package (like bash) gives you further instructions for
+completing the installation, make sure you follow the instructions. For
+example, the bash pkg_add tells us to update the /etc/shells file to
+include bash as a valid login shell.<br>
+</p>
+<p class="pFileReference">Edit the file: /etc/shells</p>
+<table class="pScreenOutput" border="0" width="80%">
+  <tbody>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">
+      <p class="pScreenOutput"># $OpenBSD: shells,v 1.5 1997/05/28
+21:42:20 deraadt Exp $<br>
+# List of acceptable shells for chpass(1).<br>
+# Ftpd will not allow users to connect who are not using<br>
+# one of these shells.<br>
+/bin/sh<br>
+/bin/csh<br>
+/bin/ksh</p>
+      </td>
+    </tr>
+    <tr class="Code">
+      <td class="Code" nowrap="nowrap">
+      <p class="Code"><b>/usr/local/bin/bash</b></p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p>Include the above line (/usr/local/bin/bash) into the /etc/shells
+file.</p>
+<h3><a name="instPMbash2ftp"></a>Example - Installing Bash 2 - ftp</h3>
+<p>For those without the release CDs, performing a pkg_add from an ftp
+connection is no more difficult than the above, as shown in the below
+example for installing the same package.</p>
+<p>I have downloaded the bash package from the Internet and have it on
+my intranet ftp site: 192.168.101.77</p>
+<table class="Code" border="0" width="80%">
+  <tbody>
+    <tr>
+      <td class="Code" nowrap="nowrap"> # <b>pkg_add
+ftp://192.168.101.77/OpenBSD/2.7/packages/i386/bash-2.04-static.tgz</b>
+      </td>
+    </tr>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">&gt;&gt;&gt; ftp -o -
+ftp://192.168.101.77/OpenBSD/2.7/packages/i386/bash-2.04-static.tgz <br>
+# </td>
+    </tr>
+  </tbody>
+</table>
+<p>pkg_add uses ftp to retrieve from my internal ftp site
+(192.168.101.77) the requested package and then extracts the files as
+per the same operation above. You can replace 192.168.101.77 with any
+valid ftp site which holds the package you wish to install.</p>
+<h4><a name="instPMdontknow"></a>Example - Don't know the package or
+ftp directory ?</h4>
+<p>If you do not know what the package name is, or the specific
+directory the file is located, you can still perform an ftp pkg_add.
+Try using the get filename <b>"| command "</b> sequence as shown in
+the below example. (note: I am connecting here to an internal site with
+the OpenBSD files, connect to some other site)</p>
+<table border="0" width="498">
+  <tbody>
+    <tr>
+      <td class="Code" nowrap="nowrap">
+      <p class="Code"># <b>ftp 192.168.101.77</b></p>
+      </td>
+    </tr>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">
+      <p class="pScreenOutput">Connected to 192.168.10<span
+ class="pScreenOutput"></span>1.77.<br>
+Name (192.168.101.77:root): <b>anonymous</b><br>
+331 Anonymous access allowed, send identity (e-mail name) as password.<br>
+Password:</p>
+      </td>
+    </tr>
+    <tr>
+      <td class="Code" nowrap="nowrap">
+      <p class="Code">ftp&gt; <b>cd pub/OpenBSD/2.7/packages/i386</b></p>
+      </td>
+    </tr>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">
+      <p class="pScreenOutput">250 CWD command successful.</p>
+      </td>
+    </tr>
+    <tr>
+      <td class="Code" nowrap="nowrap">
+      <p class="Code">ftp&gt; <b>ls bash*</b></p>
+      </td>
+    </tr>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">
+      <p class="pScreenOutput">227 Entering Passive Mode
+(192,168,101,77,4,164).<br>
+125 Data connection already open; Transfer starting.<br>
+-r-xr-xr-x&nbsp;&nbsp; 1
+owner&nbsp;&nbsp;&nbsp;&nbsp;group&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;261366
+May 10&nbsp;&nbsp;0:24 bash-1.14.7.tgz<br>
+-r-xr-xr-x&nbsp;&nbsp; 1
+owner&nbsp;&nbsp;&nbsp;&nbsp;group&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;376068
+May 10&nbsp;&nbsp;0:26 bash-1.14.7-static.tgz<br>
+-r-xr-xr-x&nbsp;&nbsp; 1
+owner&nbsp;&nbsp;&nbsp;&nbsp;group&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+1000070 Jun 15&nbsp;&nbsp;3:32 bash-2.04.tgz<br>
+-r-xr-xr-x&nbsp;&nbsp; 1
+owner&nbsp;&nbsp;&nbsp;&nbsp;group&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+1151567 Jun 15&nbsp;&nbsp;3:32 bash-2.04-static.tgz<br>
+226 Transfer complete.</p>
+      </td>
+    </tr>
+    <tr>
+      <td class="Code" nowrap="nowrap">
+      <p class="Code">ftp&gt; <b>bi</b></p>
+      </td>
+    </tr>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">
+      <p class="pScreenOutput">200 Type set to I.</p>
+      </td>
+    </tr>
+    <tr>
+      <td class="Code" nowrap="nowrap">
+      <p class="Code">ftp&gt; <b>get bash-2.04-static.tgz "| pkg_add
+-v -"</b></p>
+      </td>
+    </tr>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">
+      <p class="pScreenOutput">local: | pkg_add -v - remote:
+bash-2.04-static.tgz</p>
+      <p class="pScreenOutput"> 227 Entering Passive Mode
+(192,168,101,77,4,166).<br>
+125 Data connection already open; Transfer starting.<br>
+226 Transfer complete.<br>
+1151567 bytes received in 1.09 seconds (1.01 MB/s)</p>
+      </td>
+    </tr>
+    <tr>
+      <td class="Code" nowrap="nowrap">
+      <p class="Code">ftp&gt; <b>quit</b></p>
+      </td>
+    </tr>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">
+      <p class="pScreenOutput"># </p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<h2><a name="instUserAdmin"></a>User Administration</h2>
+<p class="pFileReference">[ref: adduser(8), group(8), rmuser(8)]<br>
+[Config info: user-name, account-type]</p>
+<p>From the man pages:</p>
+<table class="pScreenOutput" border="0" width="80%">
+  <tbody>
+    <tr>
+      <td class="pScreenOutput">
+      <p class="pScreenOutput"><b>DESCRIPTION</b><br>
+The <b>adduser</b> program adds new users to the system. The <b>rmuser</b>
+program removes users from the system. When not passed any arguments,
+both utilities operate in interactive mode and prompt for any required
+information.</p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p> The first thing that OpenBSD warns of when you login is, do not
+login as root but use su. This is saying that you should create a user
+who can use su (the Switch User program) to change to the "root" user
+when you want to perform administration tasks.</p>
+<p>The following instructions guide you through the creation of a new
+user with SuperUser access privileges.</p>
+<p>OpenBSD supplies the <b>adduser</b> script to simplify adding new
+users. All you have to know to create a new user is the name of the
+person, and what you want the login account name to be. </p>
+<p> The adduser script is started at the command prompt.</p>
+<table class="Code" border="0" width="80%">
+  <tbody>
+    <tr>
+      <td class="Code" height="19" nowrap="nowrap"># <b>adduser</b> </td>
+    </tr>
+  </tbody>
+</table>
+<p>When first started, queries you to set or change the default
+settings. Once the standard configuration has been set, it will
+continue by prompting for adding new users. </p>
+<h3> <a name="instAddUser"></a>Adding a New User</h3>
+<p>adduser support two flags -silent or -verbose. You don't really need
+to know these at the beginning, but you can check the details in the
+man pages. Read through the example below and then start adduser to
+create your new account with root access privileges.</p>
+<table class="Code" border="0" width="80%">
+  <tbody>
+    <tr>
+      <td class="Code" nowrap="nowrap">
+      <p class="Code"># adduser</p>
+      </td>
+    </tr>
+    <tr class="pScreenOutput">
+      <td class="pScreenOutput" nowrap="nowrap">
+      <p class="pScreenOutput">Enter username [a-z0-9_-]: <b>bricker</b>
+      <br>
+Enter full name [ ]: <b>Sven De La Palmer</b> <br>
+Enter shell bash csh ksh nologin sh [bash]: <b>&lt;hit ENTER&gt;</b></p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p> The shell is your command line interpreter. It reads in the
+commands you type and tries to decipher them. There are several
+different shells to choose from. If bash does not show on the screen,
+then review adding packages in the previous section. You can change
+your settings at a later time so do not worry if some settings are not
+as you want them right now. The documentation that comes with OpenBSD
+says that 'most people' use bash, strange how they don't make it the
+default though.</p>
+<table class="pScreenOutput" border="0" width="80%">
+  <tbody>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">
+      <p class="pScreenOutput">Enter home directory (full path)
+[/home/bricker]: <b>&lt;hit ENTER&gt;</b><br>
+Uid [1002]: <b>&lt;hit ENTER&gt;</b></p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p> The uid is the User ID number that the system uses to keep track of
+people. These should be unique on the system. Use the default values
+offered by the program unless you have good knowledge of previously
+granted ID numbers.</p>
+<table class="pScreenOutput" border="0" width="80%">
+  <tbody>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">
+      <p class="pScreenOutput">Enter login class: default []: <b>&lt;hit
+ENTER&gt;</b> </p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p> The login class allows you to set up resource limits for groups of
+users. </p>
+<h3><a name="instRootAccess"></a>Specifying root access privileges </h3>
+<table class="pScreenOutput" border="0" width="124">
+  <tbody>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">
+      <p class="pScreenOutput">Login group bricker [bricker]: <b>&lt;hit
+ENTER&gt;</b><br>
+Login group is "bricker". Invite bricker into other groups: guest no <br>
+[no]:&nbsp; <b>wheel</b> </p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p><b><font color="#0000ff">Important:</font></b> Your administrator
+account should be a member of the group <b>wheel</b>. <i>Regular
+users of your host should not be members of the wheel group.</i> If
+this is your 1st account for the machine (and presumably your account)
+then I suggest you add the account to the group "<b>wheel</b>."</p>
+<p>Login groups are used to divide security privileges by account
+groups. The group '<b>wheel</b>' is generally used for administrators
+with special privileges including the ability to su (switch user) to
+the SuperUser. Accounts who are not members of the group 'wheel' cannot
+gain root access remotely. Invite user accounts you wish to grant
+special security rights into the group '<b>wheel</b>,' or create a
+separate security group for people who need to work together. </p>
+<p><b>Do not</b> group normal users into wheel.</p>
+<table class="pScreenOutput" border="0" width="80%">
+  <tbody>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">
+      <p class="pScreenOutput">Enter password []: <br>
+Enter password again []: </p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p> You will be asked for the user's password twice and it will not be
+displayed. Afterwards, it will display all of the user's information
+and ask if it is correct. </p>
+<table class="pScreenOutput" border="0" width="80%">
+  <tbody>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">
+      <p class="pScreenOutput">Name:&nbsp;&nbsp;&nbsp;&nbsp; bricker <br>
+Password: **** <br>
+Fullname: Sven De La Palmer <br>
+Uid:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 1000 <br>
+Gid:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 1000 (bricker) <br>
+Class:&nbsp;&nbsp;&nbsp; <br>
+Groups:&nbsp;&nbsp; bricker wheel <br>
+HOME:&nbsp;&nbsp;&nbsp;&nbsp; /home/bricker <br>
+Shell:&nbsp;&nbsp;&nbsp; /bin/sh <br>
+OK? (y/n) [y]: <b>&lt;hit ENTER&gt;</b> </p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p>If you make a mistake, you can start over, or its possible to
+correct most of this information using the 'chpass' command (discussed
+below). </p>
+<p class="pFileReference"> [ref: What to do AFTER you have BSD
+installed by Chris Coleman,<a
+ href="http://www.daemonnews.org/200005/chrisc@daemonnews.org">
+http://www.daemonnews.org/200005/chrisc@daemonnews.org</a> </p>
+<h3><a name="instchpass"></a>Changing User Information </h3>
+<p class="pFileReference"> [ref: chpass(1), vipw(8)]</p>
+<p> Once you've configured the base system for working, we can look at
+basic configuration of users. Note, for those with some previous Unix
+experience, Do not just edit /etc/passwd or /etc/Master.passwd </p>
+<p> Use the chpass utility when adding or changing user information. If
+you try to modify the user shell selection manually (by changing
+/etc/passwd) it wont work, trust me I've made this mistake for weeks
+before I found out my errorneous ways. </p>
+<p> Entered at the command line without a parameter (ie. typed by
+itself,) chpass will edit your personal information. As root, you can
+use it to modify any user account on the system. You can find more
+details on chpass in the man pages, but let's go through an example
+review of the account we created above.</p>
+<table class="Code" border="0" width="80%">
+  <tbody>
+    <tr>
+      <td class="Code" nowrap="nowrap"> # <b>chpass bricker</b> </td>
+    </tr>
+  </tbody>
+</table>
+<p> This will bring up information about the user '<i>bricker</i>' in
+the '<i>vi</i>' editor. The password line is encrypted, so don't change
+it. If you want to disable the user, one method would be to add a # at
+the beginning of the password string, so you can easily remove it later
+when you want to reactivate the user. There are methods of disabling
+user that may be better though.</p>
+<table class="pScreenOutput" border="0" width="80%">
+  <tbody>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">
+      <p class="pScreenOutput">&nbsp; </p>
+      <p class="pScreenOutput"><span class="pScreenOutput">Login:
+bricker <br>
+Password: <br>
+Uid [#]: 1000 <br>
+Gid [# or name]: 1000 <br>
+Change [month day year]: <br>
+Expire [month day year]: <br>
+Class: <br>
+Home directory: /home/bricker <br>
+Shell: /bin/sh <br>
+Full Name: Sven De La Palmer <br>
+Office Location: <br>
+Office Phone: <br>
+Home Phone: <br>
+Other information: <br>
+~ <br>
+~ <br>
+~ <br>
+~ <br>
+~ <br>
+~ <br>
+~ <br>
+~ <br>
+/path/temp-file: unmodified: line 1 </span></p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p>Remember your vi commands ? <b>:q</b> (colon+q) quit, <b>:w </b>(colon+w)
+write, <b>:q!</b> (colon+q+exlamation-mark) quit without saving. If
+you're still having problems, remember the tutorial <a
+ href="http://www.freebsd.org/tutorials/new-users">http://www.freebsd.org/tutorials/new-users</a></p>
+<p class="pFileReference"> [ref: What to do AFTER you have BSD
+installed by Chris Coleman,<a
+ href="http://www.daemonnews.org/200005/chrisc@daemonnews.org"><span
+ class="c1">http://www.daemonnews.org/200005/chrisc@daemonnews.org</span></a>]
+</p>
+<h2><a name="instSHELL"></a>Shell Profile (example) </h2>
+<p class="pFileReference"> Files: .bash_profile, and .bashrc </p>
+<p> Since I like using the Bash shell largely due to my ignorance about
+the other shells, here is an example of the files for initialisation.
+The two user files which contain the shell settings are
+~/.bash_profile, and ~/.bashrc. </p>
+<p>Note that these are templates and there are some things that MUST be
+changed. I've put <b><font color="#0000ff">[path-to-&hellip;.]</font></b>
+as designators of specific paths that have to be set by the user/admin.
+</p>
+<p class="pFileReference"> <b>File: ~/.bash_profile </b></p>
+<table class="Code" border="0">
+  <tbody>
+    <tr>
+      <td class="Code" nowrap="nowrap">
+      <p class="Code"># .bash_profile <br>
+# <br>
+# Things loaded once per session (by the login manager). <br>
+# <br>
+      </p>
+      <p class="Code"># Source of global definitions <br>
+if [ -f /etc/bashrc ]; then <br>
+&nbsp;&nbsp; . /etc/bashrc <br>
+fi <br>
+&nbsp; &nbsp; <br>
+PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/usr/local/sbin:/usr/X11R6/bin
+      <br>
+&nbsp; <br>
+# Define variables useful for OpenBSD Installations <br>
+# <br>
+PKG_PATH=/<font color="#0000ff"><b><font color="#0000cc">[path-to-packages]</font></b></font>/packages/i386
+      <br>
+export PKG_PATH&nbsp;PATH <br>
+# Change the prompt to give current directory (\W) and <br>
+# $ if regular user -or- # if root (\$). <br>
+PS1='\[\033[1;30m\]\u@\h:\w \$\[\033[0m\] '<br>
+export PS1</p>
+      <p class="Code"></p>
+      <p class="Code"># Useability&nbsp; Items</p>
+      <p class="Code">export MANPAGER=less<br>
+      </p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p class="pFileReference"><b>File: ~/.bashrc</b>
+</p>
+<table class="Code" border="0" width="80%">
+  <tbody>
+    <tr>
+      <td class="Code" nowrap="nowrap">
+      <p class="Code"># .bashrc <br>
+&nbsp; <br>
+# Put in here variables and stuff to be launched by subinvocations <br>
+# of bash (like /usr/local/bin/bash) </p>
+      <p class="Code">PS1='\[\033[1;30m\]\u@\h:\w \$\[\033[0m\] '<br>
+export PS1 </p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p>The tilde ~ is used here to refer to the home directory of the
+current user. Therefore if you are logged in as 'bricker' then typing
+in cd ~ should put you in the directory /home/bricker. Likewise if you
+edit the file ~/.bash_profile the file is actually created as
+/home/bricker/.bash_profile. If you were to su (switch user) to root
+and then type cd ~ you should be moved to /root the home directory for
+root.</p>
+<h2 class="Code"><a name="afterboot"></a>Afterboot Settings</h2>
+<p>The afterboot man pages list a sequence of issues to review after
+the OpenBSD system has been configured and is up and running. For the
+'expert' practioner many of the items seem trivial, for us newbies it
+is a good time to review basic skills that will be re-used often and
+will probably minimise problems that would otherwise occur just from
+not checking 'basic' items. </p>
+<p>afterboot is a serious document if you want to ensure the stability
+of your system. I recommend you read the document anyway and use these
+pages as supportive material where possible. These notes are supportive
+of afterboot material.</p>
+<h3><a name="ab_date"></a>Date - Setting the System Date</h3>
+<p>You can check and configure the system date using the date command.
+Without parameters, date command will display the current system date.
+You can set the date by using the following template</p>
+<p class="pScreenOutput">date YYYYMMDDHHMM</p>
+<p>Where YYYY is the four digit year, followed by MM a two digit month
+of the year, DD a two digit date of the month, HH a two digit (24 hour)
+representation of the hour, and MM for the minute in the hour.</p>
+<p>Using the above specification, we can set (as per man afterboot
+example)</p>
+<table class="Code" border="0" width="80%">
+  <tbody>
+    <tr>
+      <td class="Code" height="19" nowrap="nowrap"># <b>date
+199901271504</b></td>
+    </tr>
+  </tbody>
+</table>
+<p> Set the current date to January 27th, 1999 3:04pm. </p>
+<p>For those new to the convention used above (YYYYMMDDHHMM) it is the
+ANSI specified date format for SQL. I also prefer the above date
+formatting as it is less confusing when sharing things with the
+Americans 8-)</p>
+<h3><a name="ab_timezone"></a>TimeZone - Specifying the Time Zone</h3>
+<p>The time zone information is recorded as data files under the
+/usr/share/zoneinfo directory. So if I want to set the timezone to
+Paris, France then I can look it up using "find / -name "Paris" -print"
+and I can specify the zone file by typing in:</p>
+<table class="Code" border="0" width="80%">
+  <tbody>
+    <tr>
+      <td class="Code" nowrap="nowrap">
+      <p class="Code">/root # <b>cd /usr/share/zoneinfo</b> <br>
+zoneinfo # <b>find . -name "Paris" -print</b> </p>
+      </td>
+    </tr>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">
+      <p class="pScreenOutput">./Europe/Paris </p>
+      </td>
+    </tr>
+    <tr>
+      <td class="Code" nowrap="nowrap">
+      <p class="Code">zoneinfo # <b>ln -fs
+/usr/share/zoneinfo/Europe/Paris /etc/localtime</b></p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p>Of course for us people in Tonga with UTC+13 we use ln -fs
+/usr/share/zoneinfo/Pacific/Tongatapu /etc/localtime (I thought you
+might just want to know that ?)</p>
+<h3 class="Code"><a name="ab_network"></a>Checking the Network Base
+Services</h3>
+<p>Basic services for connecting on the network are generally covered
+by these three items.</p>
+<ul>
+  <li><a href="#net_host">host configuration,</a></li>
+  <li><a href="#net_network">network interface configuration,</a> and</li>
+  <li><a href="#net_routing">network routing.</a></li>
+</ul>
+<h4><a name="net_host"></a>Host configuration details</h4>
+<p class="pFileReference">Files: /etc/hosts, /etc/myname</p>
+<p>For many network services to function they need to determine the
+name of the current host. Host Details are checked by using the <b>hostname</b>
+command. hostname will display what your current host name is. If you
+need to change the hostname more details are available in the
+hostname(1) man page. If you change the hostname, then you need to also
+make the change to /etc/myname and possibly /etc/hosts.</p>
+<p>/etc/hosts is a text file listing IP addresses and their related
+hostnames. Your hostname should be in this file associated with the IP
+address which you assigned your host during installation.</p>
+<p>/etc/myname is a text file with just one line containing the
+hostname of your machine. </p>
+<h4><a name="net_network"></a>Network interface configuration</h4>
+<p>Network interfaces are necessary if you wish to communicate to other
+computers (at least if you want to communicate using the standard
+tools.) In most cases the network interface device will be an ethernet
+card. To list the network devices recognised by your system we use the
+ifconfig -a command.</p>
+<table class="Code" border="0" width="80%">
+  <tbody>
+    <tr>
+      <td class="Code" height="19" nowrap="nowrap"># <b>ifconfig -a</b></td>
+    </tr>
+  </tbody>
+</table>
+<p>The <b>ifconfig -a</b> command will list the network interfaces
+currently active on the system. This will let you review what the
+system knows of itself during this instance. You can set the default
+configurations by editing the /etc/hostname.* file that corresponds to
+the network interface.</p>
+<p>If the <b>ifconfig -a</b> command lists an interface <b>le0 </b>than
+the corresponding hostname file will be <b>/etc/hostname.le0</b></p>
+<p>Example: ifconfig -a displays the following ethernet device on my
+compaq with a HP network card.</p>
+<table class="pScreenOutput" border="0" width="80%">
+  <tbody>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">
+      <p class="pScreenOutput"><span class="pScreenOutput">le1:
+flags=8863 &lt;UP,BROADCAST,NOTRAILERS,RUNNING,SIMPLEX,MULTICAST&gt;
+mtu 1500<br>
+      </span></p>
+      <p class="pScreenOutput"><span class="pScreenOutput"> inet
+192.168.101.130 netmask 0xffffff00 broadcast 192.168.101.255<br>
+      </span></p>
+      <p class="pScreenOutput"><span class="pScreenOutput"> inet6
+fe80::260:b0ff:fea4:18d3%le1 prefixlen 64 scopeid 0x1 </span></p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p>The related hostname file is /etc/hostname.le1 which contains the
+lines</p>
+<table class="pScreenOutput" border="0" width="80%">
+  <tbody>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">
+      <p class="pScreenOutput">inet 192.168.101.130 255.255.255.0 NONE </p>
+      <p class="pScreenOutput">inet alias 207.124.66.156</p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p>You can see that the inet line in hostname.le1 corresponds to the
+inet line displayed by ifconfig -a. ifconfig allows you to manually
+configure the network card, or at least check different configurations
+before you insert the details into the hostname.interface file. Details
+for configuring the network card are read from the
+/etc/hostname.interface file during the boot sequence.</p>
+<p>An example output for the loopback device will look like:</p>
+<table class="pScreenOutput" border="0" width="80%">
+  <tbody>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">
+      <p class="pScreenOutput"><span class="pScreenOutput">lo0:
+flags=8009&lt;UP,LOOPBACK,MULTICAST&gt; mtu 32972</span></p>
+      <p class="pScreenOutput"><span class="pScreenOutput"><br>
+inet6 fe80::1%lo0 prefixlen 64 scopeid 0x3<br>
+      </span></p>
+      <p class="pScreenOutput"><span class="pScreenOutput"> inet6 ::1
+prefixlen 128<br>
+      </span></p>
+      <p class="pScreenOutput"><span class="pScreenOutput"> inet
+127.0.0.1 netmask 0xff000000</span></p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p>If you have other network interfaces (example a ppp connection) then
+these will also be listed. Check the afterboot and ifconfig pages for
+more details.</p>
+<p>The inet line specifies IPv4 information whereas the inet6 line
+specifies IPv6 information. Since OpenBSD is an early adopter of IPv6
+you will see this additional information for many network devices.</p>
+<h4><a name="net_routing"></a>Routing Configuration</h4>
+<p>We can check the network routing using <b>netstat -r -n</b></p>
+<table class="Code" border="0" width="80%">
+  <tbody>
+    <tr>
+      <td class="Code" nowrap="nowrap">
+      <p class="Code"># <b>netstat -r -n</b></p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<table class="pScreenOutput" border="0" width="80%">
+  <tbody>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">
+      <p class="pScreenOutput"><span class="pScreenOutput">Routing
+tables<br>
+      </span></p>
+      <p class="pScreenOutput"><span class="pScreenOutput"><br>
+      </span></p>
+      <p class="pScreenOutput"><span class="pScreenOutput">Internet:<br>
+      </span></p>
+      <p class="pScreenOutput"><span class="pScreenOutput">Destination
+&nbsp;&nbsp;&nbsp;&nbsp;Gateway&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Flags &nbsp;Refs
+Use&nbsp;&nbsp; Mtu &nbsp;&nbsp;Interface<br>
+      </span></p>
+      <p class="pScreenOutput"><span class="pScreenOutput">127/8
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;127.0.0.1
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;UGRS &nbsp;&nbsp;0
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0 &nbsp;32972 &nbsp;&nbsp;&nbsp;lo0<br>
+      </span></p>
+      <p class="pScreenOutput"><span class="pScreenOutput">127.0.0.1
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;127.0.0.1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;UH &nbsp;&nbsp;&nbsp;&nbsp;4 &nbsp;&nbsp;&nbsp;&nbsp;42
+&nbsp;32972 &nbsp;&nbsp;&nbsp;lo0<br>
+      </span></p>
+      <p class="pScreenOutput"><span class="pScreenOutput">192.168.101/24
+&nbsp;link#1
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;UC
+&nbsp;&nbsp;&nbsp;&nbsp;0 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0
+&nbsp;&nbsp;1500 &nbsp;&nbsp;&nbsp;le1<br>
+      </span></p>
+      <p class="pScreenOutput"><span class="pScreenOutput">192.168.101.130
+127.0.0.1 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;UGHS&nbsp;&nbsp; 0
+&nbsp;&nbsp;&nbsp;122 &nbsp;32972 &nbsp;&nbsp;&nbsp;lo0<br>
+      </span></p>
+      <p class="pScreenOutput"><span class="pScreenOutput">192.168.101.255
+link#1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+UHL&nbsp;&nbsp;&nbsp; 3 &nbsp;&nbsp;&nbsp;&nbsp;49
+&nbsp;&nbsp;1500&nbsp;&nbsp;&nbsp; le1<br>
+      </span></p>
+      <p class="pScreenOutput"><span class="pScreenOutput">207.124.66/24
+&nbsp;&nbsp;link#1
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;UC&nbsp;&nbsp;&nbsp;&nbsp;
+0 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0 &nbsp;&nbsp;1500&nbsp;&nbsp;&nbsp; le1<br>
+      </span></p>
+      <p class="pScreenOutput"><span class="pScreenOutput">207.124.66.156
+&nbsp;127.0.0.1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+UGHS&nbsp;&nbsp; 0 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;5&nbsp;
+32972&nbsp;&nbsp;&nbsp; lo0<br>
+      </span></p>
+      <p class="pScreenOutput"><span class="pScreenOutput">224/4
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;127.0.0.1
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;URS &nbsp;&nbsp;&nbsp;&nbsp;0
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0 &nbsp;32972&nbsp;&nbsp;&nbsp; lo0 </span></p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p>If you are new to Unix, then just check to make sure the IP address
+you specified specified for your host is listed and take a note that
+the IP range (class) is gatewayed through the interface.</p>
+<p>In the above example all 192.168.101/24 destinations (except for my
+host ip address 192.168.101.130 nor the broadcast address
+192.168.101.255) are sent through link#1 which is my network inteface
+le1<i> [note: I need to verify more of this detail]</i> </p>
+<p>As I have an alias to the 207.124.66.156 the 207.124.66/24
+destinations are also sent through link#1 (except for the host alias
+207.124.66.156<i> [note: I need to verify more of this detail]</i></p>
+<p>The default gateway address is stored in the /etc/mygate file. If
+you need to edit this file, a painless way to reconfigure the network
+afterwards is route flush followed by a sh -x /etc/netstart command.
+Or, you may prefer to manually configure using a series of route add
+and route delete commands (see route(8))</p>
+<p class="Code"># <b>route flush</b></p>
+<p class="Code"># <b>sh -x /etc/netstart</b></p>
+<h3 class="Code"><a name="ab_daily"></a>Daily, Weekly, Monthly Scripts</h3>
+<p>Actions that are scheduled to occur in a repetitive pattern such as
+once each day, each week, each month can be placed into the
+/etc/daily.local /etc/weekly.local /etc/monthly.local scripts.</p>
+<p>The OpenBSD installation supplies a set of standard /etc/daily,
+/etc/weekly, and /etc/monthly scripts. The scripts will check for
+daily.local, weekly.local, and monthly.local so you should specify your
+scripts as part of one of the above *.local files.</p>
+<p>Finding and locating files. One of the more frequently asked
+questions is how to find a file. The /etc/weekly script updates (on a
+weekly basis) the locate.db file to index files on your system. To
+manually execute the db update, see the notes below.</p>
+<p>To manually execute any of the above scripts, they are sh shell
+scripts, then use one of the examples below</p>
+<p class="Code"># <b>sh /etc/daily</b><br>
+# <b>sh /etc/weekly</b><br>
+# <b>sh /etc/monthly</b></p>
+<h2>Miscellaneous ?</h2>
+<h3> <a name="findfile"></a>Making it easier to find files </h3>
+<p class="pFileReference">[ref: locate(8<span class="pFileReference">)
+- find filenames quickly]<br>
+[ref: locate.updatedb(1) - update locate database]<br>
+[ref: find(1) - </span>walk a file hierarchy]</p>
+<p>Unix has a nice file indexing utility accessible through '<b>locate</b>.'
+The locate program interrogates a database created by locate.updatedb,
+in this manner you do not have to traverse the hard-disk each time you
+want to find a file. Update the file/location database by using the
+locate.updatedb program and then interrogate (search in) the database
+by using locate. Start locate.updatedb.</p>
+<table class="Code" border="0" width="80%">
+  <tbody>
+    <tr>
+      <td class="Code" height="19" nowrap="nowrap">#
+/usr/libexec/locate.updatedb </td>
+    </tr>
+    <tr>
+      <td class="Code" height="19" nowrap="nowrap"># locate filename</td>
+    </tr>
+  </tbody>
+</table>
+<p> Now you can use 'locate filename' to find exactly where that file
+is. As locate.updatedb updates information in the locate database
+dependent on the user starting the program there is a potential risk
+(since root has access to all files) of listing files in the database
+that you do not want other users to be aware of.</p>
+<p>To be safe, you could just manually start the /etc/weekly script
+which is configured to execute locate.updated as user "nobody" without
+the access priviliges available to root:</p>
+<table class="Code" border="0" width="80%">
+  <tbody>
+    <tr>
+      <td class="Code" height="19" nowrap="nowrap"># <b>sh /etc/weekly</b></td>
+    </tr>
+  </tbody>
+</table>
+<p>Using the above weekly script is simpler than trying to figure out
+how su, nice interact to minimise security holes through the locate db.</p>
+<p> Otherwise you can still use the Unix 'find / -name "filename"'
+command </p>
+<table class="Code" border="0" width="80%">
+  <tbody>
+    <tr>
+      <td class="Code" height="19" nowrap="nowrap"># <b>find / -name
+"filename"</b></td>
+    </tr>
+  </tbody>
+</table>
+<h3 class="Code"><a name="singleuser"></a>Booting in Single User Mode</h3>
+<p class="pFileReference">[ref: <a
+ href="http://www.openbsd.org/faq/faq14.html">FAQ. 14.0 Disk Setup</a>]</p>
+<p>Booting the system in Single User Mode is an important option when
+you need to perform tasks on the machine that is sensitive to other
+user activities on the system. Of course, you could be just like me and
+have forgotten root's password or have zapped the shell you used for
+root and other accounts and need to dive back into root to fix the
+system.</p>
+<p>When your system starts up, it momentarily offers the boot&gt;
+prompt where we can force single user mode.</p>
+<table class="Code" border="0" width="80%">
+  <tbody>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap"> Using Drive: 0
+Partition: 3<br>
+reading boot....<br>
+probing: pc0 com0 com1 apm mem[639K 95M a20=on]<br>
+disk: fd0 hd0<br>
+&gt;&gt; OpenBSD/i386 BOOT 1<span class="Code">.</span>26 </td>
+    </tr>
+    <tr>
+      <td class="Code" nowrap="nowrap">boot&gt; <b>boot -s</b></td>
+    </tr>
+  </tbody>
+</table>
+<p>Assuming you performed the above steps correctly and nothing has
+gone wrong you should end up at a prompt asking you for a shell path or
+press return. Press return to use sh. </p>
+<p>The single user mode starts with the "/" partition. This partition
+has been mounted as read only (precautionary procedure). It is
+advisable at this point to perform a file system check on the "/"
+partition.</p>
+<table class="Code" border="0" width="80%">
+  <tbody>
+    <tr>
+      <td class="Code" height="19" nowrap="nowrap">shell # <b>fsck /</b></td>
+    </tr>
+  </tbody>
+</table>
+<p>After the fsck we want to remount root in r/w mode as opposed to
+read only. Issue the following command:</p>
+<table class="Code" border="0" width="80%">
+  <tbody>
+    <tr>
+      <td class="Code" height="19" nowrap="nowrap">shell # <b>mount -u
+-w /</b></td>
+    </tr>
+  </tbody>
+</table>
+<p>The "-u" flag allows us to change the status of an already mounted
+file system (because "/" was previously mounted by the startup. The
+"-w" flag tells mount to make "/" read-write.</p>
+<p>Once you have mounted "/" as read/write you can also mount the rest
+of your file system or just do what it is you want to do in single user
+mode and restart the system.</p>
+<h3><a name="movdir"></a>Moving Directories Safely</h3>
+<p>Problem: How can I safely move all files/directories under /opt to
+/home/opt ?</p>
+<p>Sooner or later you'll come across the problem of running out of
+disk-space on your partition scheme. The following is a set of methods
+for 'safely' moving files from one folder to another.</p>
+<p>For this example we will pretend that our /opt directory has just
+filled our / partition and we need to move files from /opt to a less
+congested partition (or a new drive) so we can continue developing
+('acking'.) We find that /usr is getting tight on space and /home has
+heaps of space (cause we have no users yet,) so we will move the files
+to /home/opt for the time-being.</p>
+<table cellpadding="0" cellspacing="0">
+  <tbody>
+    <tr>
+      <td class="pScreenOutput" align="left" nowrap="nowrap"
+ valign="top">
+      <p class="pScreenOutput">/opt</p>
+      </td>
+      <td width="10">&nbsp;</td>
+      <td class="pScreenOutput" nowrap="nowrap">
+      <p>FULL sub-directories kde, Office51, etc.</p>
+      </td>
+    </tr>
+    <tr class="pScreenOutput">
+      <td class="pScreenOutput" align="left" nowrap="nowrap"
+ valign="top">
+      <p class="pScreenOutput">/home/opt</p>
+      </td>
+      <td>&nbsp;</td>
+      <td class="pScreenOutput" nowrap="nowrap">
+      <p>FREESPACE, there's plenty of freespace here, so we'll relocate
+files</p>
+      </td>
+    </tr>
+    <tr>
+      <td class="Code" colspan="3" nowrap="nowrap" width="100%">option
+1: cd /opt; find . -xdev -depth -print | cpio -pdmu /home/opt <br>
+option 2: cd /opt; tar cXf - . | (cd /home/opt; tar xpf - ) <br>
+option 3: cd /home/opt; dump -0uaf - /opt | restore -rf - </td>
+    </tr>
+  </tbody>
+</table>
+<h4>Option 1: [ref: OpenBSD FAQ and e-mail by H&aring;kan Olsson<!-- &lt;ho@crt.se&gt; --> ]</h4>
+<p>If the 'find' is run on the locally mounted filesystem, this is a
+rather efficient method to copy the data. Also, if you move lots of
+data and there is the chance it may change during copy/move time (say
+user or project data on an NFS-exported partition), you can rerun once
+without the 'u' flag to cpio, in which case only updated files are
+copied, if any. Not foolproof certainly, but often good enough if you
+have sane time in your network (ntp, et al). </p>
+<p>-xdev (x: do not search directories on other file systems/devices,
+d: depth-first traversal; e: </p>
+<h4> Option 2: [ref: e-mail by Christopher Linn<!-- &lt;celinn@mtu.edu&gt; -->
+] </h4>
+<p>This would be if you have any other partitions mounted inside of
+/usr, you don't want tar to cross filesystem boundary </p>
+<h4> Option 3: [ref: e-mail by Dan Harnett<!-- &lt;danh@nfol.com&gt; -->
+] </h4>
+<p> It has been my experience that it is safer and more reliable.</p>
+<p>[ref: OpenBSD <a href="http://www.openbsd.org/faq/faq14.html">FAQ.
+14.0 Disk Setup</a> -&gt; <a
+ href="http://www.openbsd.org/faq/faq14.html#14.3">14.3 Adding Extra
+Disks</a> in OpenBSD]<br>
+Note: the use of the above names in no way implies these people want to
+be associated with this information release</p>
+<h3> <a name="gentools"></a>My Selection of Tools for Configuring
+OpenBSD </h3>
+<p> The OpenBSD base install has a number of standard features (web
+server etc.) Below is just a list of tools that I used on a consistent
+basis to be installing with each generic install I put together. </p>
+<table>
+  <tbody>
+    <tr>
+      <td nowrap="nowrap" valign="top"> <b>bash-2.04</b> </td>
+      <td valign="top"> GNU Bourne Again Shell (use the static version)</td>
+    </tr>
+    <tr>
+      <td nowrap="nowrap" valign="top"> <b>m4-1.4 </b></td>
+      <td valign="top"> GNU m4 </td>
+    </tr>
+    <tr>
+      <td nowrap="nowrap" valign="top"> <b>autoconf</b> &nbsp; </td>
+      <td valign="top"> automatically configure source code </td>
+    </tr>
+    <tr>
+      <td nowrap="nowrap" valign="top"> <b>automake</b> </td>
+      <td valign="top"> GNU Makefile generator </td>
+    </tr>
+    <tr>
+      <td nowrap="nowrap" valign="top"> <b>bison</b> </td>
+      <td valign="top"> another one of those tools that seems to be
+needed when compiling various programs </td>
+    </tr>
+    <tr>
+      <td nowrap="nowrap" valign="top"> <b>gmake</b> </td>
+      <td valign="top"> GNU version of make </td>
+    </tr>
+    <tr>
+      <td nowrap="nowrap" valign="top"> <b>mawk</b> </td>
+      <td valign="top"> new/posix awk </td>
+    </tr>
+    <tr>
+      <td nowrap="nowrap" valign="top"> <b>samba</b> </td>
+      <td valign="top"> SMB/CIF file/print resource sharer very useful
+with MS Windows environments </td>
+    </tr>
+    <tr>
+      <td nowrap="nowrap" valign="top"> <b>vnc</b> </td>
+      <td valign="top"> display X &amp; Win32 desktops on remote
+X/Win32/java displays </td>
+    </tr>
+  </tbody>
+</table>
+<p>Around the time of OpenBSD 2.8 was the release of the <i>pico</i>
+editor. I have a friend who lives on the pico editor so now I've come
+to install this package as well. The user interface is much nicer than
+vi, but there are some 'gotchas' as well, but to each their own
+favourite.</p>
+<p>The reason we choose to use the 'static' version of bash is because
+of the times when you may choose to have bash as the default shell for
+root. By using the static version of bash there is no need for the
+binary to lookup libraries to complete its task. This is very important
+when someone or some program may inadvertently (by mistake?) delete or
+update a library that the dynamically linked version of Bash may need.
+Also, when booting into single-user mode, not all libraries are
+immediately available depending on how your partitions are set
+(remember that in single-user mode only your "/" partition is
+immediately available.) This also means that you have to make sure your
+'bash' executable is in the "/" partition.</p>
+<h3>Available from ftp sites (&amp; distfiles) </h3>
+<table>
+  <tbody>
+    <tr>
+      <td nowrap="nowrap" valign="top"> openssh </td>
+      <td valign="top"> SSH1 and SSH2 binaries, clients installed by
+default but servers require RSA libraries available on ftp sites. <i>(included
+with OpenBSD 2.7 and later)</i></td>
+    </tr>
+    <tr>
+      <td nowrap="nowrap" valign="top"> openssl </td>
+      <td valign="top"> ssl27 (ssl26) contains RSA code </td>
+    </tr>
+    <tr>
+      <td nowrap="nowrap" valign="top"> </td>
+      <td valign="top"> </td>
+    </tr>
+    <tr>
+      <td nowrap="nowrap" valign="top"> Pgp-intl </td>
+      <td valign="top"> Data Encryption package </td>
+    </tr>
+  </tbody>
+</table>
+<p><b><font color="#0000cc">Documentation? </font></b>Linux has the
+LDP, OpenBSD has the man pages. Although the LDP are much nicer in hand
+holding, OpenBSD's man pages are so convenient for us who are not
+'live' on the NET. INSTALL.386 has a section "Using online OpenBSD
+documentation," scan through it if you are new to Unix, it has some
+helpful pointers on how to better make use of man pages. </p>
+<p>The initial purpose of this documentation was to record what I had
+to do to get OpenBSD into a workable configuration. A few of my friends
+wanted to try out Unix so here evolves my notes for my better
+understanding and for others new to OpenBSD.</p>
+<p><a href="http://wks.uts.ohio-state.edu/unix_course/unix.html"
+ class="anchBlue">http://wks.uts.ohio-state.edu/unix_course/unix.html</a></p>
+<h2><a name="author"></a>Author and Copyright</h2>
+<p>Copyright (c) 2000/1/2 Samiuela LV Taufa. All Rights Reserved.</p>
+<p>I reserve the right to be totally incorrect even at the best advice
+of betters. In other words, I'm probably wrong in enough places for you
+to call me an idiot, but don't 'cause you'll hurt my sensibilities,
+just tell me where I went wrong and I'll try again.</p>
+<p>You are permitted and encouraged to use this guide for fun or for
+profit as you see fit. If you republish this work in what-ever form, it
+would be nice (though not enforceable) to be credited.</p>
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+  <tbody>
+    <tr>
+      <td class="block" bgcolor="#cccccc" valign="middle" width="100%"><strong>
+      <p class="block">First Time Installation Aids - for newbies like
+me</p>
+      </strong></td>
+    </tr>
+  </tbody>
+</table>
+<p><font color="#808080" face="sans-serif" size="-2"><strong>Copyright&nbsp;
+&copy; 2000/1/2
+<a href="http://www.nomoa.com">NoMoa.COM</a> All rights reserved.</strong></font></p>
+</body>
+</html>

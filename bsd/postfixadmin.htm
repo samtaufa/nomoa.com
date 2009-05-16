@@ -1,0 +1,630 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+  <title>=8&gt; nomoa.com/bsd OpenBSD - 'dovecot' serving up imap, pop, sasl</title>
+  <link rel="STYLESHEET" type="text/css" href="openbsd.css">
+  <script language="JavaScript">
+<!--
+
+function newImage(arg) {
+	if (document.images) {
+		rslt = new Image();
+		rslt.src = arg;
+		return rslt;
+	}
+}
+
+function changeImages() {
+	if (document.images && (preloadFlag == true)) {
+		for (var i=0; i<changeImages.arguments.length; i+=2) {
+			document[changeImages.arguments[i]].src = changeImages.arguments[i+1];
+		}
+	}
+}
+
+var preloadFlag = false;
+function preloadImages() {
+	if (document.images) {
+		openbsd_over = newImage("mmedia/openbsd-over.gif");
+		openbsd_down = newImage("mmedia/openbsd-down.gif");
+		preloadFlag = true;
+	}
+}
+
+// -->
+  </script><!-- End Preload Script -->
+	<style type="text/css">
+.style1 {
+	font-weight: bold;
+	color: #0000FF;
+	letter-spacing: -1pt;
+}
+</style>
+	</head>
+<body onload="preloadImages();" bgcolor="#fffacd">
+<p class="logo">
+<a class="anchBlue" href="http://www.nomoa.com/bsd"
+ onmouseover="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;"
+ onmouseout="changeImages('openbsd', 'mmedia/openbsd.gif'); return true;"
+ onmousedown="changeImages('openbsd', 'mmedia/openbsd-down.gif'); return true;"
+ onmouseup="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;">
+<img name="openbsd" alt="OpenBSD ... The Only way to Go ..."
+ src="mmedia/openbsd.gif" align="middle" border="0" height="50"
+ width="368"></a></p>
+<h1> postfixadmin - a web gui for administering Postfix/MySQL</h1>
+<hr color="fuchsia">
+<p> Table of Contents: </p>
+<ul>
+  <li><a href="#introduction">Introduction</a></li>
+	<li><a href="#install">C<span class="style1">onfiguring MySQL</span></a></li>
+	<ul><li><a href="#2.1Creating the Database">Creating the Database</li></a>
+	<ul><li><a href="#2.1.1ModifyingDatabase">Modifying the Database and MySQL users</a></li>
+		<li><a href="#2.1.2ModifyingSuperadmin">Modifying the superadmin account</a></li></ul>
+		<li><a href="#2.2CreateTheDatabase">Create the Database</a></li>
+	<li><a href="#2.3DatabaseErrors">Database Errors</a></li>
+	<li><a href="#2.4Summary">Summary</a></li></ul>
+	<li><a href="#3ConfiguringFiles">Configuring Files</li></a>
+	<ul><li><a href="#3.1ChangingFilePermissions">Changing File Permissions</a></li>
+		<li><a href="#3.2ChangingConfig.inc.php">Changing config.inc.php</a></li></ul>
+	<li><a href="#4ConfiguringPostfix">Configuring Postfix</a></li>
+	<li><a href="#4StartOurEngines">Start our Engines</a></li>
+	<li><a href="#5DATABASE_MYSQL.TXT">DATABASE_MYSQL.TXT</a></li>
+	<li><a href="#7ReferenceResources">Reference Resources</a></li>
+	<li><a href="#author">Author and Copyright</a></li>
+</ul>
+<hr color="fuchsia">
+<h2><a name="introduction"></a>Introduction</h2>
+<p class="pFileReference">[OpenBSD 4.0 Stable] </p>
+<p> <a href="http://www.high5.net">Postfixadmin</a> is a web front end for 
+managing a MySQL database, that is normally configured for use by your postfix 
+installation.</p>
+<p> This guide was tested on OpenBSD 4.0 release with postfixadmin 2.1.0
+<a href="postfix.htm">postfix 2.3.2</a> and <a href="dovecot.htm">dovecot 
+1.0rc15</a> and <a href="mysql.htm">mysql 5.024a</a>. Check with the release you are using whether you have the minimal 
+software requirements before continuing.</p>
+<p> If you have not already done so, please install and verify your
+<a href="mysql.htm">mysql</a> configuration with php support.</p>
+<p>You can download postfixadmin from <a href="http://high5.net">
+http://high5.net</a> or grab the current source using svn, instructions at
+<a href="http://high5.net">http://high5.net</a>. If you can follow through the 
+INSTALL.TXT file, go ahead and install from there. Otherwise, read that file 
+first before continuing further.</p>
+<p>For our purposes, we will assume that you have already unarchived the 
+postfixadmin files available in the 
+/var/www/htdocs/postfixadmin directory.</p>
+<h2><a name="2ConfiguringMySQL"></a>Configuring MySQL</h2>
+<p>The simplest way to configure your mysql server is to use the 
+DATABASE_MYSQL.TXT that holds the database schema as well as sample data for our 
+postfixadmin.</p>
+<p>We actually want to make some modifications to the file, as customisations 
+for our own installation.</p>
+<h3><a name="2.1Creating the Database"></a>Creating the Database</h3>
+<p>Obviously, the current release of postfixadmin is most likely to have the 
+latest configuration of the database. For MySQL, the current schema is in the 
+file DATABASE_MYSQL.TXT.</p>
+<p>There are two basic changes I want to make for how I have installed 
+postfixadmin:</p>
+<ul>
+	<li>Modify the database and mysql user names</li>
+	<li>Modify the superadmin user</li>
+</ul>
+<p>You may not want to make the changes as I have made them, but may use this as 
+the foundation for ensuring your set up is customised for your needs.</p>
+<h4><a name="2.1.1ModifyingDatabase"></a>Modifying Database and mysql users</h4>
+<p>In our installation, I have decided to use different user account name for 
+the postfix server, and a different database name. The standard release uses the 
+database &#39;postfix&#39; and a user account &#39;postfix&#39; which I found confusing, so I&#39;ve 
+renamed the postfix user account to be &#39;postfixserver&#39; and the database name 
+will be &#39;mail.&#39;</p>
+<p>What we want to do is use the same installation files as postfixadmin with 
+the following modifications.</p>
+<ul>
+	<li>Replace &#39;postfix&#39; user to be &#39;postfixserver&#39;</li>
+	<li>Replace &#39;postfix&#39; database to be &#39;mail&#39;</li>
+</ul>
+<p>The major changes we will want to make is shown in the following file 
+fragment that begins at around line 25.</p>
+<p class="pFileReference">File Fragment: ./DATABASE_MYSQL.TXT</p>
+<table style="width: 86%" class="Screen">
+	<tr>
+		<td style="height: 23px; width: 32px">25</td>
+		<td style="height: 23px">#</td>
+	</tr>
+	<tr>
+		<td style="width: 32px">26</td>
+		<td># Postfix / MySQL</td>
+	</tr>
+	<tr>
+		<td style="width: 32px">27</td>
+		<td>#</td>
+	</tr>
+	<tr>
+		<td style="width: 32px">28</td>
+		<td>USE mysql;</td>
+	</tr>
+	<tr>
+		<td style="width: 32px">29</td>
+		<td># Postfix user &amp; password</td>
+	</tr>
+	<tr>
+		<td style="width: 32px">30</td>
+		<td>INSERT INTO user (Host, User, Password) VALUES (&#39;localhost&#39;,&#39;postfix&#39;,password(&#39;postfix&#39;));</td>
+	</tr>
+	<tr>
+		<td style="width: 32px">31</td>
+		<td>INSERT INTO db (Host, Db, User, Select_priv) VALUES (&#39;localhost&#39;,&#39;postfix&#39;,&#39;postfix&#39;,&#39;Y&#39;);</td>
+	</tr>
+	<tr>
+		<td style="width: 32px">32</td>
+		<td># Postfix Admin user &amp; password</td>
+	</tr>
+	<tr>
+		<td style="width: 32px">33</td>
+		<td>INSERT INTO user (Host, User, Password) VALUES (&#39;localhost&#39;,&#39;postfixadmin&#39;,password(&#39;postfixadmin&#39;));</td>
+	</tr>
+	<tr>
+		<td style="width: 32px">34</td>
+		<td>INSERT INTO db (Host, Db, User, Select_priv, Insert_priv, 
+		Update_priv, Delete_priv) VALUES (&#39;localhost&#39;,&#39;postfix&#39;, &#39;postfixadmin&#39;, 
+		&#39;Y&#39;, &#39;Y&#39;, &#39;Y&#39;, &#39;Y&#39;);</td>
+	</tr>
+	<tr>
+		<td style="width: 32px">35</td>
+		<td>FLUSH PRIVILEGES;</td>
+	</tr>
+	<tr>
+		<td style="width: 32px">36</td>
+		<td>GRANT USAGE ON postfix.* TO postfix@localhost;</td>
+	</tr>
+	<tr>
+		<td style="width: 32px">37</td>
+		<td>GRANT SELECT, INSERT, DELETE, UPDATE ON postfix.* TO 
+		postfix@localhost;</td>
+	</tr>
+	<tr>
+		<td style="width: 32px">38</td>
+		<td>GRANT USAGE ON postfix.* TO postfixadmin@localhost;</td>
+	</tr>
+	<tr>
+		<td style="width: 32px">39</td>
+		<td>GRANT SELECT, INSERT, DELETE, UPDATE ON postfix.* TO 
+		postfixadmin@localhost;</td>
+	</tr>
+	<tr>
+		<td style="width: 32px">40</td>
+		<td>CREATE DATABASE postfix;</td>
+	</tr>
+	<tr>
+		<td style="width: 32px">41</td>
+		<td>USE postfix;</td>
+	</tr>
+</table>
+<p>After we make changes to the above file, we should have something like the 
+below, with the changes highlighted in blue</p>
+<p class="pFileReference">Updated File Fragment: ./DATABASE_MYSQL.TXT</p>
+<table style="width: 86%" class="Screen">
+	<tr>
+		<td style="height: 23px; width: 32px">25</td>
+		<td style="height: 23px">#</td>
+	</tr>
+	<tr>
+		<td style="width: 32px">26</td>
+		<td># Postfix / MySQL</td>
+	</tr>
+	<tr>
+		<td style="width: 32px">27</td>
+		<td>#</td>
+	</tr>
+	<tr>
+		<td style="width: 32px">28</td>
+		<td>USE mysql;</td>
+	</tr>
+	<tr>
+		<td style="width: 32px">29</td>
+		<td># Postfix user &amp; password</td>
+	</tr>
+	<tr>
+		<td style="width: 32px">30</td>
+		<td>INSERT INTO user (Host, User, Password) VALUES (&#39;localhost&#39;,&#39;<span class="emphasis"><strong>postfixserver</strong></span>&#39;,password(&#39;<span class="emphasis"><strong>postfixserver</strong></span>&#39;));</td>
+	</tr>
+	<tr>
+		<td style="width: 32px">31</td>
+		<td>INSERT INTO db (Host, Db, User, Select_priv) VALUES (&#39;localhost&#39;,&#39;<span class="emphasis"><strong>mail</strong></span>&#39;,&#39;<span class="emphasis"><strong>postfixserver</strong></span>&#39;,&#39;Y&#39;);</td>
+	</tr>
+	<tr>
+		<td style="width: 32px">32</td>
+		<td># Postfix Admin user &amp; password</td>
+	</tr>
+	<tr>
+		<td style="width: 32px">33</td>
+		<td>INSERT INTO user (Host, User, Password) VALUES (&#39;localhost&#39;,&#39;postfixadmin&#39;,password(&#39;<span class="emphasis">postfixadmin</span>&#39;));</td>
+	</tr>
+	<tr>
+		<td style="width: 32px">34</td>
+		<td>INSERT INTO db (Host, Db, User, Select_priv, Insert_priv, 
+		Update_priv, Delete_priv) VALUES (&#39;localhost&#39;,&#39;<span class="emphasis"><strong>mail</strong></span>&#39;, 
+		&#39;postfixadmin&#39;, &#39;Y&#39;, &#39;Y&#39;, &#39;Y&#39;, &#39;Y&#39;);</td>
+	</tr>
+	<tr>
+		<td style="width: 32px">35</td>
+		<td>FLUSH PRIVILEGES;</td>
+	</tr>
+	<tr>
+		<td style="width: 32px">36</td>
+		<td>GRANT USAGE ON <span class="emphasis">mail</span>.* TO
+		<span class="emphasis">postfixserver</span>@localhost;</td>
+	</tr>
+	<tr>
+		<td style="width: 32px">37</td>
+		<td>GRANT SELECT, INSERT, DELETE, UPDATE ON <span class="emphasis">mail</span>.* TO postfixserver@localhost;</td>
+	</tr>
+	<tr>
+		<td style="width: 32px">38</td>
+		<td>GRANT USAGE ON <span class="emphasis">mail</span>.* TO postfixadmin@localhost;</td>
+	</tr>
+	<tr>
+		<td style="width: 32px">39</td>
+		<td>GRANT SELECT, INSERT, DELETE, UPDATE ON <span class="emphasis">mail</span>.* TO postfixadmin@localhost;</td>
+	</tr>
+	<tr>
+		<td style="width: 32px">40</td>
+		<td>CREATE DATABASE <span class="emphasis">mail</span>;</td>
+	</tr>
+	<tr>
+		<td style="width: 32px">41</td>
+		<td>USE <span class="emphasis">mail</span>;</td>
+	</tr>
+</table>
+<p>Details of the changes we want to make are as follows:</p>
+<ul>
+	<li>Line 30: Replace the user &#39;postfix&#39; with &#39;postfixserver&#39;, and remember 
+	that the password &#39;postfixserver&#39; should be something unique to your 
+	installation.</li>
+	<li>Line 31: Replace the Db &#39;postfix&#39; with &#39;mail&#39; and the User &#39;postfix&#39; to 
+	be &#39;postfixserver&#39;</li>
+	<li>Line 33: Replace the password for &#39;postfixadmin&#39; with something unique 
+	for your installation.</li>
+	<li>Line 34: Replace the Db &#39;postfix&#39; with &#39;mail&#39;</li>
+	<li>Line 36: Replace&nbsp; postfix.* with mail.* and replace 
+	postfix@localhost with <a href="mailto:postfixserver@localhost">
+	postfixserver@localhost</a> </li>
+	<li>Line 37: Replace postfix.* with mail.*</li>
+	<li>Line 38: Replace postfix.* with mail.*</li>
+	<li>Line 39: Replace postfix.* with mail.*</li>
+	<li>Line 40: Replace postfix; with mail;</li>
+	<li>Line 41: Replace postfix; with mail;</li>
+</ul>
+<p>&nbsp;</p>
+<h4><a name="2.1.2ModifyingSuperadmin"></a>Modifying superadmin account</h4>
+<p>The default superadmin user account can be somewhat confusing as you are 
+literally requested to enter &#39;admin@domain.tld&#39; as the user account. This 
+aesthetic change is to use &#39;admin&#39; and allow setting the default password.</p>
+<p class="pFileReference">File Fragment: ./DATABASE_MYSQL.TXT</p>
+<table style="width: 86%" class="Screen">
+	<tr>
+		<td style="height: 23px; width: 32px">145</td>
+		<td style="height: 23px"># superadmin user &amp; password (login: 
+		admin@domain.tld, password: admin)</td>
+	</tr>
+	<tr>
+		<td style="width: 32px">146</td>
+		<td>INSERT INTO domain_admins (username, domain, active) VALUES (&#39;admin@domain.tld&#39;,&#39;ALL&#39;,&#39;1&#39;);</td>
+	</tr>
+	<tr>
+		<td style="width: 32px">147</td>
+		<td>INSERT INTO admin (username, password, active) VALUES 
+		(&#39;admin@domain.tld&#39;,&#39;$1$0fec9189$bgI6ncWrldPOsXnkUBIjl1&#39;,&#39;1&#39;);</td>
+	</tr>
+	</table>
+<p>We will change the default to something like the below</p>
+<p class="pFileReference">Updated File Fragment: ./DATABASE_MYSQL.TXT</p>
+<table style="width: 86%" class="Screen">
+	<tr>
+		<td style="height: 23px; width: 32px">145</td>
+		<td style="height: 23px"># superadmin user &amp; password (login: 
+		admin@domain.tld, password: admin)</td>
+	</tr>
+	<tr>
+		<td style="width: 32px">146</td>
+		<td>INSERT INTO domain_admins (username, domain, active) VALUES (&#39;<span class="emphasis">admin</span>&#39;,&#39;ALL&#39;,&#39;1&#39;);</td>
+	</tr>
+	<tr>
+		<td style="width: 32px">147</td>
+		<td>INSERT INTO admin (username, password, active) VALUES (&#39;<span class="emphasis">admin</span>&#39;,&#39;<span class="emphasis">6dwLx9NTxhTjU</span>&#39;,&#39;1&#39;);</td>
+	</tr>
+	</table>
+<p>Details of the changes we want to make are as follows:</p>
+<ul>
+	<li>Line 146: Replace &#39;admin@domain.tld&#39; with &#39;admin&#39;</li>
+	<li>Line 147: Replace &#39;admin@domain.tld&#39; with &#39;admin&#39;. Replace password with 
+	new password.</li>
+</ul>
+<h3><a name="2.2CreateTheDatabase"></a>Create the Database</h3>
+<p>Now that we&#39;ve completed the modifications to our database instructions, we 
+can create our database with the following instructions.</p>
+<p class="Code"># mysql -u root -p &lt; ./DATABASE_MYSQL.TXT</p>
+<h3><a name="2.3DatabaseErrors"></a>Database Errors</h3>
+<p>You should not get any error messages, and if you do you may need to check 
+the file changes above for any syntax errors.</p>
+<p>Otherwise, copy the DATABASE_MYSQL.TXT shown later in this documentation, and 
+recreate the database after executing the below mysql commands to clear out your 
+previous installation. </p>
+<p>Note: You may inadvertently destroy something on your server, so only perform 
+these on a test server unless you know what you are doing.</p>
+<p>To remove the previous, or any part of the previous database instructions 
+that may have been added to the database server:</p>
+<ul>
+	<li>drop/delete the database mail and or postfix</li>
+	<li>delete user postfix</li>
+	<li>delete user postfixadmin</li>
+	<li>delete user postfixserver</li>
+	<li>delete database privileges (db) for postfix</li>
+	<li>delete database privileges (db) for postfixadmin</li>
+	<li>delete database privileges (db) for postfixserver</li>
+	<li>flush the privileges</li>
+</ul>
+<p class="ScreenSession">Screen Session</p>
+<p class="Code">$ mysql -u root -p</p>
+<p class="pScreenOutput">Enter password:<br>
+Welcome to the MySQL monitor. Commands end with ; or \g.<br>
+Your MySQL connection id is 25 to server version: 5.0.24a-log<br>
+<br>
+Type &#39;help;&#39; or &#39;\h&#39; for help. Type &#39;\c&#39; to clear the buffer.<br>
+</p>
+<p class="Code">mysql&gt; drop database mail;</p>
+<p class="pScreenOutput">Query OK, 7 rows affected (0.05 sec)<br>
+</p>
+<p class="Code">mysql&gt; drop database postfix;</p>
+<p class="pScreenOutput">ERROR 1008 (HY000): Can&#39;t drop database &#39;postfix&#39;; 
+database doesn&#39;t exist</p>
+<p class="Code">mysql&gt; use mysql;</p>
+<p class="pScreenOutput">Database changed</p>
+<p class="Code">mysql&gt; delete from user where user=&#39;postfix&#39;;</p>
+<p class="pScreenOutput">Query OK, 0 rows affected (0.00 sec)<br>
+</p>
+<p class="Code">mysql&gt; delete from user where user=&#39;postfixadmin&#39;;</p>
+<p class="pScreenOutput">Query OK, 1 row affected (0.00 sec)<br>
+</p>
+<p class="Code">mysql&gt; delete from user where user=&#39;postfixserver&#39;;</p>
+<p class="pScreenOutput">Query OK, 1 row affected (0.00 sec)<br>
+</p>
+<p class="Code">mysql&gt; delete from db where user=&#39;postfix&#39;;</p>
+<p class="pScreenOutput">Query OK, 0 rows affected (0.01 sec)<br>
+</p>
+<p class="Code">mysql&gt; delete from db where user=&#39;postfixserver&#39;;</p>
+<p class="pScreenOutput">Query OK, 1 row affected (0.00 sec)<br>
+</p>
+<p class="Code" style="height: 19px">mysql&gt; delete from db where 
+user=&#39;postfixadmin&#39;;</p>
+<p class="pScreenOutput">Query OK, 1 row affected (0.00 sec)<br>
+</p>
+<p class="Code">mysql&gt; flush privileges;</p>
+<p>Remember that if you&#39;ve changed the user names, then you need to remember to 
+use those changes in the above instructions.</p>
+<h3><a name="2.4Summary"></a>Summary</h3>
+<p>Your database should now be appropriately created for use with
+<a href="postfix.htm">postfix</a> and postfixadmin.</p>
+<h2><a name="3ConfiguringFiles"></a>Configuring Files</h2>
+<p>There are two main changes you need to make with the files that are 
+distributed with postfixadmin.</p>
+<ul>
+	<li>Set the correct permissions</li>
+	<li>Change config.inc.php</li>
+</ul>
+<h3><a name="3.1ChangingFilePermissions"></a>Changing File permissions</h3>
+<p>For security reasons, we will set the permissions for files in the 
+postfixadmin directory. We can use a combination of the &#39;find&#39; and &#39;chmod&#39; 
+programs to quickly achieve this</p>
+<p class="Code"># cd /var/www/htdocs/postfixadmin</p>
+<p class="Code"># find . -type f -exec chmod 640 &quot;{}&quot; &quot;;&quot;</p>
+<p>If you observe some file permission problems after the above settings, then 
+you may need to take a look at whether you also need to change the ownership of 
+the files, as in the example below.</p>
+<p class="Code"># find . -exec chown www:www &quot;{}&quot; &quot;;&quot;</p>
+<h3><a name="3.2ChangingConfig.inc.php"></a>Changing config.inc.php</h3>
+<p>postfixadmin&#39;s runtime behaviour is effected by initialisation settings in 
+the config.inc.php file. Mostly, the changes are relevant to the users and 
+passwords you&#39;ve set in the above Database creation exercise, as well as issues 
+relevant to your installation.</p>
+<p>Things that I changed include:</p>
+<p class="pFileReference">File Fragment: 
+/var/www/htdocs/postfixadmin/config.inc.php</p>
+<p class="Code">$CONF[&#39;postfix_admin_url&#39;] = &#39;http://PRIVATE_IP/postfixadmin/&#39;;<br>
+$CONF[&#39;postfix_admin_path&#39;] = &#39;/admin/&#39;;<br>
+$CONF[&#39;database_host&#39;] = &#39;127.0.0.1&#39;;<br>
+$CONF[&#39;database_name&#39;] = &#39;mail&#39;;<br>
+$CONF[&#39;admin_email&#39;] = &#39;postmaster@example.org&#39;;<br>
+$CONF[&#39;smtp_server&#39;] = &#39;127.0.0.1&#39;;<br>
+$CONF[&#39;encrypt&#39;] = &#39;system&#39;;<br>
+&nbsp;$CONF[&#39;default_aliases&#39;] = array (<br>
+&nbsp;&#39;abuse&#39; =&gt; &#39;abuse@example.org&#39;,<br>
+&nbsp;&#39;hostmaster&#39; =&gt; &#39;hostmaster@example.org&#39;,<br>
+&nbsp;&#39;postmaster&#39; =&gt; &#39;postmaster@example.org&#39;,<br>
+&nbsp;&#39;webmaster&#39; =&gt; &#39;webmaster@example.org&#39;<br>
+);<br>
+$CONF[&#39;domain_path&#39;] = &#39;YES&#39;;<br>
+$CONF[&#39;vacation_domain&#39;] = &#39;autoreply.example.org&#39;;<br>
+$CONF[&#39;footer_text&#39;] = &#39;Return to MYHOST&#39;;<br>
+$CONF[&#39;footer_link&#39;] = &#39;http://PRIVATE_IP&#39;;<br>
+</p>
+<h2><a name="4ConfiguringPostfix"></a>Configuring Postfix</h2>
+<p>Documentation for <a href="postfix.htm#6.4ConfiguringPostfix">configuring 
+Postfix</a> for use with this MySQL database, is described at
+<a href="postfix.htm#6.4ConfiguringPostfix">this link</a>.</p>
+<h2><a name="4StartOurEngines"></a>Start our Engines</h2>
+<p>Your postfixadmin installation should be installed and ready.</p>
+<p>To start, open your browser to the url you specified in your configuration 
+file, like:</p>
+<p class="Code">$ lynx http://PRIVATE_IP/postfixadmin/</p>
+<p>You can now use user &#39;admin&#39; with password &#39;admin&#39; for managing your virtual 
+domains, or if you have changed the password in the above instructions, use that 
+password.</p>
+<h2><a name="5DATABASE_MYSQL.TXT"></a>DATABASE_MYSQL.TXT</h2>
+<p>Following is the modified DATABASE_MYSQL.TXT discussed above.</p>
+<p class="pFileReference">File: ./DATABASE_MYSQL.TXT</p>
+<p class="pScreenOutput">#<br>
+# Postfix Admin<br>
+# by Mischa Peters &lt;mischa at high5 dot net&gt;<br>
+# Copyright (c) 2002 - 2005 High5!<br>
+# Licensed under GPL for more info check GPL-LICENSE.TXT<br>
+# <br>
+# This is the complete MySQL database structure for Postfix Admin.<br>
+# If you are installing from scratch you can use this file otherwise you<br>
+# need to use the TABLE_CHANGES.TXT or TABLE_BACKUP_MX.TXT that comes with 
+Postfix Admin.<br>
+# You can find these in DOCUMENTS/ <br>
+#<br>
+# There are 2 entries for a database user in the file.<br>
+# One you can use for Postfix and one for Postfix Admin.<br>
+#<br>
+# If you run this file twice (2x) you will get an error on the user creation in 
+MySQL.<br>
+# To go around this you can either comment the lines below &quot;USE MySQL&quot; until 
+&quot;USE postfix&quot;.<br>
+# Or you can remove the users from the database and run it again.<br>
+#<br>
+# You can create the database from the shell with:<br>
+#<br>
+# mysql -u root [-p] &lt; DATABASE_MYSQL.TXT <br>
+#<br>
+# Postfix / MySQL<br>
+#<br>
+USE mysql;<br>
+# Postfix user &amp; password<br>
+INSERT INTO user (Host, User, Password) VALUES (&#39;localhost&#39;,&#39;postfixserver&#39;,password(&#39;postfixserver&#39;));<br>
+INSERT INTO db (Host, Db, User, Select_priv) VALUES (&#39;localhost&#39;,&#39;mail&#39;,&#39;postfixserver&#39;,&#39;Y&#39;);<br>
+# Postfix Admin user &amp; password<br>
+INSERT INTO user (Host, User, Password) VALUES (&#39;localhost&#39;,&#39;postfixadmin&#39;,password(&#39;postfixadmin&#39;));<br>
+INSERT INTO db (Host, Db, User, Select_priv, Insert_priv, Update_priv, 
+Delete_priv) VALUES (&#39;localhost&#39;, &#39;mail&#39;, &#39;postfixadmin&#39;, &#39;Y&#39;, &#39;Y&#39;, &#39;Y&#39;, &#39;Y&#39;);<br>
+FLUSH PRIVILEGES;<br>
+GRANT USAGE ON mail.* TO postfixserver@localhost;<br>
+GRANT SELECT, INSERT, DELETE, UPDATE ON mail.* TO postfixserver@localhost;<br>
+GRANT USAGE ON mail.* TO postfixadmin@localhost;<br>
+GRANT SELECT, INSERT, DELETE, UPDATE ON mail.* TO postfixadmin@localhost;<br>
+CREATE DATABASE mail;<br>
+USE mail;<br>
+#<br>
+# Table structure for table admin<br>
+#<br>
+CREATE TABLE `admin` (<br>
+`username` varchar(255) NOT NULL default &#39;&#39;,<br>
+`password` varchar(255) NOT NULL default &#39;&#39;,<br>
+`created` datetime NOT NULL default &#39;0000-00-00 00:00:00&#39;,<br>
+`modified` datetime NOT NULL default &#39;0000-00-00 00:00:00&#39;,<br>
+`active` tinyint(1) NOT NULL default &#39;1&#39;,<br>
+PRIMARY KEY (`username`),<br>
+KEY username (`username`)<br>
+) TYPE=MyISAM COMMENT=&#39;Postfix Admin - Virtual Admins&#39;; <br>
+#<br>
+# Table structure for table alias<br>
+#<br>
+CREATE TABLE `alias` (<br>
+`address` varchar(255) NOT NULL default &#39;&#39;,<br>
+`goto` text NOT NULL,<br>
+`domain` varchar(255) NOT NULL default &#39;&#39;,<br>
+`created` datetime NOT NULL default &#39;0000-00-00 00:00:00&#39;,<br>
+`modified` datetime NOT NULL default &#39;0000-00-00 00:00:00&#39;,<br>
+`active` tinyint(1) NOT NULL default &#39;1&#39;,<br>
+PRIMARY KEY (`address`),<br>
+KEY address (`address`)<br>
+) TYPE=MyISAM COMMENT=&#39;Postfix Admin - Virtual Aliases&#39;; <br>
+#<br>
+# Table structure for table domain<br>
+#<br>
+CREATE TABLE `domain` (<br>
+`domain` varchar(255) NOT NULL default &#39;&#39;,<br>
+`description` varchar(255) NOT NULL default &#39;&#39;,<br>
+`aliases` int(10) NOT NULL default &#39;0&#39;,<br>
+`mailboxes` int(10) NOT NULL default &#39;0&#39;,<br>
+`maxquota` int(10) NOT NULL default &#39;0&#39;,<br>
+`quota` int(10) NOT NULL default &#39;0&#39;,<br>
+`transport` varchar(255) default NULL,<br>
+`backupmx` tinyint(1) NOT NULL default &#39;0&#39;,<br>
+`created` datetime NOT NULL default &#39;0000-00-00 00:00:00&#39;,<br>
+`modified` datetime NOT NULL default &#39;0000-00-00 00:00:00&#39;,<br>
+`active` tinyint(1) NOT NULL default &#39;1&#39;,<br>
+PRIMARY KEY (`domain`),<br>
+KEY domain (`domain`)<br>
+) TYPE=MyISAM COMMENT=&#39;Postfix Admin - Virtual Domains&#39;; <br>
+#<br>
+# Table structure for table domain_admins<br>
+#<br>
+CREATE TABLE `domain_admins` (<br>
+`username` varchar(255) NOT NULL default &#39;&#39;,<br>
+`domain` varchar(255) NOT NULL default &#39;&#39;,<br>
+`created` datetime NOT NULL default &#39;0000-00-00 00:00:00&#39;,<br>
+`active` tinyint(1) NOT NULL default &#39;1&#39;,<br>
+KEY username (`username`)<br>
+) TYPE=MyISAM COMMENT=&#39;Postfix Admin - Domain Admins&#39;; <br>
+#<br>
+# Table structure for table log<br>
+#<br>
+CREATE TABLE `log` (<br>
+`timestamp` datetime NOT NULL default &#39;0000-00-00 00:00:00&#39;,<br>
+`username` varchar(255) NOT NULL default &#39;&#39;,<br>
+`domain` varchar(255) NOT NULL default &#39;&#39;,<br>
+`action` varchar(255) NOT NULL default &#39;&#39;,<br>
+`data` varchar(255) NOT NULL default &#39;&#39;,<br>
+KEY timestamp (`timestamp`)<br>
+) TYPE=MyISAM COMMENT=&#39;Postfix Admin - Log&#39;; <br>
+#<br>
+# Table structure for table mailbox<br>
+#<br>
+CREATE TABLE `mailbox` (<br>
+`username` varchar(255) NOT NULL default &#39;&#39;,<br>
+`password` varchar(255) NOT NULL default &#39;&#39;,<br>
+`name` varchar(255) NOT NULL default &#39;&#39;,<br>
+`maildir` varchar(255) NOT NULL default &#39;&#39;,<br>
+`quota` int(10) NOT NULL default &#39;0&#39;,<br>
+`domain` varchar(255) NOT NULL default &#39;&#39;,<br>
+`created` datetime NOT NULL default &#39;0000-00-00 00:00:00&#39;,<br>
+`modified` datetime NOT NULL default &#39;0000-00-00 00:00:00&#39;,<br>
+`active` tinyint(1) NOT NULL default &#39;1&#39;,<br>
+PRIMARY KEY (`username`),<br>
+KEY username (`username`)<br>
+) TYPE=MyISAM COMMENT=&#39;Postfix Admin - Virtual Mailboxes&#39;; <br>
+#<br>
+# Table structure for table vacation<br>
+#<br>
+CREATE TABLE `vacation` (<br>
+`email` varchar(255) NOT NULL default &#39;&#39;,<br>
+`subject` varchar(255) NOT NULL default &#39;&#39;,<br>
+`body` text NOT NULL default &#39;&#39;,<br>
+`cache` text NOT NULL default &#39;&#39;,<br>
+`domain` varchar(255) NOT NULL default &#39;&#39;,<br>
+`created` datetime NOT NULL default &#39;0000-00-00 00:00:00&#39;,<br>
+`active` tinyint(1) NOT NULL default &#39;1&#39;,<br>
+PRIMARY KEY (`email`),<br>
+KEY email (`email`)<br>
+) TYPE=MyISAM COMMENT=&#39;Postfix Admin - Virtual Vacation&#39;; <br>
+# superadmin user &amp; password (login: admin@domain.tld, password: admin)<br>
+INSERT INTO domain_admins (username, domain, active) VALUES (&#39;admin&#39;,&#39;ALL&#39;,&#39;1&#39;);<br>
+INSERT INTO admin (username, password, active) VALUES 
+(&#39;admin&#39;,&#39;6dwLx9NTxhTjU&#39;,&#39;1&#39;);</p>
+<p>&nbsp;</p>
+<h2><a name="7ReferenceResources"></a>Reference Resources</h2>
+<p>High5.net <a href="http://www.high5.net">http://www.high5.net</a> </p>
+<h2><a name="author"></a>Author and Copyright</h2>
+<p>Copyright (c) 2007 Samiuela LV Taufa. All Rights Reserved.</p>
+<p>I reserve the right to be totally incorrect even at the best advice
+of betters. In other words, I'm probably wrong in enough places for you
+to call me an idiot, but don't 'cause you'll hurt my sensibilities,
+just tell me where I went wrong and I'll try again.</p>
+<p>You are permitted and encouraged to use this guide for fun or for
+profit as you see fit. If you republish this work in what-ever form, it
+would be nice (though not enforceable) to be credited.</p>
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+  <tbody>
+    <tr>
+      <td class="block" bgcolor="#cccccc" valign="middle" width="100%">
+      <p class="block">postfixadmin - a web gui for administering Postfix/MySQL</p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p><font color="#808080" face="sans-serif" size="-2"><strong>Copyright&nbsp; © 
+2007
+<a href="http://www.nomoa.com">NoMoa.COM</a> All rights reserved.</strong></font></p>
+</body>
+</html>

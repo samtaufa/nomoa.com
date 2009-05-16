@@ -1,0 +1,1354 @@
+
+<html>
+<head>
+<title>=8&gt; nomoa.com/bsd OpenBSD - IDE RAIDFrame disk driver, OpenBSD 3.3 current</title><link rel="STYLESHEET" type="text/css" href="openbsd.css">
+<script language="JavaScript">
+<!--
+
+function newImage(arg) {
+	if (document.images) {
+		rslt = new Image();
+		rslt.src = arg;
+		return rslt;
+	}
+}
+
+function changeImages() {
+	if (document.images && (preloadFlag == true)) {
+		for (var i=0; i<changeImages.arguments.length; i+=2) {
+			document[changeImages.arguments[i]].src = changeImages.arguments[i+1];
+		}
+	}
+}
+
+var preloadFlag = false;
+function preloadImages() {
+	if (document.images) {
+		openbsd_over = newImage("mmedia/openbsd-over.gif");
+		openbsd_down = newImage("mmedia/openbsd-down.gif");
+		preloadFlag = true;
+	}
+}
+
+// -->
+</script>
+<!-- End Preload Script -->
+</head>
+
+<body bgcolor="#FFFACD" onLoad="preloadImages();">
+<p class="logo">
+<a class="anchBlue" href="http://www.nomoa.com/bsd" 
+   onMouseOver="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;"
+   onMouseOut="changeImages('openbsd', 'mmedia/openbsd.gif'); return true;"
+   onMouseDown="changeImages('openbsd', 'mmedia/openbsd-down.gif'); return true;"
+   onMouseUp="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;">
+   <img name="openbsd"  align="absMiddle" 
+        alt="OpenBSD ... The Only way to Go ..." border="0" height="50"
+        src="mmedia/openbsd.gif" width="368"></a>
+</p>
+
+<h1>IDE RAID - OpenBSD 3.3 current</h1>
+<hr color="fuchsia">
+<p>Table of Contents:</p>
+<ul>
+  <li><a href="#intro">Introduction</a> 
+  <li> Retrieving Current 
+    <ul>
+      <li>Create Kernel with RAIDframe disk driver support</li>
+    </ul>
+  <li>Building the release/distribution Binaries 
+    <ul>
+      <li>Scripted Process</li>
+    </ul>
+  <li> Create minimal raid install 
+    <ul>
+      <li>Create Build Directories 
+      <li>Extract files from the binary distribution 
+      <li>Make additional Directories 
+      <li>Create Customisation Files 
+      <li>Create the minimal install tarball. 
+    </ul>
+  <li>Machine Install Phase 1 - Installing the minimal pre-raided configuration 
+    <ul>
+      <li>Partitioning the Hard Drive
+      <li>Files to Install 
+      <li>Image partition information onto 2nd Drive 
+      <li>Copy the root partition onto the 2nd Drive 
+      <li>Make the 2nd Drive bootable 
+      <li>Power Recycle Testing 
+    </ul>
+  <li>Machine Install Phase 2 - Creating the raided Array 
+    <ul>
+      <li>Configuration</li>
+      <li>Partitioning RAID</li>
+    </ul>
+  <li>Installing OpenBSD current on the raided array</li>
+  <ul>
+    <li>mount raided partitions</li>
+    <li>extract release files</li>
+    <li>configure system</li>
+    <li>configure a new root password</li>
+    <li>finalise raided configuration</li>
+    <li>test: eare we really raided?</li>
+  </ul>
+  <li>Testing RAIDFramed server</li>
+  <ul>
+    <li>Power Recycle Testing</li>
+    <li>Forced Fail</li>
+    <li>Forced Recovery</li>
+  </ul>
+  <li><a href="#author">Author and Copyright</a></li>
+</ul>
+<hr color="fuchsia">
+<h2><a name="intro"></a>Introduction</h2>
+<p>[ref: raid(4), raidctl(8)]<br>
+  [ref: <a href="http://www.abstrakt.ch/unix/MINI-HOWTO-openbsd-raid.html" class="anchBlue">Andreas 
+  F. Bobak's &quot;Installing OpenBSD 3.3 on a Soft-RAID Array&quot;</a>]</p>
+<p>These are notes expanding on the configuration of the RAIDFrame disk driver 
+  [raid(8)] from <a href="http://www.abstrakt.ch/unix/MINI-HOWTO-openbsd-raid.html">Andreas 
+  F. Bobak's mini-howto.</a> There is also another good <a href="http://www.monkey.org/openbsd/archive/misc/0203/msg00803.html">howto 
+  by Sven Kirmess</a>, discovered after the initial build of this howto. </p>
+<p>The primary instigator of these notes is to clarify the process as I perform 
+  it on a machine for which I am putting the RAIDframe on an IDE RAID configuration. 
+  That is to say, I want to be able to rebuild the system if it dies horribly 
+  one day or I get paid to put one together.</p>
+<p>These notes will take you through the major phases of preparing and creating 
+  a raid enabled IDE RAID system using standard IDE drives.</p>
+<ul>
+  <li>Compiling RAID support into the GENERIC Kernel</li>
+  <li>Building a minimal RAID install tarball</li>
+  <li>Preparing a system for RAID installation</li>
+  <li>Installing/Configuring RAID onto that system</li>
+  <li>Verifying RAID is functioning correctly on the system</li>
+</ul>
+<p>Testing Environment: OpenBSD3.3 current (2003-07-09), Pentium4 motherboard 
+  with onboard RAID IDE controller (ASUS P4B533)</p>
+<h2>Retrieving Current</h2>
+<p>The source is required for building RAID support into the kernel. We will be 
+  building the RAID configuration from source, and therefore the initial part 
+  of these instructions are on acquiring the source and building a release. Maybe 
+  one day this can be expanded and put into its own walk-through. The 'release' 
+  build is primarily to get it into a state that is similar to getting distribution 
+  binaries.</p>
+<p>The primary reason for generating a binary distribution is to allow the process 
+  to use available binary distributions (aka buy the cd or download snapshots)</p>
+<p>For those who will be using the release source code available on CD to create 
+  their custom kernel, then you can skip the source retrieval section.</p>
+<p>For my configuration, it is faster for me to suck the source down on a non-local 
+  site, compress the files for transfer to the local site. For those with fast 
+  enough pipes or who can get the source pre-compressed, please skip this stage.</p>
+<p>Using anoncvs get the current release of OpenBSD. This is not necessary, but 
+  a note for how I did it.</p>
+<p class="Code">cd /some/location</p>
+<p class="Code">export CVSROOT=:pserver:(anoncvs site of your choice)</p>
+<p class="Code">cvs login</p>
+<p class="Code">cvs get src</p>
+<p class="Code">cvs get XF4</p>
+<p class="Code">cvs get ports</p>
+<p>Compressing current so I can get it faster down the pipe to my work machines.</p>
+<p class="Code">gtar -cjf src.tbz2 src/</p>
+<p class="Code">gtar -cjf XF4.tbz2 XF4/</p>
+<p class="Code">gtar -cjf ports.tbz2 ports/</p>
+<p>Bring it across the wire on ftp or sftp (which is apparently better for these 
+  things than scp)</p>
+<p>Decompressing on local system</p>
+<p class="Code">cd /usr</p>
+<p class="Code">gtar -xjf /path-to-file/src.tbz2</p>
+<p class="Code">gtar -xjf /path-to-file/ports.tbz2</p>
+<p class="Code">gtar -xjf /path-to-file/XF4.tbz2</p>
+<h3>Create Kernel with RAIDframe support</h3>
+<p>[ref: <a href="http://www.abstrakt.ch/unix/MINI-HOWTO-openbsd-raid.html">FAQ</a> 
+  et. al.]</p>
+<p>There are a good amount of documentation already available for customising 
+  the kernel, and we are just quick-stepping through the bits you have to do. 
+  For explanation of what we are doing here please refer to the FAQ and other 
+  documentation. </p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="Code"> <p># cd /usr/src/sys/arch/$ARCH/conf<br>
+        # cp GENERIC <strong>RAIDKERN</strong></p>
+    </td>
+  </tr>
+</table>
+<p>modify the <strong>RAIDKERN</strong> file to include the following options</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="pScreenOutput">option RAID_AUTOCONFIG<br>
+      pseudo-device raid 4 # RAIDframe disk driver </td>
+  </tr>
+</table>
+<p>The primary modifications are inclusion of the pseudo-device and the RAID_AUTOCONFIG. 
+  For documentation completion, I have also included the below for my kernel.</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="pScreenOutput"> option BUFCACHEPERCENT=30<br>
+      option NMBCLUSTERS=8192</td>
+  </tr>
+</table>
+<p>continue customisation by doing the following:</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="Code_td"><p># config <strong>RAIDKERN<br>
+        </strong># cd ../compile/<strong>RAIDKERN<br>
+        </strong># make depend &amp;&amp; make</p>
+    </td>
+  </tr>
+</table>
+<p>On my system, the build machine is the same arch as the proposed RAID machine, 
+  so I can test the kernel, and use it for building binaries by doing the following.</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="Code_td"><p># cp /bsd /bsd.old<br>
+        # cp bsd /bsd<br>
+        # cp bsd /bsd.raid</p>
+    </td>
+  </tr>
+</table>
+<p>Restart the machine to ensure the kernel build worked.</p>
+<h2>Building the release/distribution Binaries</h2>
+<p>[ref: (<a href="http://archives.neohapsis.com/archives/openbsd/2003-01/0667.html">jross_at_openvistas.net 
+  post </a>), release(8), <a href="http://www.geocities.com/easybakeoven88/release.html">http://www.geocities.com/easybakeoven88/release.html</a>]</p>
+<p>To ensure that the binaries are in synch with the RAID kernel, we now need 
+  to build binaries 'current' with the 'current' kernel created above.</p>
+<p class="pFileReference">Create the Script mybuild.sh inspired by posting noted 
+  above.</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="pScreenSmall">
+	<pre>#!/bin/sh
+#
+# OpenBSD - Release Building Shell Script v2.4
+# Created by FenderQ - November 9 2002
+# 
+# SEE ALSO release(8)
+# 
+
+DEST="/usr/new-root"
+RELEASE="/usr/new-release"
+
+build_kernel() {
+    echo "********** Build and install a new kernel **********"
+    cd /usr/src/sys/arch/i386/conf
+    config GENERIC
+    cd ../compile/GENERIC
+    make clean depend bsd
+    cp /bsd /bsd.old && cp bsd / && chown root.wheel /bsd
+}
+
+build_system() {
+    echo "********** Build a new system **********"
+    rm -rf /usr/obj/*
+    cd /usr/src && nice make obj
+    nice make build
+    cd /dev && ./MAKEDEV all
+}
+
+make_release() {
+    echo "********** Make and validate the system release **********"
+    cd /usr/src/distrib/crunch && make obj depend all install
+    export DESTDIR=$DEST RELEASEDIR=$RELEASE
+    rm -rf $DESTDIR
+    mkdir -p $DESTDIR $RELEASEDIR
+    cd /usr/src/etc && nice make release
+    cd /usr/src/distrib/sets && sh checkflist
+    unset DESTDIR RELEASEDIR
+}
+
+build_XF4() {
+    echo "********** Build and install XF4 **********"
+    rm -rf /usr/Xbuild
+    mkdir -p /usr/Xbuild
+    cd /usr/ports/lang/tcl/8.3 && make install
+    cd /usr/ports/x11/tk/8.3 && make install
+    cd /usr/Xbuild && lndir /usr/XF4 && nice make build
+}
+
+make_release_XF4() {
+    echo "********** Make and validate the XF4 release **********"
+    export DESTDIR=$DEST RELEASEDIR=$RELEASE
+    rm -rf $DESTDIR
+    mkdir -p $DESTDIR $RELEASEDIR
+    nice make release
+    unset DESTDIR RELEASEDIR
+}
+
+clean_everything() {
+    echo "********** Clean everything **********"
+    rm -rf /usr/obj/* $DEST $RELEASE
+}
+
+usage() {
+    echo "Usage: $0 options" 
+    echo 
+    echo "Options:"
+    echo 
+    echo "  kernel             - Build and install GENERIC kernel"
+    echo "  system             - Build a new system"
+    echo "  release            - Make and validate the system release"
+    echo "  xwindow            - Build and install XF4"
+    echo "  xwindow-release    - Make and validate the XF4 release"
+    echo "  clean              - Clean everything"
+    echo
+}
+
+if [ `whoami` != "root" ]; then
+    echo "You probably should be root instead of `whoami` to run this safely." 
+    exit 1
+fi
+
+START=`date`
+echo
+echo "***** OpenBSD - Release Building *****"
+echo
+echo "Dest: $DEST"
+echo "Release: $RELEASE"
+echo "CVS Revision Tag: $CVSTAG"
+echo "CVS Server: $CVSROOT"
+echo
+
+if [ $# = 0 ]; then usage; exit 1; fi
+
+for i in $*
+    do
+    case $i in
+        kernel)
+            build_kernel
+            ;;
+        system)
+            build_system
+            ;;
+        release)
+            make_release
+            ;;
+        xwindow)
+            build_XF4
+            ;;
+        xwindow-release)
+            make_release_XF4
+            ;;
+        clean)
+            clean_everything
+            ;;
+        *)
+            echo "********** Abort! Abort! **********"
+            echo "Invalid option encountered: $i"
+            echo "Exiting......."
+            echo
+            exit 1
+            ;; 
+    esac
+    done
+    
+echo
+echo "Start Time  : $START"
+echo "Finish Time : `date`"
+echo
+	</pre>
+    </td>
+  </tr>
+</table>
+<p>Notes:</p>
+<p>/usr is an 80GB Hard-drive with 60GB free space on this test configuration 
+  (i.e. make sure you have enough space on the partition you intend to place the 
+  files onto)</p>
+<p>Depending on how sluggish your system is, this can be speedy or its time to 
+  weed the garden. You could of course just manually key in the commands above 
+  without need to resort to the script.</p>
+<p>After everything is completed, we should have a RELEASE SNAPSHOT in $MYRELEASEDIR 
+  with the GENERIC KERNEL.</p>
+<h2>Create minimal RAIDframe install set</h2>
+<p>We will create a new tarball &quot;site33.tgz&quot; to be our minimal install 
+  set as the completion of this section of the guide.</p>
+<p>To save on some keyboard retyping, I'm setting up some environment variables 
+  that will be used later in the process (i.e. if you use different directories 
+  it'll be easier to make the change here.)</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td class="Code_td" NOWRAP> # export MYRELEASEDIR=/usr/new-release</td>
+  </tr>
+  <tr> 
+    <td class="Code_td" NOWRAP># export MYBUILDDIR=/usr/new-minimal-package</td>
+  </tr>
+  <tr> 
+    <td class="Code_td" NOWRAP># export MYRAIDRELEASE=/usr/home/ftp/pub/OpenBSD/3.3/i386</td>
+  </tr>
+  <tr>
+    <td class="Code_td" NOWRAP># export MYRAIDKERNEL=/usr/src/sys/arch/i386/compile/RAIDKERN/bsd</td>
+  </tr>
+</table>
+<p>MYRELEASEDIR is where the snapshot, cd-release, or src-build release is located. 
+</p>
+<p>MYBUILDDIR is the empty location where we are going to build our minimal release.</p>
+<p>MYRAIDRELEASE is where we are going to put the tgz/compressed release build 
+  for ftp or cd-writing.</p>
+<p>MYRAIDKERNEL is the location and RAID enabled kernel</p>
+<p>Now, on to the extraction process. We will:</p>
+<ul>
+  <li>Create the directories where we will build our RAID binaries</li>
+  <li>Extract the files for compilation</li>
+  <li>Make some further directories</li>
+  <li>Create some files to simplify our install process</li>
+  <li>Create the install tarball</li>
+</ul>
+  
+<h3>Create Build Directory</h3>
+<table width="75%" class="Code">
+  <tr> 
+    <td class="Code_td" NOWRAP># mkdir -p $MYBUILDDIR</td>
+  </tr>
+  <tr> 
+    <td class="Code_td" NOWRAP># cd $MYBUILDDIR</td>
+  </tr>
+</table>
+  
+<h3>Extract Files for the Build</h3>
+<table class="Code">
+  <tr> 
+    <td class="Code_td" NOWRAP># tar xvzfp $MYRELEASEDIR/etc33.tgz './etc/*'</td>
+  </tr>
+  <tr> 
+    <td class="Code_td" NOWRAP># tar xvzfp $MYRELEASEDIR/base33.tgz \<br>
+      './bin/*' '*/ex' '*/MAKEDEV' '*zoneinfo*' '*/vi' '*/raidc*' \<br>
+      '*/find' ./usr/bin/reset ./usr/bin/tset */ld.so */libcurses.so* */libc.so* 
+      \<br>
+      */libterm* */termcap* */terminfo* \<br>
+      */chroot *libexec/getty '*/mtree' */slog* *bin/ssh* \<br>
+      */mdec/* './var/*' '*/encrypt' '*/pwd_mkdb*' ./sbin/ancontrol ./sbin/chown 
+      ./sbin/dhclient \<br>
+      ./sbin/dhclient-script ./sbin/disklabel ./sbin/dmesg ./sbin/fdisk ./sbin/fsck* 
+      \<br>
+      ./sbin/halt ./sbin/ifconfig ./sbin/init ./sbin/kbd ./sbin/mkfifo ./sbin/mknod 
+      \<br>
+      ./sbin/mount* ./sbin/newfs ./sbin/ping */libcrypto.so* */libkrb5.so* */crontab 
+      \<br>
+      */egrep */fgrep */compress *bin/ftp */grep */gunzip */gzcat */gzip */less 
+      */more \<br>
+      */rsh */sed *bin/sysc* './sbin/route' './sbin/ttyflags' './sbin/swapctl'</td>
+  </tr>
+</table>
+<p>We're splitting up part of the extraction process, so we can make some notes 
+  on what is being sucked out here. (and my ssh sessions weren't handling unlimited 
+  command-line pastes duhhhh)</p>
+<table class="Code">
+  <tr> 
+    <td class="Code_td" NOWRAP># tar xvzfp $MYRELEASEDIR/base33.tgz \<br>
+      './usr/sbin/kvm_mkdb' './usr/sbin/dev_mkdb' './usr/bin/mktemp' './usr/bin/install' 
+      \<br>
+      './usr/sbin/syslogd' './usr/bin/wc' './sbin/savecore' \<br>
+      './sbin/quotacheck' './usr/sbin/quotaoff' './usr/sbin/quotaon' \<br>
+      './usr/bin/cmp' './sbin/ccdconfig' './usr/sbin/inetd' '*/libz.so*' './usr/sbin/cron' 
+      \<br>
+      '*/libwrap.so*' './usr/lib/libutil.so*' './usr/lib/libkrb5.so*' \<br>
+      './usr/lib/libas*' './usr/lib/libcom_err.so*' './usr/lib/libdes.so*' \<br>
+      './usr/libexec/auth/login_*' './usr/bin/login' '*/libedit.*' './sbin/umount'</td>
+  </tr>
+</table>
+  
+<p>We are adding the following so we can have more complete ssh support in the 
+  minimal environment (i.e. support for scp and sftp) Very useful when you forget 
+  to put something, or you can just leave it out.</p>
+  <table class="Code">
+
+  <tr> 
+    <td class="Code_td" NOWRAP># tar xvzfp $MYRELEASEDIR/base33.tgz \<br>
+      './usr/bin/scp' './usr/libexec/sftp-server' './usr/bin/ftp'</td>
+  </tr>
+ </table>
+ 
+<p>Tools I soon found out that were necessary, at least in my testing period.</p>
+<table class="Code">
+  <tr> 
+    <td class="Code_td" NOWRAP># tar xvzfp $MYRELEASEDIR/base33.tgz \<br>
+      './usr/bin/which' './usr/bin/touch' './usr/bin/logname' './usr/bin/whoami' 
+      \<br>
+      './usr/bin/du' </td>
+  </tr>
+</table>
+<p>Copy the standard 'GENERIC' kernel as bsd.old into the working directory and 
+  copy our raid enabled kernel into the current/build directory.</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="Code_td"># cp $MYRELEASEDIR/bsd ./bsd.old</td>
+  </tr>
+  <tr> 
+    <td nowrap class="Code_td"># cp $MYRAIDKERNEL ./bsd</td>
+  </tr>
+</table>
+<h3>Make some directories reuired during boot process</h3>
+<p>For the minimal install we can get rid of some large directories in ./var such 
+  as www. We will also need to create some directories that are 'accessed' during 
+  full startup by the ./etc/rc script.</p>
+ 
+<table width="75%" class="Code">
+  <tr> 
+    <td class="Code_td" NOWRAP># mkdir ./usr/local</td>
+  </tr>
+  <tr> 
+    <td class="Code_td" NOWRAP># rm -rf ./var/www</td>
+  </tr>
+  <tr> 
+    <td class="Code_td" NOWRAP># mkdir ./tmp</td>
+  </tr>
+  <tr>
+    <td class="Code_td" NOWRAP># mkdir ./root</td>
+  </tr>
+</table>
+<h3>Create customisation files</h3>
+<p class="pFileReference">Create a dummy ./etc/rc.conf.local</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="Code_td"> #!/bin/sh -<br>
+      #<br>
+      sendmail_flags=NO<br>
+      check_quotas=NO &nbsp;&nbsp;# NO may be desirable in some YP environments<br>
+      ntpd=NO &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# run 
+      ntpd if it exists</td>
+  </tr>
+</table>
+<p>Just ensuring a few things are turned off in our environment.</p>
+<p>Now we'll make a few basic login environments for root. I'm not too good at 
+  this stuff so have copied others work.</p>
+<p class="pFileReference">Create ./root/.profile with the following preliminary 
+  contents</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="pScreenOutput"># $OpenBSD: dot.profile,v 1.3 2003/03/20 
+      01:43:31 david Exp $<br>
+      #<br>
+      # sh/ksh initialization
+      <p>PATH=/sbin:/usr/sbin:/bin:/usr/bin<br>
+        export PATH<br>
+        HOME=/root<br>
+        export HOME<br>
+        umask 022</p>
+      <p>alias ll='ls -al'<br>
+        export TERM=vt220</p>
+      <p>if [ -x /usr/bin/tset ]; then<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eval `/usr/bin/tset -sQ \?$TERM`<br>
+        fi</p></td>
+  </tr>
+</table>
+<p class="pFileReference">Create ./root/.login with the following preliminary 
+  contents</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="pScreenOutput"># $OpenBSD: dot.login,v 1.9 2003/03/20 01:43:31 
+      david Exp $<br>
+      #<br>
+      # csh login file
+      <p>set tterm='?'$TERM<br>
+        set noglob<br>
+        onintr finish<br>
+        eval `tset -s -Q $tterm`<br>
+        finish:<br>
+        unset noglob<br>
+        unset tterm<br>
+        onintr</p>
+      <p>if ( `logname` == `whoami` ) then<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;echo &quot;Don't login as root, use 
+        su&quot;<br>
+        endif</p>
+    </td>
+  </tr>
+</table>
+<p class="pFileReference">Create ./root/raid0.conf.new with the following preliminary 
+  contents</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="pScreenOutput">START array<br>
+      # numRow numCol numSpare<br>
+      1 2 0<br> <p>START disks<br>
+        /dev/wd0d<br>
+        /dev/wd1d</p>
+      <p>START layout<br>
+        # sectPerSU SUsPerParityUnit SUsPerReconUnit RAID_level_1<br>
+        128 1 1 1</p>
+      <p>START queue<br>
+        fifo 100</p></td>
+  </tr>
+</table>
+<p class="pFileReference">[ref: raid(8)]</p>
+<p>The raid configuration file is well documented in the raid(8) man page. Take 
+  special note of the device wd0d and wd1d. These, in my configuration, are the 
+  device/partition on which we will install our raid system. You can change this 
+  now, or later as fits your configuration.</p>
+<p>The file will be used in two sections of the installation. 1st it will be required 
+  in creating the raid configuration, and 2nd will be used by the system to 'auto-detect' 
+  the raid enabled system.</p>
+<p>If you hate superfluous error messages then you can also perform the following 
+  'optional' instructions, to 'create' dummy files:</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="Code_td">touch ./var/log/messages<br>
+      touch ./var/log/authlog<br>
+      touch ./var/log/secure<br>
+      touch ./var/cron/log<br>
+      touch ./var/log/daemon<br>
+      touch ./var/log/xferlog<br>
+      touch ./var/log/lpd-errors<br>
+      touch ./var/log/maillog</td>
+  </tr>
+</table>
+<h3>Create the minimal install tarball</h3>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="Code_td"># tar -czf $MYRAIDRELEASE/site33.tgz *</td>
+  </tr>
+</table>
+<p>We are now ready to ftp-install or create a cdr with our minimal RAID enabled 
+  kernel &amp; short-list binaries.</p>
+<p>To complete preparations for an ftp install, we'd probably need to copy the 
+  release files onto the MYRAIDRELEASE directory:</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="Code_td"># cp $MYRELEASEDIR/* $MYRAIDRELEASE/</td>
+  </tr>
+</table>
+<p>For a boot media you can either create a boot floppy, or burn the contents 
+  of $MYRAIDRELEASE onto a CDR. To create a boot floppy, use something like the 
+  below. </p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="Code_td"># dd if=$MYRAIDRELEASE/floppy33.fs of=/dev/fd0c</td>
+  </tr>
+</table>
+<p>To burn a CDR, make sure you use the $MYRAIDRELEASE/cdrom33.fs as the boot-image 
+  and include your standard install binaries from $MYRELEASEDIR and the raid enabled 
+  tar ball fom $MYRAIDRELEASE.</p>
+<h2>Machine Install Phase 1 - Installing the minimal pre-raided configuration</h2>
+<p>There is a two phase process in installing RAID which first requires building 
+  a minimal system that can start the RAIDFrame disk drivers, and then building 
+  the RAID enabled system on top of that.</p>
+<p>On the new machine, we are assuming you will have two or more identical drives 
+  for RAID connected on an iDE RAID controller. In our example we will be installing 
+  and configuring on the 1st (primary) drive of this configuration, the others 
+  in the set will be created from this install drive.</p>
+<p>My two drives are wd0 and wd1.</p>
+<h3>Partitioning the Hard-Drive</h3>
+<p>When you reach the the disk creation process create a small (50M) 'a' and similarly 
+  smal (32M) 'swap' partition. Specify 'd' as type &quot;RAID.&quot; </p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td width="34%" nowrap class="dns"><strong>Partition</strong></td>
+    <td width="36%" nowrap class="dns"><div align="center"><strong>FS-TYPE</strong></div></td>
+    <td width="36%" nowrap class="dns"><div align="center"><strong>Intended Mount 
+        Point</strong></div></td>
+    <td width="30%" nowrap class="dns"><div align="center"><strong>Size</strong></div></td>
+  </tr>
+  <tr> 
+    <td nowrap class="dns"><div align="center">wd0a</div></td>
+    <td nowrap class="dns"><div align="center">4.2BSD</div></td>
+    <td nowrap class="dns"><div align="center">/</div></td>
+    <td nowrap class="dns"><div align="center">50M</div></td>
+  </tr>
+  <tr> 
+    <td nowrap class="dns"><div align="center">wd0b</div></td>
+    <td nowrap class="dns"><div align="center">swap</div></td>
+    <td nowrap class="dns"><div align="center">swap</div></td>
+    <td nowrap class="dns"><div align="center">32M</div></td>
+  </tr>
+  <tr> 
+    <td nowrap class="dns"><div align="center">wd0c</div></td>
+    <td nowrap class="dns"><div align="center">unused</div></td>
+    <td nowrap class="dns"><div align="center">[reserved]</div></td>
+    <td nowrap class="dns"><div align="center"></div></td>
+  </tr>
+  <tr> 
+    <td nowrap class="dns"><div align="center">wd0d</div></td>
+    <td nowrap class="dns"><div align="center">RAID</div></td>
+    <td nowrap class="dns"><div align="center"></div></td>
+    <td nowrap class="dns"><div align="center">*</div></td>
+  </tr>
+</table>
+<p>For example:</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="Code_td"> &gt; <strong>a a</strong><br>
+      offset: [63]<br>
+      size: [ ... ] <strong>50m</strong><br>
+      Rounding to nearest cylinder: xxxxx<br>
+      FS type: [4.2BSD]<br>
+      mount point: [none] <strong>/</strong><br>
+      &gt; <strong>a b</strong><br>
+      offset: [ ... ]<br>
+      size: [ ... ] <strong>32m</strong><br>
+      Rounding to nearest cylinder: xxxxx<br>
+      FS type: [swap]<br>
+      &gt; <strong>a d</strong><br>
+      offset: [ ... ]<br>
+      size: [ ... ]<br>
+      FS type: [4.2BSD] <strong>RAID</strong><br>
+      mount point: [none]<br>
+      &gt; <strong>w</strong><br>
+      &gt; <strong>q</strong></td>
+  </tr>
+</table>
+<p>Remember that in our example we are not touching the other drive(s).</p>
+<h3>Files to install</h3>
+<p>When you get the list of files to install, specify </p>
+<ul>
+  <li>bsd, and </li>
+  <li>site33.tgz. </li>
+</ul>
+<p>Do not select any other set. Remember that we are only using a 50M '/' partition 
+  in our example.</p>
+<p>After the installation is complete, restart to ensure installation is a workable 
+  installed system.</p>
+<p>If the installation is functional, you should be able to SSH into the new machine 
+  which will also let you upload any other (read: missing) binaries required for 
+  your installation.</p>
+<h3>Image partition information onto 2nd Drive</h3>
+<p>With a working, minimal system we now need to configure the 2nd drive.</p>
+<p>We are going to make a 'copy' of the disklabel information from our primary 
+  drive and modify it for use on our 2nd drive.</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="Code_td"># disklabel wd0 &gt; /root/disklabel.wd0</td>
+  </tr>
+  <tr> 
+    <td nowrap class="Code_td"># cp /root/disklabel.wd0 /root/disklabel.wd1</td>
+  </tr>
+  <tr>
+    <td nowrap class="Code_td"># vi /root/disklabel.wd1</td>
+  </tr>
+</table>
+<p class="pFileReference">Edit the file /root/disklabel.wd1 and change the entry 
+  that showed:</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="pScreenOutput">
+<p># /dev/rwd0c:</p>
+</td>
+  </tr>
+</table>
+<p>To now show as:</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="Code_td"># /dev/rwd1c:</td>
+  </tr>
+</table>
+<p>To copy the disklabel for the 2nd drive follow the below commands to initialise 
+  a new Master Boot Record (MBR) on the drive and then to write the new partitioning 
+  information.</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="Code_td"># fdisk -i wd1</td>
+  </tr>
+  <tr>
+    <td nowrap class="Code_td"># disklabel -R -r wd1 /root/disklabel.wd1</td>
+  </tr>
+</table>
+<p>Our 2nd drive is now 'partitioned' and ready for use.</p>
+<p>Create the filesystem on the '/' partition by doing the following</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="Code_td"># newfs /dev/wd1a</td>
+  </tr>
+</table>
+<h3>Copy the root partition onto the 2nd drive:</h3>
+<p>Before we make the 2nd drive bootable, we'll need to ensure all files from 
+  the 1st drive are copied across. Let's make a mount point for the 2nd drive 
+  and mount it.</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="Code_td"># mkdir /mnt</td>
+  </tr>
+  <tr>
+    <td nowrap class="Code_td"># mount /dev/wd1a /mnt</td>
+  </tr>
+</table>
+<p>Now, we need to copy all our files across from wd0a to wd1a</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="Code_td"># cd /</td>
+  </tr>
+  <tr>
+    <td nowrap class="Code_td"># pax -r -w -p e -v bin boot bsd dev etc root sbin 
+      tmp usr var /mnt/</td>
+  </tr>
+</table>
+<h3>Make the 2nd drive bootable</h3>
+<p>Now, we'll copy the boot files across and make the 2nd drive bootable</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="Code_td"># cp /usr/mdec/boot /mnt/boot</td>
+  </tr>
+  <tr>
+    <td nowrap class="Code_td"># /usr/mdec/installboot -v /mnt/boot /usr/mdec/biosboot 
+      wd1</td>
+  </tr>
+</table>
+<p>Depending on your system, you may or may not need to perform the below configuration. 
+  Fix the fstab on the 2nd drive by editing /mnt/etc/fstab to modify the line 
+  referring to</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="pScreenOutput">/dev/wd0a / ffs rw 1 1</td>
+  </tr>
+</table>
+<p>to now refer to:</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="Code_td">/dev/wd1a / ffs rw 1 1</td>
+  </tr>
+</table>
+<p>On my test configuration, the above change works fine so long as there is a 
+  detected and active wd0. If wd0 is totally failed, even though wd1 is on a 2nd 
+  controller it will start as wd0 (i.e. fstab needs to remain as original). Oh 
+  well, easier to edit in single user mode.</p>
+<h3>Power Recycle Testing</h3>
+<h4>Test #1: </h4>
+<p>We now test to see whether we have configured the 2nd drive correctly. Use 
+  &quot;halt&quot; to stop the machine and when you restart, specify the 2nd drive 
+  as the boot drive:</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="Code_td">boot &gt; boot hd1a:/bsd</td>
+  </tr>
+</table>
+<p>Watch the process, as the system should boot from the 2nd drive, and if not 
+  it may automatically boot from the 'primary' drive.</p>
+<p>Once this is working flawlessly, we are now assured that the boot configuration 
+  is working and can continue with the 2nd test.</p>
+<h4>Test #2: </h4>
+<p>The 2nd test will be a physical powerdown/ drive disconnection.</p>
+<p>Use &quot;halt -p&quot; to powerdown the system and after the system has halted, 
+  physically disconnect the primary hard-drive (wd0) and restart the machine to 
+  test whether the 2nd drive will start correctly.</p>
+<h2>Creating the RAID Array</h2>
+<p class="pFileReference">[ref: raidctl(8)]</p>
+<p>During our minimal configuration we had created a ./root/raid0.conf.new file 
+  that we are going to now use for configuring the raid array.</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="Code_td">raidctl -C /root/raid0.conf.new raid0</td>
+  </tr>
+</table>
+<p>Initialize the component labels with an ID. We are arbitrarily picking an easy 
+  number '100'</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="Code_td">raidctl -I 100 raid0</td>
+  </tr>
+</table>
+<p>Initialize the parity set</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="Code_td">raidctl -iv raid0</td>
+  </tr>
+</table>
+<p>If you make a mistake above, you can restart the process by &quot;undoing&quot; 
+  raid with the command &quot;raidctl -u raid0&quot;</p>
+<p>From the manpage:</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td class="pScreenOutput"><strong>-i dev</strong> Initialize the RAID device. 
+      In particular, (rewrite) the parity on the selected device. This MUST be 
+      done for all RAID sets before the RAID device is labeled and before file 
+      systems are created on the RAID device.</td>
+  </tr>
+</table>
+<p>Now, at this point you will be probably better off going and making dinner, 
+  possibly eating it as well. On this test system it took about 2 hours to get 
+  past this stage. Strangely enough, the 2nd time around (i.e. I screwed up a 
+  few things and restarted often) this process only took about 30 minutes (?)</p>
+<h3>Partitioning your RAID configuration</h3>
+<p>Once completed with the initial configuration of the raid0 environment, we 
+  create the partitions using disklabel.</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="Code_td">disklabel -E raid0</td>
+  </tr>
+</table>
+<p>Create your partition information as you would a normal drive (except mount 
+  points are not yet associated,) so keep a list of your partition 'letters'. 
+  As per standard configuration 'b' is the swap partition, 'c' is reserved.</p>
+<p>For my configuration, and for this documentation, I have created the following 
+  partitions all FS-TYPE BSD4.3 (except swap of course.)</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td width="34%" nowrap class="dns"><strong>Partition</strong></td>
+    <td width="36%" nowrap class="dns"><div align="center"><strong>Intended Mount 
+        Point</strong></div></td>
+    <td width="30%" nowrap class="dns"><div align="center"><strong>Size</strong></div></td>
+  </tr>
+  <tr> 
+    <td nowrap class="dns"><div align="center">raid0a</div></td>
+    <td nowrap class="dns"><div align="center">/</div></td>
+    <td nowrap class="dns"><div align="center"></div></td>
+  </tr>
+  <tr> 
+    <td nowrap class="dns"><div align="center">raid0b</div></td>
+    <td nowrap class="dns"><div align="center">swap</div></td>
+    <td nowrap class="dns"><div align="center"></div></td>
+  </tr>
+  <tr> 
+    <td nowrap class="dns"><div align="center">raid0c</div></td>
+    <td nowrap class="dns"><div align="center">[reserved]</div></td>
+    <td nowrap class="dns"><div align="center"></div></td>
+  </tr>
+  <tr> 
+    <td nowrap class="dns"><div align="center">raid0d</div></td>
+    <td nowrap class="dns"><div align="center">/tmp</div></td>
+    <td nowrap class="dns"><div align="center"></div></td>
+  </tr>
+  <tr> 
+    <td nowrap class="dns"><div align="center">raid0e</div></td>
+    <td nowrap class="dns"><div align="center">/var</div></td>
+    <td nowrap class="dns"><div align="center"></div></td>
+  </tr>
+  <tr> 
+    <td nowrap class="dns"><div align="center">raid0f</div></td>
+    <td nowrap class="dns"><div align="center">/usr</div></td>
+    <td nowrap class="dns"><div align="center"></div></td>
+  </tr>
+  <tr> 
+    <td nowrap class="dns"><div align="center">raid0h</div></td>
+    <td nowrap class="dns"><div align="center">/home</div></td>
+    <td nowrap class="dns"><div align="center"></div></td>
+  </tr>
+</table>
+<p>There's an interesting note about 'swap' that we'll discover later. But if 
+  you can, avoid 'swap' on the 'raid' system. [ooops, have to mention that I don't 
+  have much history on this so make your call]</p>
+<p>Format the filesystem(s) you have created:</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="Code_td"># newfs raid0a; newfs raid0d; newfs raid0e; newfs 
+      raid0f; newfs raid0h</td>
+  </tr>
+</table>
+<p> To continue configuration, we turn on auto-configuration on raid0, making 
+  it bootable/rootable will be done later.</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="Code_td"><p>raidctl -A yes raid0</p>
+</td>
+  </tr>
+</table>
+<h2>Installing OpenBSD current on the raided array</h2>
+<p>We are now ready to install our OpenBSD binaries onto the raided environment 
+  by </p>
+<ul>
+  <li>mounting the raid partitions, then </li>
+  <li>installing the binaries.</li>
+  <li>configure the system</li>
+  <li>configure a new root password</li>
+  <li>finalise the raid configuration</li>
+  <li>test: are we really raided?</li>
+</ul>
+<h3>Mount raided partitions</h3>
+<p>To install the binaries we'll create mount points, and mount the raid partitions 
+  for installation of software. We'll put '/' on /mnt and subsequent subpartitions 
+  under that.</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="Code"> cd /mnt <br>
+      mount /dev/raid0a /mnt</td>
+  </tr>
+</table>
+<p>Within the new 'root' environment (/mnt) create the mount points for the other 
+  partitions in your configuration.</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="Code_td">
+      mkdir ./usr<br>
+      mkdir ./tmp<br>
+      mkdir ./var <br>
+      mkdir ./home</td>
+  </tr>
+</table>
+<p>Now we can mount the partitions as per our desired configuration, noted above.</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="Code_td">
+      mount /dev/raid0d /mnt/tmp<br>
+      mount /dev/raid0e /mnt/var<br>
+      mount /dev/raid0f /mnt/usr<br>
+      mount /dev/raid0h /mnt/home
+</td>
+  </tr>
+</table>
+<h3> Extract Release Files</h3>
+<p>Now on this configuration, I've made ./tmp a 2GB partition so we can ftp the 
+  binaries onto tmp before installation (or you can of course just grab the files 
+  from a mounted CDR.) Install the binaries by going into the new 'root' and untar'ing 
+  the files</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="Code_td">cd /mnt<br>
+      tar -zxvpf ./tmp/etc33.tgz<br>
+      tar -zxvpf ./tmp/base33.tgz<br>
+      tar -zxvpf ./tmp/comp33.tgz<br>
+      tar -zxvpf ./tmp/man33.tgz </td>
+  </tr>
+</table>
+<p>Of course you can install all your binaries</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="Code_td">cd /mnt<br>
+      tar -zxvpf ./tmp/game33.tgz<br>
+      tar -zxvpf ./tmp/misc33.tgz</td>
+  </tr>
+</table>
+<p> I haven't compiled the X environment yet, which is fine since my new raid 
+  box is going to be faster than my build machine.</p>
+<h3>Configure System</h3>
+<p>Now we have a binary complete RAID configuration, except it doesn't have any 
+  of the system configuration we got from doing the proper install onto the hard 
+  disk, so we need to copy those files across onto the raid0 configuration. In 
+  this case we are concerned with at least the /dev /boot directories and bsd*/files 
+  as well as a number of configuration files.</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="Code_td">cd /</td>
+  </tr>
+  <tr> 
+    <td nowrap class="Code_td">pax -r -w -p e -v dev boot bsd* /mnt/</td>
+  </tr>
+  <tr> 
+    <td nowrap class="Code_td">cd /etc</td>
+  </tr>
+  <tr>
+    <td nowrap class="Code_td">cp -p fstab my* hostname.* hosts resolv.conf dhc* 
+      /mnt/etc/</td>
+  </tr>
+</table>
+<p class="pFileReference">Edit the /mnt/etc/fstab file to refer to the 'correct' 
+  configuration, by changing the line that refered to:</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="pScreenOutput">/dev/wd0a / ffs rw 1 1</td>
+  </tr>
+</table>
+<p class="pFileReference">To now refer to our new slicing:</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="Code_td">/dev/raid0a / &nbsp;&nbsp;&nbsp;&nbsp;ffs rw 1 
+      1<br>
+      /dev/raid0d /tmp &nbsp;ffs rw 1 1<br>
+      /dev/raid0e /var &nbsp;ffs rw 1 1<br>
+      /dev/raid0f /usr &nbsp;ffs rw 1 1<br>
+      /dev/raid0h /home ffs rw 1 1 </td>
+  </tr>
+</table>
+<h3>Configure a new root password</h3>
+<p>After this, we now need to configure a password for the raid0 environment by 
+  first changing rooting into the new environment.</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="Code_td">/mnt/usr/sbin/chroot /mnt</td>
+  </tr>
+  <tr> 
+    <td nowrap class="Code_td">passwd</td>
+  </tr>
+  <tr>
+    <td nowrap class="Code_td">exit</td>
+  </tr>
+</table>
+<h3> Finalise RAIDframe Configuration</h3>
+<p>Now we are ready to change raid0 so that it is recognised as a root partition.</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="Code_td">raidctl -A root raid0</td>
+  </tr>
+</table>
+<p>This can be reversed by using</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="pScreenOutput">raidctl -A yes raid0</td>
+  </tr>
+</table>
+<p>Tell the system that raid0 is available for auto-configuration by copying the 
+  config file into the /etc directory.</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td height="22" nowrap class="Code_td"># cp /root/raid0.conf.new /etc/raid0.conf</td>
+  </tr>
+</table>
+<p>This tells the minimal configuration (via /etc/rc) to boot raid0 if the kernel 
+  (in raid0:/) is available.</p>
+<p>Reboot to test whether our hard-work has paid of.</p>
+<h3>Test: are we really raided ?</h3>
+<p>So, how can you tell whether the machine has gone into raid0 ?</p>
+<p>The most obvious is which password gets you into root. (That is, of course, 
+  if you've selected a different root password for the raid0 configuration from 
+  the wd0a configuration)</p>
+<p>You can tell by seeing if your booted environment is the full install (i.e. 
+  just cat /etc/fstab would be a good start)</p>
+<p>The fallback is to watch the startup process (check with dmesg) to see if something 
+  like the below has shown up.</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="pScreenOutput">Kernelized RAIDframe activated<br>
+      &nbsp;&nbsp;[.. stuff left out ..]<br>
+      raid0 (root): (RAID Level 1) total number of sectors is 77987712 (38079 
+      MB) as root<br>
+      dkcsum: wd0 matched BIOS disk 80<br>
+      dkcsum: wd1 matched BIOS disk 81<br>
+      rootdev=0x1300 rrootdev=0x3600 rawdev=0x3602<br>
+      dev = 0x1304, block = 68, fs = /var<br>
+      panic: ffs_blkfree: freeing free frag<br>
+      OpenBSD 3.3-current (RAIDKERN) #1: Fri Jul 11 12:03:08 TOT 2003<br>
+      root@[build-machine-name]:/usr/src/sys/arch/i386/compile/RAIDKERN</td>
+  </tr>
+</table>
+<p>When it works, remember that the system is not wd0a, but raid0a which means 
+  if you are using ssh to connect, the signature has changed. (this is good)</p>
+<h2> Testing RAID configuration</h2>
+<p>To verify the raid0 configurations are actually working, i.e. backing up files 
+  (mirror in this example) we need to do some power down, remove drive, testing.</p>
+<h3>Power Recycle Testing</h3>
+<p>1st. Power down the system and physically disconnect drive 1 (wd0)</p>
+<p>Restart the machine to ensure the raid0 array is still the boot system, although 
+  performing from the 2nd drive.</p>
+<p>At the root prompt verify the system is running by typing</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td height="22" nowrap class="Code_td"># raidctl -s raid0</td>
+  </tr>
+</table>
+<p>you should get a message similar to the below.</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td height="22" nowrap class="pScreenOutput"> raid0 Components:<br>
+      /dev/wd0d: optimal<br>
+      component1: failed<br>
+      No spares.<br>
+      Parity status: clean<br>
+      Reconstruction is 100% complete.<br>
+      Parity Re-write is 100% complete.<br>
+      Copyback is 100% complete.</td>
+  </tr>
+</table>
+<p>Note that 'component1: failed' line above indicates a failure.</p>
+<p>What I did next is probably not 'proper', I powered down the system again to 
+  reconnect the primary drive and disconnected the 2nd drive.</p>
+<p>The system showed the same message above (note message made previously about 
+  how this system designates wd0 for the 1st 'active' drive it finds, irregardless 
+  of controller)</p>
+<p>Anyhow, reconnect both drives and restart the system.</p>
+<p>Because of my smarty activities above, the system automatically complains about 
+  'parity' and starts checking the system. At this point I go for lunch and come 
+  back afterwards to find an AOK, working system.</p>
+<p>Remember how we put 'swap' into the raided environment. Well, there you go, 
+  the swap space was different between the two drives and forced a dirty-parity 
+  check. </p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td height="22" nowrap class="pScreenOutput"> Kernelized RAIDframe activated<br>
+      &nbsp;&nbsp;&nbsp;[ ... stuff left out ... ]<br>
+      raid0 (root): (RAID Level 1) total number of sectors is 77987712 (38079 
+      MB) as root<br>
+      dkcsum: wd0 matched BIOS disk 80<br>
+      dkcsum: wd1 matched BIOS disk 81<br>
+      rootdev=0x1300 rrootdev=0x3600 rawdev=0x3602<br>
+      <strong>WARNING: / was not properly unmounted</strong></td>
+  </tr>
+</table>
+<p>hmmm, walk away and because I went away for a while, we really should check 
+  the status of the system with: <strong>raidctl -s raid0</strong></p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td height="22" nowrap class="pScreenOutput"> raid0 Components:<br>
+      /dev/wd0d: optimal<br>
+      /dev/wd1d: optimal<br>
+      No spares.<br>
+      Parity status: clean<br>
+      Reconstruction is 100% complete.<br>
+      Parity Re-write is 100% complete.<br>
+      Copyback is 100% complete.</td>
+  </tr>
+</table>
+<p>OK, seems the thing figured itself out (although probably not the optimal way 
+  to do this.) I guess, in a manual sense I should have chosen to:</p>
+<p> Verify the parity is ok using : raidctl -P raid0</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td height="22" class="pScreenOutput"> <strong>-P dev</strong> <br>
+      Check the status of the parity on the RAID set, and initialize (re-write) 
+      the parity if the parity is not known to be up-to-date. This is normally 
+      used after a system crash (and before a fsck(8)) to ensure the integrity 
+      of the parity.</td>
+  </tr>
+</table>
+<p>If a new drive has been put in, to rebuild that drive from the working drive.</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td height="22" class="pScreenOutput"> <strong>-R component dev</strong><br>
+      Fails the specified component, if necessary, and immediately be gins a reconstruction 
+      back to component. This is useful for re constructing back onto a component 
+      after it has been replaced following a failure.</td>
+  </tr>
+</table>
+<p>For example, if drive 2 has failed we would recreate the partition information 
+  on drive 2 (as above) and then use the following command(?):</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td height="22" nowrap class="Code_td"># raidctl -R /dev/wd1d raid0</td>
+  </tr>
+</table>
+<h3>Forced Fail</h3>
+<p>A test mentioned in the man page, is to perform a forced 'Fail' (which just 
+  fails the raid0 component and does not reconstruct the drive as partitioned 
+  from the beginning.) The command is supposed to begin reconstruction immediately.</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td height="22" class="pScreenOutput"> <strong>-F component dev</strong><br>
+      Fails the specified component of the device, and immediately be gin a reconstruction 
+      of the failed disk onto an available hot spare. This is one of the mechanisms 
+      used to start the recon struction process if a component does have a hardware 
+      failure. 
+      <p></p></td>
+  </tr>
+</table>
+<p>so, let's go for it. Better find out now, then later when it doesn't work on 
+  a critical system.</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td height="22" nowrap class="Code_td"># raidctl -F /dev/wd1d raid0</td>
+  </tr>
+</table>
+<p>OK, if you try it on a two drive system, then you'll probably get a message 
+  like this:</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td height="22" nowrap class="pScreenOutput"> raidctl -F /dev/wd1d raid0<br>
+      /bsd: raid0: Failing disk r0 c1.<br>
+      /bsd: raid0: Failing disk r0 c1.<br>
+      /bsd: Unable to reconstruct disk at row 0 col 1 because no spares are available.<br>
+      /bsd: Unable to reconstruct disk at row 0 col 1 because no spares are available.</td>
+  </tr>
+</table>
+<p>Ooops, ok it seems we really needed a spare for that command to do both the 
+  fail and reconstruct.</p>
+<h3>Forced Reconstruction</h3>
+<p>So, I guess it's a good time to test whether the &quot;-R&quot; really does 
+  works:</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td height="22" nowrap class="Code_td"># raidctl -R /dev/wd1d raid0</td>
+  </tr>
+</table>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td height="22" nowrap class="pScreenOutput">/bsd: Closing the opened device: 
+      /dev/wd1d<br>
+      /bsd: Closing the opened device: /dev/wd1d<br>
+      /bsd: About to (re-)open the device for rebuilding: /dev/wd1d<br>
+      /bsd: About to (re-)open the device for rebuilding: /dev/wd1d<br>
+      /bsd: RECON: Initiating in-place reconstruction on<br>
+      /bsd: RECON: Initiating in-place reconstruction on<br>
+      /bsd: row 0 col 1 -&gt; spare at row 0 col 1.<br>
+      /bsd: row 0 col 1 -&gt; spare at row 0 col 1.<br>
+      /bsd: Quiescence reached...<br>
+      /bsd: Quiescence reached...</td>
+  </tr>
+</table>
+<p>OK, something seems to be happening. To make sure we know what stage our 'reconstruction' 
+  is at, keep a watch on 'raidctl -s raid0' and you will get a progress report 
+  such as the following:</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td height="22" nowrap class="pScreenOutput">raid0 Components:<br>
+      /dev/wd0d: optimal<br>
+      /dev/wd1d: <strong>reconstructing</strong><br>
+      No spares.<br>
+      Parity status: clean<br>
+      Reconstruction is <strong>9%</strong> complete.<br>
+      Parity Re-write is 100% complete.<br>
+      Copyback is 100% complete.</td>
+  </tr>
+</table>
+<p>I've highlighted as <strong>bold</strong> the areas that should be changing. 
+  raidctl will perform the work in the background and when it finally finishes 
+  it should give you a message similar to the below.</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td height="22" nowrap class="pScreenOutput">/bsd: Quiescence reached...<br>
+      /bsd: Quiescence reached...<br>
+      /bsd: Number of I/Os: 31<br>
+      /bsd: Number of I/Os: 31<br>
+      /bsd: Elapsed time (us): 1224582350<br>
+      /bsd: Elapsed time (us): 1224582350<br>
+      /bsd: User I/Os per second: 0<br>
+      /bsd: User I/Os per second: 0<br>
+      /bsd: Average user response time: 0 us<br>
+      /bsd: Average user response time: 0 us<br>
+      /bsd: Total sectors moved: 404<br>
+      /bsd: Total sectors moved: 404<br>
+      /bsd: Average access size (sect): 13<br>
+      /bsd: Average access size (sect): 13<br>
+      /bsd: Achieved data rate: 0.0 MB/sec<br>
+      /bsd: Achieved data rate: 0.0 MB/sec<br>
+      /bsd: Reconstruction of disk at row 0 col 1 completed.<br>
+      /bsd: Reconstruction of disk at row 0 col 1 completed.<br>
+      /bsd: Recon time was 1224.573513 seconds, accumulated XOR time was 0 us 
+      (0.000000).<br>
+      /bsd: Recon time was 1224.573513 seconds, accumulated XOR time was 0 us 
+      (0.000000).<br>
+      /bsd: (start time 1057885838 sec 269003 usec, end time 1057887062 sec 842516 
+      usec)<br>
+      /bsd: (start time 1057885838 sec 269003 usec, end time 1057887062 sec 842516 
+      usec)<br>
+      /bsd: Total head-sep stall count was 0.<br>
+      /bsd: Total head-sep stall count was 0.<br>
+      /bsd: RAIDframe: 1138971 recon event waits, 0 recon delays.<br>
+      /bsd: RAIDframe: 1138971 recon event waits, 0 recon delays.<br>
+      /bsd: RAIDframe: 10000 max exec ticks.<br>
+      /bsd: RAIDframe: 10000 max exec ticks.<br>
+      /bsd: RAIDframe: 10000 max exec ticks.<br>
+      /bsd: RAIDframe: 10000 max exec ticks.</td>
+  </tr>
+</table>
+<h3>Coffee Please</h3>
+<p>And there we should have it, we've rebuilt our failed drive.</p>
+<table width="75%" border="1" class="Code">
+  <tr> 
+    <td height="22" nowrap class="Code"># raidctl -s raid0 </td>
+  </tr>
+  <tr>
+    <td height="22" nowrap class="pScreenOutput">raid0 Components:<br>
+      /dev/wd0d: optimal<br>
+      /dev/wd1d: optimal<br>
+      No spares.<br>
+      Parity status: clean<br>
+      Reconstruction is 100% complete.<br>
+      Parity Re-write is 100% complete.<br>
+      Copyback is 100% complete.</td>
+  </tr>
+</table>
+<p>Now for that well deserved cup of coffee. (snore, snore, snore)</p>
+<h2>Afterthoughts - What have we learned</h2>
+<p><strong>Word</strong>: quiescence</p>
+<p>n 1: a state of quiet (but possibly temporary) inaction [syn: dormancy, quiescency] 
+  2: quiet and inactive restfulness [syn: quiescency, dormancy, sleeping]</p>
+<p>Source: WordNet &reg; 1.6, &copy; 1997 Princeton University (via <a href="http://www.dictionary.com">dictionary.com</a>)<br>
+</p>
+<p><strong>ldd</strong> - there's a lot of dependencies involved with binaries, 
+  so per file copying is more difficult and is a trial and error environment if 
+  you don't use ldd to find dependencies for some of the files you are bound to 
+  use and need.</p>
+<p><strong>raidctl(8)</strong> - is very well documented and with pleasant examples. 
+  After seing the potential from Andreas F. Bobak's mini-howto the man pages were 
+  very helpful in completing things I couldn't get from the howto. It was the 
+  source for a number of misunderstandings on my part.</p>
+<h2><a name="author"></a><a name="author"></a><a name="author"></a>Author and 
+  Copyright</h2> 
+<p>Copyright (c) 2003 Samiuela LV Taufa. All Rights Reserved.</p>
+<p>I reserve the right to be totally incorrect even at the best advice of betters. In other words, I'm probably wrong in enough places for you to call me an idiot, but don't 'cause you'll hurt my sensibilities, just tell me where I went wrong and I'll try again.</p>
+<p>You are permitted and encouraged to use this guide for fun or for profit as 
+  you see fit. If you republish this work in what-ever form, it would be nice 
+  (though not enforceable) to be credited.</p>
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+  <tr> 
+    <td class="block" valign="MIDDLE" width="100%" bgcolor="#cccccc"><strong> 
+      <p class="block">RAIDFrame - cheap RAID and OpenBSD</p>
+      </strong></td>
+  </tr>
+</table>
+<p><font color="#808080" face="sans-serif" size="-2"><strong>Copyright&nbsp; &copy; 
+  2000/1/2 <a href="http://www.nomoa.com">NoMoa Publishers</a> All rights 
+  reserved.  Caveat Emptor</strong></font></p>
+</body>
+</html>

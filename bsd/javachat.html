@@ -1,0 +1,78 @@
+<html>
+<head>
+<title>JAVA CHAT Sample Page</title>
+<link rel="stylesheet" type="text/css" href="openbsd.css">
+</head>
+<body bgcolor=white text=black link=darkred alink=darkred vlink=darkred>
+
+<B><font size=+3 color=darkred>JavaChat</font></b><BR>
+<font size=-1><i>by Spaniel Software</i></font>
+<hr noshade>
+
+<table cellpadding=5><tr><td><font face=arial><b>Status:</b><br>
+
+<applet code=SpanielChatClient.class id=ChatWindow width=200 height=30>
+<param name=port value=4228>
+<!-- do NOT change the above -->
+<!-- you can change all the below as you prefer. Experiment. -->
+<param name=MainTitle value="Java Chat">
+<param name=ScreenColorRed value="128">
+<param name=ScreenColorGreen value="255">
+<param name=ScreenColorBlue value="128">
+<param name="0" value="In The Hall">
+<param name="50" value="The Living Room">
+<param name="100" value="The Dining Room">
+<param name="200" value="The Closet">
+<param name="300" value="The Kitchen">
+<param name="400" value="The Bathroom">
+<param name="500" value="The Master Bedroom">
+<param name="600" value="The Second Bedroom">
+<param name="700" value="The Garden">
+<param name="800" value="The Tree House">
+<param name="900" value="The Green House">
+<param name="999" value="The Room At The End Of The Web">
+</applet>
+
+</td></tr></table>
+<hr noshade>
+<h3><font color=darkred>Set-Up Details</font></h3>
+View the source of this page. You will need to use the APPLET portion of the code in any
+pages which you want to set-up for chat. You can modify lines three and below (do NOT
+change the first two lines) of the APPLET code. That is, you can change the default colour
+and the room names.
+<P>
+Rooms 0-499 are public and should be used for open discussion forums. Rooms 500 to 999 can
+be "locked" and should be used for private conversions, where access needs to be
+restricted.
+<P>
+If you will be moving the chat applet to another directory, in addition to moving the
+source, you will also need to move all six .class files included.
+<P>
+<hr noshade>
+<h3><font color=darkred>Some Things You Should Know</font></h3>
+<ul>
+<li>This application runs on 32-bit systems only (i.e., Windows 95 & Win NT).
+<li>To post a message in a room, type the message and hit the Send Message button (or press
+Return in the message text field).
+<li>To send a private message (one that only the intended recipient can read), click
+their name in the Who's In The Room list (this enables the Private Message button). Type
+the message as
+usual and then hit the Private Message button.
+<li>To change rooms, enter a room number (0 to 999) in the Room field (in the bottom right
+corner)
+and hit the Move To New Room button. Alternatively, you can enter special rooms by choosing
+one
+of those displayed in the Themed Rooms menu.
+<li>Rooms 500-999 can be locked to prevent others from seeing your conversation. Hit the
+Lock
+Room button to do this. A Room Status of "Public" means that the room cannot be locked.
+<li>To find out where other users are, hit the Find People In Other Rooms button. This
+tells you the location
+of all users <I>except</I> those in locked rooms.
+</ul>
+<p><b>Happy Chatting!</b></p>
+
+
+</body>
+</html>
+

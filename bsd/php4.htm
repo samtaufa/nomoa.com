@@ -1,0 +1,416 @@
+
+<html>
+<head>
+<title>=8&gt; nomoa.com/bsd OpenBSD - php4 installation</title><link rel="STYLESHEET" type="text/css" href="openbsd.css">
+<script language="JavaScript">
+<!--
+
+function newImage(arg) {
+	if (document.images) {
+		rslt = new Image();
+		rslt.src = arg;
+		return rslt;
+	}
+}
+
+function changeImages() {
+	if (document.images && (preloadFlag == true)) {
+		for (var i=0; i<changeImages.arguments.length; i+=2) {
+			document[changeImages.arguments[i]].src = changeImages.arguments[i+1];
+		}
+	}
+}
+
+var preloadFlag = false;
+function preloadImages() {
+	if (document.images) {
+		openbsd_over = newImage("mmedia/openbsd-over.gif");
+		openbsd_down = newImage("mmedia/openbsd-down.gif");
+		preloadFlag = true;
+	}
+}
+
+// -->
+</script>
+<!-- End Preload Script -->
+</head>
+
+<body bgcolor="#FFFACD" onLoad="preloadImages();">
+<p class="logo">
+<a class="anchBlue" href="http://www.nomoa.com/bsd" 
+   onMouseOver="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;"
+   onMouseOut="changeImages('openbsd', 'mmedia/openbsd.gif'); return true;"
+   onMouseDown="changeImages('openbsd', 'mmedia/openbsd-down.gif'); return true;"
+   onMouseUp="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;">
+   <img name="openbsd"  align="absMiddle" 
+        alt="OpenBSD ... The Only way to Go ..." border="0" height="50"
+        src="mmedia/openbsd.gif" width="368"></a>
+</p>
+
+<h1>php4 - serving dynamic web pages</h1>
+<hr color="fuchsia">
+<p>Table of Contents: </p>
+<ul>
+  <li><a href="#introduction">Introduction</a></li>
+  <li><a href="#installing">Installing php4 </a></li>
+  <li><a href="#ports">Using the Ports Tree to Reconfigure php4</a></li>
+  <li><a href="#configuring">Configuring apache</a></li>
+  <li><a href="#testing">Testing the installation</a></li>
+  <li><a href="#source">Compiling from source</a></li>
+  <li><a href="#apache_fails">Apache fails to start</a></li>
+  <li><a href="#editorial" class="anchBlue">Editorial Notes</a></li>
+  <li><a href="#author">Author and Copyright</a></li>
+</ul>
+<hr color="fuchsia">
+<h2><a name="introduction"></a>Introduction</h2>
+
+<p>php4's release has been much anticipated and OpenBSD has packaged different 
+  pre-compilations for direct installation. A direct binary package will most 
+  likely cater for the majority of peoples' needs. </p>
+<p>This guide will help you install php4 with OpenBSD.</p>
+<p>My gratitudes to those who have sent me information on their php4 installation 
+  successes which has lead to my being able to get this far.</p>
+<h2><a name="php3"></a><a name="installing"></a>Installing php4</h2>
+ 
+<p class="pFileReference">[package: php4-4.0.3pl1p1-mysql.tgz (available from 
+  ftp sites)]<br>
+  [package: mysql-3.22.32.tgz, (required by above package)]<br>
+  [config file: /var/www/conf/php.ini]</p>
+<p>If all you wish to do is install php4 and mysql for some custom software you 
+  are deeveloping then just install the packages using the pkg_add package manager.<br>
+</p>
+<p class="Code"># <b>pkg_add /<font color="#0000FF">[path-to-package-file]</font>/mysql-3.22.32.tgz</b></p>
+<p class="Code"><b># pkg_add /<font color="#0000FF">[path-to-package-file]</font>/php4-4.0.3pl1p1-mysql.tgz</b><br>
+</p>
+<p>&nbsp;</p>
+
+<h2><a name="compiling"> </a><a name="ports"></a>Using the Ports Tree to Reconfigure 
+  php4</h2>
+
+<p class="pFileReference">[source: ports.tar.gz]<br>
+</p>
+<p class="pFileReference">[source: php4-4.0.3pl1.tar.gz (available from php4 or 
+  OpenBSD ftp sites)]<br>
+  [package: imap-uw-2000b.tgz (required for below configuration)]<br>
+  [package: c-client-2000c.tgz (required during build time for imap client connection)]<br>
+  [package: pdflib-3.02.tgz] </p>
+<p>The configuration selection I use below includes support for IMAP and mysql. 
+  Instructions for installing IMAP and MySQL in <a href="mailServer.htm#imap">Mail 
+  Services</a>, and <a href="mysql.htm">MySQL</a>. The c-client can be package 
+  added as listed above, instead of the manual approach described in the Mail 
+  Services notes.</p>
+<p>After decompressing the ports.tar.gz tree onto your hard-disk. Install and 
+  configure imap as described above, along with any other libraries you wish to 
+  configure with php to support.</p>
+<p>For those with a fast Internet connection, go ahead and skip the next step 
+  and go straight to making your file. For us with slow if infrequent access, 
+  follow these steps.</p>
+<p>1. Download the current ports collection and php4 files (for my configuration 
+  php4-4.0.3pl1 co-incided with the latest version supported by the ports.tar.gz 
+  file)</p>
+<p>2. Place the file into the /usr/ports/distfiles directory (if the directory 
+  does not exist, go ahead and create it.) The directory is where the ports activity 
+  downloads files, so it doesn't have to search the Internet if the files are 
+  already there.</p>
+<p>Change into the php4 directory and use the FLAVOR options to create IMAP support. 
+</p>
+<table border="0" width="800" class="Code">
+  <tr> 
+    <td nowrap class="Code"> 
+      <p class="Code"># <b>cd /usr/ports/www/php4</b></p>
+      <p class="Code"># <b>env FLAVOR=&quot;mysql imap gettext pdflib gd&quot; 
+        make</b></p>
+      <p class="Code">&nbsp;</p>
+    </td>
+  </tr>
+  <tr> 
+    <td nowrap class="pScreenOutput"> 
+      <p class="pScreenOutput">[ ... screen output of config / make process ... 
+        ]</p>
+      <p class="pScreenOutput">&nbsp;</p>
+      <p class="pScreenOutput">libzlib.la TSRM/libtsrm.la -lz -lcrypto -lssl -lresolv 
+        -lm -lresolv </p>
+      <p class="pScreenOutput">Making all in pear</p>
+      <p class="pScreenOutput">&nbsp;</p>
+    </td>
+  </tr>
+  <tr> 
+    <td nowrap class="Code"> 
+      <p class="Code"># <b>env FLAVOR=&quot;mysql imap gettext pdflib gd&quot; 
+        make install</b></p>
+      </td>
+  </tr>
+  <tr> 
+    <td nowrap class="pScreenOutput"> 
+      <p class="pScreenOutput">[ ... screen output of config / make process ... 
+        ]</p>
+      <p class="pScreenOutput">&nbsp;</p>
+      <p class="pScreenOutput"> +--------------- </p>
+      <p class="pScreenOutput">| To finish the install, you need to enable the 
+        php4 </p>
+      <p class="pScreenOutput">| module using the following command </p>
+      <p class="pScreenOutput">| </p>
+      <p class="pScreenOutput">| /usr/local/sbin/php4-enable </p>
+      <p class="pScreenOutput">+--------------- </p>
+      </td>
+  </tr>
+  <tr> 
+    <td nowrap class="Code"> 
+      <p class="Code"># <b>/usr/local/sbin/php4-enable </b></p>
+      </td>
+  </tr>
+  <tr> 
+    <td nowrap class="pScreenOutput"> 
+      <p class="pScreenOutput">enabling php4 module... cp /usr/local/lib/libphp4.so 
+        /usr/lib/apache/modules/libphp4.so </p>
+      <p class="pScreenOutput">chmod 755 /usr/lib/apache/modules/libphp4.so </p>
+      <p class="pScreenOutput">[activating module `php4' in /var/www/conf/httpd.conf] 
+      </p>
+      <p class="pScreenOutput">note: sample configuration files can be found in 
+        /usr/local/share/doc/php4</p>
+      </td>
+  </tr>
+  <tr> 
+    <td nowrap class="Code"> 
+      <p class="Code">&nbsp;</p>
+      <p class="Code"># <b>cp /usr/ports/www/php4/work/php-4.0.4pl1/php.ini-dist 
+        /var/www/conf/php.ini</b> </p>
+      <p class="Code"># <b>echo "&lt;?php phpinfo() ?&gt;" &gt; /var/www/htdocs/test.php</b></p>
+    </td>
+  </tr>
+</table>
+<p>The FLAVORS selection included gettext and a few other options I want. After 
+  the make finishes the configuration it generates the necessary files and the 
+  2nd thing we do is install by using make install. This causes the ports tree 
+  to create a package and add the package to our system.</p>
+<p>After the package installation, the package manager prompts us to execute the 
+  php4-enable program. </p>
+<p>After php4-enable I am copying the sample initialisation file php.ini-dist 
+  into the expected configuration directory (/var/www/conf)</p>
+<p>php4 should now be installed with the features that I require.</p>
+<h2><a name="configuring"></a><a name="configuring"></a>Configuring Apache</h2>
+
+<p class="pFileReference">The installation (/usr/local/sbin/php4-enable) will 
+  make the below modifications to the apache configuration file:</p>
+<table border="0" width="800" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="pScreenOutput"> 
+      <p class="pScreenOutput"># Dynamic Shared Object (DSO) Support</p>
+    </td>
+  </tr>
+  <tr> 
+    <td nowrap class="Code"> 
+      <p class="Code"><b>LoadModule php4_module /usr/lib/apache/modules/libphp4.so</b></p>
+      <p class="Code">&nbsp;</p>
+    </td>
+  </tr>
+  <tr> 
+    <td nowrap class="pScreenOutput"> 
+      <p class="pScreenOutput"># AddType allows you to tweak mime.types without 
+        actually editing it, or to<br>
+        # make certain files to be certain types.<br>
+        #AddType application/x-httpd-php3 .phtml<br>
+        #AddType application/x-httpd-php3-source .phps</p>
+    </td>
+  </tr>
+</table>
+<p>You should enable the changes and make additions as 
+  shown below:</p>
+<p class="pFileReference">Edit /var/www/conf/httpd.conf</p>
+<table border="0" width="800" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="pScreenOutput"> 
+      <p class="pScreenOutput"># Dynamic Shared Object (DSO) Support<br>
+        LoadModule php4_module /usr/lib/apache/modules/libphp4.so<br>
+        &nbsp;<br>
+        # AddType allows you to tweak mime.types without actually editing it, 
+        or to<br>
+        # make certain files to be certain types.</p>
+    </td>
+  </tr>
+  <tr> 
+    <td nowrap class="Code"> 
+      <p class="Code"><b>AddType application/x-httpd-php .phtml<br>
+        AddType application/x-httpd-php-source .phps <br>
+        AddType application/x-httpd-php .php<br>
+        AddType application/x-httpd-php .php3</b><br>
+        <br>
+        # Add to the Directory Index the php extensions<br>
+        <b>DirectoryIndex</b> index.html index.htm default.html default.html <b>index.php3 
+        index.php index.phtml </b></p>
+    </td>
+  </tr>
+</table>
+<p>The install does not configure some of the standard file extensions used for 
+  php4 files (at least from what I understand by checking the url's presented 
+  by some sites.) We retain the use of php3 as this is common on many php scripts 
+  available on the net.</p>
+<p>php4 will use the system default &quot;tmp&quot; partition/path if not otherwise 
+  specified. In php3 you were required to specify the tmp space to be used for 
+  php uploads as in the following. The default file has a commented out section 
+  on where to store temporary upload files. </p>
+<p class="pFileReference">File /var/www/conf/php.ini</p>
+<table width="80%" border="0" class="pScreenOutput">
+  <tr> 
+    <td class="pScreenOutput" nowrap>;upload_tmp_dir = ; temporary directory for 
+      HTTP uploaded files </td>
+  </tr>
+</table>
+<p>Set a valid temporary directory location such as /tmp</p>
+<table width="80%" border="0" class="pScreenOutput">
+  <tr> 
+    <td class="Code" nowrap>upload_tmp_dir = /tmp ; temporary directory for HTTP 
+      uploaded files</td>
+  </tr>
+</table>
+<p> Test whether the binaries are built and installed correctly by restarting 
+the httpd server (force it to re-read the configuration file by using.)</p>
+<table width="80%" border="0" class="pScreenOutput">
+  <tr> 
+    <td class="Code" nowrap># <b>apachectl restart</b></td>
+  </tr>
+</table>
+<p>If Apache was not previously running, then you could use the " <i>apachectl 
+  start </i>" command to start the server.</p>
+ 
+<h2><a name="testing"></a><a name="testing"></a>Testing php.</h2>
+ 
+<p>The above <i>echo "&lt;?php phpinfo() ?&gt;" &gt; /var/www/htdocs/test.php 
+  </i> will let you quickly check whether php is working by calling up the file 
+  <b>test.php</b>:</p>
+<table border="0" width="800" class="pScreenSmall">
+  <tr> 
+    <td nowrap class="Code"># <b>lynx localhost/test.php </b></td>
+  </tr>
+  <tr> 
+    <td nowrap class="pScreenOutput"> 
+      <div align="center">[ lynx displays the following ...]<br>
+        &nbsp;<br>
+        PHP Version 4.0.4pl1<br>
+        <br>
+        System OpenBSD hostname 2.8 GENERIC#399 i386<br>
+        Build Date Today's Date<br>
+        _______________________________________________________________________________________________________________<br>
+      </div>
+      <p class="pScreenOutput">[ ... more stuff cut out ... ]<br>
+        &nbsp;</p>
+    </td>
+  </tr>
+</table>
+<p>Of course if you have a browser that supports tables (AOL Navigator, or Microsoft 
+  Internet Explorer) then it would a look a lot nicer.</p>
+<p align="left">Further test scripts are available, but once the above is working 
+  you know you have a 'working' php configuration. The additional scripts can 
+  help you with debugging errors or if there are specific components you need 
+  to review. Two directories (test, tests) hold a number of different tests for 
+  checking the functionality of your php configuration. </p>
+<h2><a name="source"></a>Compiling from source</h2>
+<p><s>Being offline, when things go wrong there is no net connection to check 
+  what I'm doing wrong, so I have found fiddling with compiling the source has 
+  worked for me. After installing all the supporting programs shown above, I can 
+  compile the features I wish by doing the following.</s></p>
+<table border="0" width="800" class="Code">
+  <tr> 
+    <td nowrap class="CodeSmall"><s># ./configure --with-apxs=/usr/sbin/apxs --with-xml 
+      \<br>
+      --with-config-file-path=/var/www/conf --with-mysql=/usr/local --prefix=/usr/local 
+      \<br>
+      --sysconfdir=/etc --with-imap=/usr/local --with-ftp --with-gettext \<br>
+      --enable-force-cgi-redirect=yes --enable-track-vars=yes \<br>
+      --enable-magic-quotes=yes --enable-debug=no --with-system-regex=yes<br>
+      &nbsp;<br>
+      # make<br>
+      # make install<br>
+      # cp php.ini-dist /var/www/conf/php.ini<br>
+      # echo "&lt;?php phpinfo() ?&gt;" &gt; /var/www/htdocs/test.php</s></td>
+  </tr>
+</table>
+<p><s>Note that with php4 a full make; make install will automatically perform 
+  the tasks normally performed in a package installation by php4-enable</s></p>
+<p>The above compile sequences used to work, but the config has changed significantly 
+  and we are all better off because of the ports tree and Anil Madhavapeddy and 
+  the number of patches required to get php4 working with OpenBSD.</p>
+<h2><a name="apache_fails"></a>Apache fails to start</h2>
+<p>After you restart your machine you may get an error during the restart, and 
+  when you attempt to manually start Apache such as the following:</p>
+<table width="80%" border="0" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="CodeSmall"> 
+      <p class="CodeSmall"># apachectl start </p>
+    </td>
+  </tr>
+  <tr> 
+    <td nowrap class="pScreenSmall"> 
+      <p class="pScreenSmall">/usr/libexec/ld.so: httpd: libmysqlclient.so.6.0: 
+        No such file or directory </p>
+      <p class="pScreenSmall">/usr/sbin/apachectl start: httpd could not be started</p>
+    </td>
+  </tr>
+</table>
+<p>The problem is that the libmysqlclient.so.6.0 file is not in the standard path 
+  for the run-time linker ld.so. To ensure that the file is always included when 
+  the system is started you can either link the file to the standard location, 
+  or add the file location to the default search path.</p>
+<h5>Approach 1:</h5>
+<p>We can create a symlink of the library file into a standard library path such 
+  as /usr/local/lib/</p>
+<table width="80%" border="0" class="Code">
+  <tr> 
+    <td nowrap class="CodeSmall"> 
+      <p class="CodeSmall"># ln -s /usr/local/lib/mysql/libmysqlclient.so.6.0 
+        /usr/local/lib/libmysqlclient.so.6.0</p>
+    </td>
+  </tr>
+</table>
+<h5>Approach 2:</h5>
+<p>We can include the new directory into the list of directories searched by ld.so 
+  and this can be done in the configuration <a href="rc.conf.htm" class="anchBlue">rc.conf.local</a></p>
+<p class="pFileReference">edit /etc/rc.conf.local and add the following line in 
+  <a href="rc.conf.htm#Section3">Section 3</a>:</p>
+<table width="80%" border="0" class="CodeSmall">
+  <tr> 
+    <td nowrap class="CodeSmall"> 
+      <p class="CodeSmall">shlib_dirs=&quot;$shlib_dirs /usr/local/lib/mysql&quot; 
+        # extra directories for ldconfig</p>
+    </td>
+  </tr>
+</table>
+<p class="pFileReference">This will override the existing setting in /etc/rc.conf 
+  which is usually:</p>
+<table width="80%" border="0" class="pScreenSmall">
+  <tr> 
+    <td nowrap class="pScreenSmall"> 
+      <p class="pScreenSmall">shlib_dirs= # extra directories for ldconfig</p>
+    </td>
+  </tr>
+</table>
+<p>We are using $shlib_dirs in the above example to expand whatever settings exist 
+  for shlib_dirs and then include our new directory. Note that you must use quotation 
+  marks and use a space between directory paths.</p>
+<p>There are some security concerns about adding directories into the standard 
+  path for ldconfig so you should study the man pages.</p>
+<h2><a name="editorial"></a>Editorial Notes</h2>
+<p>Especial appreciation is given here to Guillermo Ruiz who's e-mail detailing 
+  how he was able to configure PHP4 and MySQL saved many hours of 'fiddling' to 
+  get the above notes.</p>
+<p>Guillermo's notes are <a href="guillermoPHP4MySQL.htm">linked here</a> and 
+  The copyright of the original material remains with Guillermo Ruiz.</p>
+<h2><a name="author"></a>Author and Copyright</h2>
+ 
+<p>Copyright (c) 2000/1/2 Samiuela LV Taufa. All Rights Reserved.</p>
+<p>I reserve the right to be totally incorrect even at the best advice of betters. In other words, I'm probably wrong in enough places for you to call me an idiot, but don't 'cause you'll hurt my sensibilities, just tell me where I went wrong and I'll try again.</p>
+<p>You are permitted and encouraged to use this guide for fun or for profit as 
+  you see fit. If you republish this work in what-ever form, it would be nice 
+  (though not enforceable) to be credited.</p>
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+  <tr> 
+    <td class="block" valign="MIDDLE" width="100%" bgcolor="#cccccc"><strong> 
+      <p class="block">php4 - scripting the web.</p>
+      </strong></td>
+  </tr>
+</table>
+<p><font color="#808080" face="sans-serif" size="-2"><strong>Copyright&nbsp; &copy; 
+  2000/1/2 <a href="http://www.nomoa.com">NoMoa Publishers</a> All rights 
+  reserved.  Caveat Emptor</strong></font></p>
+</body>
+</html>

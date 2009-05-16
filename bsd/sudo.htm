@@ -1,0 +1,370 @@
+
+<html>
+<head>
+<title>=8> nomoa.com/bsd OpenBSD - sudo Selective Access to RooT</title><link rel="STYLESHEET" type="text/css" href="openbsd.css">
+<SCRIPT LANGUAGE="JavaScript">
+<!--
+
+function newImage(arg) {
+	if (document.images) {
+		rslt = new Image();
+		rslt.src = arg;
+		return rslt;
+	}
+}
+
+function changeImages() {
+	if (document.images && (preloadFlag == true)) {
+		for (var i=0; i<changeImages.arguments.length; i+=2) {
+			document[changeImages.arguments[i]].src = changeImages.arguments[i+1];
+		}
+	}
+}
+
+var preloadFlag = false;
+function preloadImages() {
+	if (document.images) {
+		openbsd_over = newImage("mmedia/openbsd-over.gif");
+		openbsd_down = newImage("mmedia/openbsd-down.gif");
+		preloadFlag = true;
+	}
+}
+
+// -->
+</SCRIPT>
+<!-- End Preload Script -->
+</HEAD>
+
+<body bgcolor="#FFFACD" ONLOAD="preloadImages();">
+<p class="logo">
+<a class="anchBlue" href="http://www.nomoa.com/bsd" 
+   onMouseOver="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;"
+   onMouseOut="changeImages('openbsd', 'mmedia/openbsd.gif'); return true;"
+   onMouseDown="changeImages('openbsd', 'mmedia/openbsd-down.gif'); return true;"
+   onMouseUp="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;">
+   <img name="openbsd"  align="absMiddle" 
+        alt="OpenBSD ... The Only way to Go ..." border="0" height="50"
+        src="mmedia/openbsd.gif" width="368"></a>
+</p>
+
+<h1>sudo - selective access RooT</h1>
+<hr color="fuchsia">
+<p>Table of Contents: </p>
+<ul>
+  <li><a href="#introduction">Introduction</a></li>
+  <li><a href="#aqExample">A Quick Example</a></li>
+  <li><a href="#exmanpages">Examples from the Man Page</a></li>
+  <li><a href="#author">Author and Copyright</a></li>
+</ul>
+<hr color="fuchsia">
+<h2><a name="introduction"></a>Introduction</h2>
+<p class="pFileReference">Program: sudo<br>
+  Configuration File: /etc/sudoers<br>
+  [ref: sudo(8), sudoers(5), visudo(8), su(1)]</p>
+<p>sudo allows administrators to provide restricted access to superuser privileges. 
+</p>
+<p>sudo allows the administrator to provide certain users the ability to execute 
+  commands as another user, one advantage of using sudo is to grant users temporary 
+  and restricted access to Super User privileged programs and execution mode. 
+  This howto does not delve into the intricacies of security but how to setup 
+  a limited sudo system.</p>
+<p>A better tutorial can be found at O'Reilly Network's BSD Column '<a href="http://www.onlamp.com/lpt/a/2680" class="anchBlue">Eliminating 
+  Root with Sudo</a>'</p>
+<h2><a name="aqExample"></a>A Quick Example</h2>
+<p class="pFileReference">Scenario:<br>
+  2 x OpenBSD Servers (rowlands, and pott)<br>
+  4 x restricted access accounts (mycall, sionef, samm, sepiuta)</p>
+<p>An example use for sudo is we maintain systems for high-schools. Since the 
+  systems are not live 24 hours it would be good for a select small group to have 
+  the abilities to shutdown the system and to addusers.</p>
+<p>Two accounts I would like to have the ability to shutdown the machines and 
+  create new user accounts. (userids: mycall, sionef). Two accounts I only want 
+  to give the ability to create new user accounts. (samm, sepiuta)</p>
+<p class="pFileReference">Create the file: /etc/sudoers</p>
+<table width="80%" border="0" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="pScreenOutput"> 
+      <p class="pScreenOutput"># Host alias specification<br>
+        Host_Alias QSC=rowlands,pott</p>
+      <p class="pScreenOutput">&nbsp;</p>
+      <p class="pScreenOutput"># Cmnd alias specification<br>
+        Cmnd_Alias SHUTDOWN=/sbin/shutdown<br>
+        Cmnd_Alias ADDUSER=/usr/sbin/adduser</p>
+      <p class="pScreenOutput">&nbsp;</p>
+      <p class="pScreenOutput"># User specification<br>
+        root ALL=ALL<br>
+        mycall QSC=SHUTDOWN:ADDUSER<br>
+        sionef QSC=SHUTDOWN:ADDUSER<br>
+        samm QSC=ADDUSER<br>
+        sepiuta QSC=ADDUSER</p>
+    </td>
+  </tr>
+</table>
+<p>The /etc/sudoers specifies the privileges we provide for users. We can specify 
+  the user, the hosts on which they can execute privileged commands, as well as 
+  the privileged commands they are allowed to use.</p>
+<table width="80%" border="0" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="Code">$ su</td>
+  </tr>
+  <tr> 
+    <td nowrap class="pScreenOutput">password:</td>
+  </tr>
+  <tr> 
+    <td nowrap class="Code"> # chmod 0440 /etc/sudoers<br>
+      # exit</td>
+  </tr>
+  <tr> 
+    <td nowrap class="pScreenOutput">exit</td>
+  </tr>
+  <tr> 
+    <td nowrap class="Code">$</td>
+  </tr>
+</table>
+<p>The final part of configuring sudo is to change the file settings of /etc/sudoers 
+  to 0440.</p>
+<p>Userid: mycall can now execute the shutdown process or the adduser program 
+  from his own shell account.</p>
+<p>For example:</p>
+<table width="80%" border="0" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="Code">$ whoami</td>
+  </tr>
+  <tr> 
+    <td nowrap class="pScreenOutput">mycall</td>
+  </tr>
+  <tr> 
+    <td nowrap class="Code">$ sudo shutdown -r +15<span class="Code"> </span>"quick 
+      reboot"</td>
+  </tr>
+  <tr> 
+    <td nowrap class="pScreenOutput">
+      <p class="pScreenOutput">&nbsp;</p>
+      <p class="pScreenOutput">We trust you have received the usual lecture from 
+        the local System</p>
+      <p class="pScreenOutput">Administrator. It usually boils down to these two 
+        things:</p>
+      <p class="pScreenOutput">&nbsp;</p>
+      <p class="pScreenOutput"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#1) 
+        Respect the privacy of others.</p>
+      <p class="pScreenOutput"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#2) 
+        Think before you type.</p>
+      <p class="pScreenOutput">&nbsp;</p>
+</td>
+  </tr>
+  <tr> 
+    <td nowrap class="Code">Password: ***** &lt;-- authenticate mycall</td>
+  </tr>
+  <tr> 
+    <td nowrap class="pScreenOutput">Shutdown at (date) (time) (year)<br>
+      <br>
+      shutdown: [pid pid-#]<br>
+      $ <br>
+      *** System shutdown message from mycall@hostname *** <br>
+      System going down at (time) <br>
+      <br>
+      quick reboot </td>
+  </tr>
+</table>
+<p>In the above example, mycall has executed the shutdown process by first specifying 
+  &quot;sudo.&quot; After sudo parses the command line it authenticates mycall 
+  by requesting the login password. After authentication sudo executes the command 
+  given to it.</p>
+<h2><a name="exmanpages"></a>Examples from the man pages:</h2>
+<p class="pFileReference">[ref: sudoers(5)]</p>
+<p>The following are taken directly from the man page (ie. go ahead and read it 
+  for clearer explanation of the settings.</p>
+<p> First, we define our aliases: </p>
+<table width="80%" border="0" class="dns">
+  <tr> 
+    <td nowrap> 
+      <pre>
+        # User alias specification
+        User_Alias     FULLTIMERS = millert, mikef, dowdy
+        User_Alias     PARTTIMERS = bostley, jwfox, crawl
+        User_Alias     WEBMASTERS = will, wendy, wim
+
+        # Runas alias specification
+        Runas_Alias    OP = root, operator
+        Runas_Alias    DB = oracle, sybase
+
+        # Host alias specification
+        Host_Alias     SPARC = bigtime, eclipse, moet, anchor :\
+                       SGI = grolsch, dandelion, black :\
+                       ALPHA = widget, thalamus, foobar :\
+                       HPPA = boa, nag, python
+        Host_Alias     CUNETS = 128.138.0.0/255.255.0.0
+        Host_Alias     CSNETS = 128.138.243.0, 128.138.204.0/24, 128.138.242.0
+        Host_Alias     SERVERS = master, mail, www, ns
+        Host_Alias     CDROM = orion, perseus, hercules
+
+        # Cmnd alias specification
+        Cmnd_Alias     DUMPS = /usr/bin/mt, /usr/sbin/dump, /usr/sbin/rdump,\
+                               /usr/sbin/restore, /usr/sbin/rrestore
+        Cmnd_Alias     KILL = /usr/bin/kill
+        Cmnd_Alias     PRINTING = /usr/sbin/lpc, /usr/bin/lprm
+        Cmnd_Alias     SHUTDOWN = /usr/sbin/shutdown
+        Cmnd_Alias     HALT = /usr/sbin/halt, /usr/sbin/fasthalt
+        Cmnd_Alias     REBOOT = /usr/sbin/reboot, /usr/sbin/fastboot
+        Cmnd_Alias     SHELLS = /usr/bin/sh, /usr/bin/csh, /usr/bin/ksh, \
+                                /usr/local/bin/tcsh, /usr/bin/rsh, \
+                                /usr/local/bin/zsh
+        Cmnd_Alias     SU = /usr/bin/su
+</pre>
+    </td>
+  </tr>
+</table>
+<p>Here we override some of the compiled in default values.
+       We want sudo to log via syslog(3) using the auth facility
+       in all cases.  We don't want to subject the full time
+       staff to the sudo lecture, and user millert need not give
+       a password.  In addition, on the machines in the SERVERS
+       Host_Alias, we keep an additional local log file and make
+       sure we log the year in each log line since the log
+       entries will be kept around for several years.</p>
+<pre class="dns">       # Override builtin defaults
+        Defaults               syslog=auth
+        Defaults:FULLTIMERS    !lecture
+        Defaults:millert       !authenticate
+        Defaults@SERVERS       log_year, logfile=/var/log/sudo.log
+
+</pre>
+<p>
+       The User specification is the part that actually
+       determines who may run what.
+</p>
+<pre>
+		root           ALL = (ALL) ALL
+        %wheel         ALL = (ALL) ALL
+</pre>
+<p>We let root and any user in group wheel run any command on any host as any user.</p>
+<pre>       FULLTIMERS     ALL = NOPASSWD: ALL
+</pre>
+<p>       Full time sysadmins (millert, mikef, and dowdy) may run
+       any command on any host without authenticating themselves.</p>
+
+<pre>       PARTTIMERS     ALL = ALL
+</pre>
+<p>Part time sysadmins (bostley, jwfox, and crawl) may run
+       any command on any host but they must authenticate
+       themselves first (since the entry lacks the NOPASSWD tag).
+</p>
+
+<pre>		jack           CSNETS = ALL
+</pre>
+<p>The user jack may run any command on the machines in the CSNETS alias (the 
+  networks 128.138.243.0, 128.138.204.0, and 128.138.242.0). Of those networks, 
+  only <128.138.204.0> has an explicit netmask (in CIDR notation) indicating it 
+  is a class C network. For the other networks in CSNETS, the local machine's 
+  netmask will be used during matching. </p>
+
+<pre>		lisa           CUNETS = ALL
+</pre>
+<p>The user lisa may run any command on any host in the
+       CUNETS alias (the class B network 128.138.0.0).
+</p>
+
+<pre>		operator       ALL = DUMPS, KILL, PRINTING, SHUTDOWN, HALT, REBOOT,\
+                       /usr/oper/bin/
+</pre>
+<p>The operator user may run commands limited to simple
+       maintenance.  Here, those are commands related to backups,
+       killing processes, the printing system, shutting down the
+       system, and any commands in the directory /usr/oper/bin/.
+</p>
+
+<pre>		joe            ALL = /usr/bin/su operator
+</pre>
+<p>The user joe may only su(1) to operator.
+</p>
+
+<pre>		pete           HPPA = /usr/bin/passwd [A-z]*, !/usr/bin/passwd root
+</pre>
+<p> The user pete is allowed to change anyone's password except for root on the 
+  HPPA machines. Note that this assumes passwd(1) does not take multiple usernames 
+  on the command line. </p>
+
+<pre>		bob            SPARC = (OP) ALL : SGI = (OP) ALL
+</pre>
+<p>  The user bob may run anything on the SPARC and SGI
+       machines as any user listed in the OP Runas_Alias (root
+       and operator).</p>
+
+<pre> 		jim            +biglab = ALL
+</pre>
+<p>The user jim may run any command on machines in the biglab
+       netgroup.  Sudo knows that "biglab" is a netgroup due to
+       the '+' prefix.
+</p>
+
+<pre>		+secretaries   ALL = PRINTING, /usr/bin/adduser, /usr/bin/rmuser
+</pre>
+<p>Users in the secretaries netgroup need to help manage the printers as well 
+  as add and remove users, so they are allowed to run those commands on all machines. 
+</p>
+
+<pre>		fred           ALL = (DB) NOPASSWD: ALL
+</pre>
+<p> The user fred can run commands as any user in the DB Runas_Alias (oracle or 
+  sybase) without giving a password. </p>
+
+<pre>		john           ALPHA = /usr/bin/su [!-]*, !/usr/bin/su *root*
+</pre>
+<p>On the ALPHA machines, user john may su to anyone except root but he is not 
+  allowed to give su(1) any flags. </p>
+
+<pre>		jen            ALL, !SERVERS = ALL
+</pre>
+<p>The user jen may run any command on any machine except for those in the SERVERS 
+  Host_Alias (master, mail, www and ns). </p>
+
+<pre> 		jill           SERVERS = /usr/bin/, !SU, !SHELLS</pre>
+<p> For any machine in the SERVERS Host_Alias, jill may run any commands in the 
+  directory /usr/bin/ except for those commands belonging to the SU and SHELLS 
+  Cmnd_Aliases. </p>
+
+<pre>		steve          CSNETS = (operator) /usr/local/op_commands/
+</pre>
+<p>The user steve may run any command in the directory /usr/local/op_commands/ 
+  but only as user operator.</p>
+
+<pre>		matt           valkyrie = KILL
+</pre>
+<p>On his personal workstation, valkyrie, matt needs to be able to kill hung processes. 
+</p>
+
+<pre>		WEBMASTERS     www = (www) ALL, (root) /usr/bin/su www
+</pre>
+<p>On the host www, any user in the WEBMASTERS User_Alias (will, wendy, and wim), 
+  may run any command as user www (which owns the web pages) or simply su(1) to 
+  www. </p>
+
+<pre>  		ALL            CDROM = NOPASSWD: /sbin/umount /CDROM,\
+                       /sbin/mount -o nosuid\,nodev /dev/cd0a /CDROM
+</pre>
+<p> Any user may mount or unmount a CD-ROM on the machines in the CDROM Host_Alias 
+  (orion, perseus, hercules) without entering a password. This is a bit tedious 
+  for users to type, so 
+  it is a prime candiate for encapsulating in a shell script. </p>
+
+<pre></pre>
+<p></p>
+
+<h2><a name="author"></a>Author and Copyright</h2> 
+<p>Copyright (c) 2000/1/2 Samiuela LV Taufa. All Rights Reserved.</p>
+<p>I reserve the right to be totally incorrect even at the best advice of betters. In other words, I'm probably wrong in enough places for you to call me an idiot, but don't 'cause you'll hurt my sensibilities, just tell me where I went wrong and I'll try again.</p>
+<p>You are permitted and encouraged to use this guide for fun or for profit as 
+  you see fit. If you republish this work in what-ever form, it would be nice 
+  (though not enforceable) to be credited.</p>
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+  <tr> 
+    <td class="block" valign="MIDDLE" width="100%" bgcolor="#cccccc"><strong> 
+      <p class="block">sudo - selective access RooT</p>
+      </strong></td>
+  </tr>
+</table>
+<p><font color="#808080" face="sans-serif" size="-2"><strong>Copyright&nbsp; &copy; 
+  2000/1/2 <a href="http://www.nomoa.com">NoMoa Publishers</a> All rights 
+  reserved.  Caveat Emptor</strong></font></p>
+</body>
+</html>

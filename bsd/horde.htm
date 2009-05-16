@@ -1,0 +1,237 @@
+
+<html>
+<head>
+<title>=8> nomoa.com/bsd OpenBSD - horde and PHPLib</title><link rel="STYLESHEET" type="text/css" href="openbsd.css">
+<script language="JavaScript">
+<!--
+
+function newImage(arg) {
+	if (document.images) {
+		rslt = new Image();
+		rslt.src = arg;
+		return rslt;
+	}
+}
+
+function changeImages() {
+	if (document.images && (preloadFlag == true)) {
+		for (var i=0; i<changeImages.arguments.length; i+=2) {
+			document[changeImages.arguments[i]].src = changeImages.arguments[i+1];
+		}
+	}
+}
+
+var preloadFlag = false;
+function preloadImages() {
+	if (document.images) {
+		openbsd_over = newImage("mmedia/openbsd-over.gif");
+		openbsd_down = newImage("mmedia/openbsd-down.gif");
+		preloadFlag = true;
+	}
+}
+
+// -->
+</script>
+<!-- End Preload Script -->
+</head>
+
+<body bgcolor="#FFFACD" onLoad="preloadImages();">
+<p class="logo">
+<a class="anchBlue" href="http://www.nomoa.com/bsd" 
+   onMouseOver="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;"
+   onMouseOut="changeImages('openbsd', 'mmedia/openbsd.gif'); return true;"
+   onMouseDown="changeImages('openbsd', 'mmedia/openbsd-down.gif'); return true;"
+   onMouseUp="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;">
+   <img name="openbsd"  align="absMiddle" 
+        alt="OpenBSD ... The Only way to Go ..." border="0" height="50"
+        src="mmedia/openbsd.gif" width="368"></a>
+</p>
+
+<h1>horde, PHPLib</h1>
+<hr color="fuchsia">
+<p>Table of Contents: </p>
+<ul>
+  <li><a href="#introduction">Introduction</a></li>
+  <li><a href="#install"> Installing </a> </li>
+  <li><a href="#configureH">Configuring horde/PHPLib </a></li>
+  <li><a href="#configureA">Configuring Apache </a></li>
+  <li><a href="#testingH">Testing the horde installation </a></li>
+  <li><a href="#testingP">Testing the PHPLib installation </a></li>
+  <li><a href="#author">Author and Copyright</a></li>
+</ul>
+<hr color="fuchsia">
+<h2><a name="introduction"></a>Introduction</h2>
+<p>The horde project is an umbrella project that supports a lot of Web Hosted 
+  services using the Server Scripting powers of PHP. Prior to PHP 4 maintaining 
+  state between different sessions of the user / client communications used a 
+  series of PHP libraries coined &quot;PHPLib.&quot;</p>
+<p>In other words, if you've installed PHP4 then you do not need to read this 
+  guide. If you need to use php3 you may need to read this guide.</p>
+<p>This Guide introduces you to the installation of Horde and PHPLib as distributed 
+  as a combined tar ball from <a href="http://www.horde.org">http://www.horde.org</a>.</p>
+<h2><a name="install"></a>Installing </h2>
+
+<p class="pFileReference">Source File: horde-1.2.0-pre13.tar.gz (available from 
+  <a href="http://www.horde.org">http://www.horde.org</a>) <br>
+  [ref: horde-1.2.0-pre13/docs/INSTALL]<br>
+  [ref: <a href="http://faq.horde.org">http://faq.horde.org</a>]</p>
+<p>Untar the source files and copy the files from the php directory into a directory 
+  that will be used by the server. (Note: This directory does not need to live 
+  under your web server's document root, so it's probably safer to put it somewhere 
+  outside the reaches of lurking web clients.[horde/doc/PHPLIB)</p>
+<p class="Code"># <b>cd /usr/src</b><br>
+</p>
+<p class="Code"># <b>tar -zxf /<font color="#0000FF">[path-to-file]</font>/horde-1.2.0-pre13.tar.gz</b> 
+  <br>
+  # <b>mv horde-1.2.0-pre13 /var/www/horde</b> </p>
+<a name="configureH"> 
+<h2>Configuring horde/PHPLib</h2>
+</a> 
+<p class="pFileReference">[ref: /var/www/horde/phplib/README]<br>
+</p>
+<p class="pFileReference"> [ref: /var/www/horde/scripts/database/MYSQL] </p>
+<p>Horde is essentially installed and we now need to configure the settings of 
+  horde and PHPLib</p>
+<p>1. Edit the /var/www/conf/php3.ini file (php.ini in PHP 4) to have the following 
+  modifications:</p>
+<p class="pScreenOutput">include_path = <b>'.:/var/www/horde/phplib'</b><br>
+  auto_prepend_file = <b>/var/www/horde/phplib/prepend.php3</b> <br>
+  track_vars = <b>on</b> <br>
+  magic_quotes_gpc = <b>off</b> </p>
+<p>2. Edit the File: /var/www/horde/phplib/local.inc</p>
+<p>Uncomment the references to SQL functions (this should include <i>class HordeDB 
+  extends DB_Sql</i>, <i>function halt($msg)</i>, and <i>class HordeCT extends 
+  CT_Sql</i>. We make these changes since we have the MySQL database running and 
+  will use that server for database use.</p>
+
+<p>The appropriate sections in local.inc should look like the below.</p>
+<table class="dns">
+  <tr><td>
+      <pre>/* To use an SQL database, uncomment and edit the following: */
+class HordeDB extends DB_Sql {
+  var $Host = '<b>localhost</b>';
+  var $Database = '<b>horde</b>';
+  var $User = '<b>horde</b>';
+  var $Password = '<b>hordemgr</b>';
+  var $Port = '';
+
+  function halt($msg) {
+    printf("Database error (HordeDB): %s\n", $msg);
+  }
+}
+
+class HordeCT extends CT_Sql {
+  var $database_class = 'HordeDB';         // Which database class to use...
+  var $database_table = 'active_sessions'; // and find our data in this table.
+}</pre>
+</td></tr>
+</table>
+<p><a name="prepend.inc"></a>3. Edit the /var/www/horde/phplib/prepend.php3 file 
+  to specify the location of the 'libdir'</p>
+<p class="Code"> # The line that reads as # $_PHPLIB["libdir"] = ""; <br>
+  # should be changed to something like the below<br>
+  $_PHPLIB["libdir"] = <b>"/var/www/horde/phplib/"</b>; </p>
+<p>4. Configure MySQL with the database that we will use with horde. This may 
+  require starting MySQL if we have not yet started it, and using the script provided 
+  with the horde distribution to create the database.</p>
+<p class="Code"># <b>/usr/local/bin/safe_mysqld --user=mysql --log & </b><br>
+  # <b>cd /var/www/horde/scripts/database</b><br>
+  # <b>/usr/local/bin/mysql -u root -p &lt; mysql_create.sql</b> </p>
+<p>5. Now that we have the MySQL tables set up, we can configure /var/www/horde/phplib/local.inc 
+  to contain the user/password we will use for MySQL. Note that this information 
+  is derived from the mysql_create.sql script.</p>
+<p class="Code"> var $Host = '<b>localhost</b>';<br>
+  var $Database = '<b>horde</b>';<br>
+  var $User = '<b>hordemgr</b>';<br>
+  var $Password = '<b>hordemgr</b>';<br>
+  var $Port = ''; </p>
+<p><b>Security Note</b>: Since the user/password combination is well known we 
+  will need to change the password. For extra security you may want to change 
+  the database and user which will require you hand-tuning a number of other php 
+  scripts. [ref <a href="imp.htm#security">IMP Security</a>]</p>
+<a name="configureA"> 
+<h2>Configuring Apache.</h2>
+</a> 
+<p>To finalise configuration, we modify the apache configuration file.</p>
+<p class="pFileReference">Edit the file /var/www/conf/httpd.conf to include new 
+  settings for horde</p>
+
+<p class="Code">Alias <b>/horde/ "/var/www/horde/"</b><br>
+  &lt;<b>Directory &quot;/var/www/horde&quot;</b>&gt;<br>
+  &nbsp;&nbsp;&nbsp;Options Indexes FollowSymLinks <br>
+  &nbsp;&nbsp;&nbsp;AllowOverride None <br>
+  &nbsp;&nbsp;&nbsp;order allow,deny <br>
+  &nbsp;&nbsp;&nbsp;allow from all <br>
+  &lt;/Directory&gt;</p>
+<p>Force apache to re-read its configuration file</p>
+<p class="Code"> <directory /var/www/horde># <b>apachectl restart</b></directory> 
+</p>
+<a name="testingH"> 
+<h2>Testing the horde Installation</h2>
+</a> 
+<p>We can now test whether our horde and database access is working correctly 
+  by going to the url http://localhost/horde/test.php3</p>
+<p class="Code"># <b>lynx http://localhost/horde/test.php3</b></p>
+<p class="pScreenOutput">[ lynx displays the following ...]<br>
+  &nbsp;<br>
+</p>
+<p class="pScreenOutput">&nbsp;&nbsp;View&nbsp;phpinfo()&nbsp;screen<br>
+  <br>
+  &nbsp;&nbsp;PHP&nbsp;Version<br>
+  <br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;PHP&nbsp;Version:&nbsp;3.0.16<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;PHP&nbsp;Major&nbsp;Version:&nbsp;3<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;PHP&nbsp;Minor&nbsp;Version:&nbsp;16<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;Your&nbsp;PHP3&nbsp;version&nbsp;is&nbsp;recent.&nbsp;You&nbsp;should&nbsp;not&nbsp;have&nbsp;any&nbsp;problems&nbsp;with<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Horde&nbsp;modules,&nbsp;provided&nbsp;that&nbsp;you&nbsp;have&nbsp;applied&nbsp;the&nbsp;patch(es)<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;described&nbsp;in&nbsp;horde/docs/INSTALL.<br>
+  <br>
+  &nbsp;&nbsp;PHP&nbsp;Module&nbsp;Capabilities<br>
+  <br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;IMAP&nbsp;Support:&nbsp;Yes<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;LDAP&nbsp;Support:&nbsp;No<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;MySQL&nbsp;Support:&nbsp;Yes<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;PostgreSQL&nbsp;Support:&nbsp;No <br>
+  <br>
+</p>
+<p class="pScreenOutput">[ ... more stuff cut out ... ]</p>
+<p>If the above output shows then php is installed and functioning correctly.</p>
+<a name="testingP"> 
+<h2>Testing the PHPLib installation</h2>
+</a> 
+<p>Using the same php script ../horde/test.php3 we can test the PHPLib installation 
+  by selecting the <i>&quot;Click here to test PHPLIB for Horde&quot;</i>. Selecting 
+  the link with lynx will ask for confirmation of cookies (choose YES/All to accept 
+  the cookies.) Reload the page displayed below to see the line &quot;Per Session 
+  Data: 1&quot; increment.</p>
+<p class="pScreenOutput">[ lynx displays the following ...]<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;Reload&nbsp;this&nbsp;page&nbsp;to&nbsp;see&nbsp;the&nbsp;counters&nbsp;increment.<br>
+  &nbsp;&nbsp;&nbsp;Go&nbsp;back&nbsp;to&nbsp;the&nbsp;test.php3&nbsp;page.<br>
+  &nbsp;&nbsp;&nbsp;View&nbsp;the&nbsp;output&nbsp;of&nbsp;phpinfo().<br>
+  <br>
+  &nbsp;&nbsp;Per&nbsp;Session&nbsp;Data:&nbsp;1<br>
+  <br>
+  &nbsp;&nbsp;&nbsp;If&nbsp;this&nbsp;page&nbsp;works&nbsp;correctly,&nbsp;then&nbsp;you&nbsp;have&nbsp;a&nbsp;correctly&nbsp;configured<br>
+  &nbsp;&nbsp;&nbsp;HordeSession&nbsp;class.&nbsp;You&nbsp;should&nbsp;be&nbsp;done&nbsp;with&nbsp;PHPLIB&nbsp;setup.</p>
+<p class="pScreenOutput">&nbsp;</p>
+<p>If everything has worked well we now have a functioning installation of horde 
+  and PHPLib.</p>
+<h2><a name="author"></a>Author and Copyright</h2>
+ 
+<p>Copyright (c) 2000/1/2 Samiuela LV Taufa. All Rights Reserved.</p>
+<p>I reserve the right to be totally incorrect even at the best advice of betters. In other words, I'm probably wrong in enough places for you to call me an idiot, but don't 'cause you'll hurt my sensibilities, just tell me where I went wrong and I'll try again.</p>
+<p>You are permitted and encouraged to use this guide for fun or for profit as 
+  you see fit. If you republish this work in what-ever form, it would be nice 
+  (though not enforceable) to be credited.</p>
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+  <tr> 
+    <td class="block" valign="MIDDLE" width="100%" bgcolor="#cccccc"><strong> 
+      <p class="block">Horde and PHPLib - The foundations for Web based Services</p>
+      </strong></td>
+  </tr>
+</table>
+<p><font color="#808080" face="sans-serif" size="-2"><strong>Copyright&nbsp; &copy; 
+  2000/1/2 <a href="http://www.nomoa.com">NoMoa Publishers</a> All rights 
+  reserved.  Caveat Emptor</strong></font></p>
+</body>
+</html>

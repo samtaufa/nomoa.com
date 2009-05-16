@@ -1,0 +1,216 @@
+BODY  {
+	font : verdana, arial, helvetica, sans-serif;
+	color : black;
+	font-weight : normal;
+	font-size : small;
+	line-height : normal;
+	background-attachment : fixed;
+}
+
+P.copyright  {
+	font-size : x-small;
+	letter-spacing : -1pt;
+	font-family : Verdana, Arial, Helv, sans-serif;
+}
+
+.hand  {
+	cursor : hand;
+}
+
+
+
+A  {
+	color : #31319C;
+}
+
+A.index  {
+	text-decoration : none;
+	font-size : small;
+	font-weight : bold;
+	font-color: light-blue;
+}
+
+A.index2  {
+	color : #00ccff;
+	text-decoration : none;
+}
+
+A.blueback  {
+	color : #00ccff;
+	font-size : medium;
+	font-weight : bold;
+	font-family : Verdana, Arial, Helv;
+	text-decoration : none;
+}
+
+.smallblue  {
+	font-size : small;
+	color : #333399;
+	text-decoration : none;
+	font-weight : bold;
+	line-height : normal;
+}
+
+.lrgblue  {
+	font-size : 110%;
+	color : #333399;
+}
+
+TD.symbol  {
+	text-decoration : none;
+	font-size : x-small;
+	font-weight : bold;
+	color : #333399;
+}
+
+TD.stockhd  {
+	font-size : x-small;
+	font-weight : bold;
+	color : #333399;
+}
+
+TD.company  {
+	text-decoration : none;
+	font-size : 7pt;
+	color : #333399;
+}
+
+.medLink  {
+	text-decoration : none;
+	letter-spacing : -1pt;
+}
+
+.boldLink  {
+	font-weight : bold;
+	font-size : 8pt;
+	text-decoration : none;
+}
+
+.smallLink  {
+	text-decoration : none;
+	font-size : 8pt;
+	line-spacing
+		letter-spacing : -1pt;
+}
+
+.largeBlt  {
+	margin-top : 6px;
+	margin-right : 2px;
+}
+
+.smallBlt  {
+	margin-bottom : 2px;
+	margin-right : 2px;
+}
+
+.bestBlt  {
+	margin-top : 3px;
+}
+
+.toolLink  {
+	color : #639CCE;
+	font : 8pt verdana, arial, helvetica, sans-serif;
+	font-weight : bold;
+	letter-spacing : -1pt;
+	text-decoration : none;
+}
+
+.toolbar  {
+	font : 8pt verdana;
+	color : white;
+	background-color : black;
+	cursor : default;
+}
+
+.eventNav  {
+	font-size : 8pt;
+}
+
+.TongaLink  {
+	color : #cc0099;
+	font :  verdana, arial, helvetica, sans-serif;
+	font-weight : bold;
+	letter-spacing : -1pt;
+	text-decoration : none;
+}
+
+table  {
+	font-family : Verdana, Arial, sans-serif;
+}
+
+h1  {
+	font-family : Verdana, Arial, sans-serif;
+	font-size : 150%;
+	color : "#FF0080";
+}
+
+h2  {
+	font-family : Verdana, Arial, sans-serif;
+	font-size : 140%;
+	line-height : 14pt;
+}
+
+h3  {
+	font-family : Verdana, Arial, sans-serif;
+	font-size : 140%pt;
+	color : "#996600";
+}
+
+p  {
+	font-family : Verdana, Arial, sans-serif;
+	font-size : medium;
+}
+
+p.Tongan  {
+	font-family : TG Verdana, Verdana, Arial, sans-serif;
+}
+
+p.smallprint  {
+	font-size : small;
+}
+
+p.articleheading  {
+	font-weight : bold;
+}
+
+p.MajorHeadings  {
+	font-family : Verdana, Arial, sans-serif;
+	font-size : 140%;
+	font-weight : bold;
+	color : #996600;
+}
+
+p.refer  {
+	font-weight : normal;
+	font-family : Verdana, Arial, sans-serif;
+	font-size : x-small;
+}
+
+p.Category  {
+	font-family : Verdana, Arial, sans-serif;
+	font-size : 130%;
+	font-weight : bold;
+	color : #996600;
+	cursor : hand;
+}
+
+A  {
+	color : #31319C;
+}
+
+A.index  {
+	font-weight : bold;
+	text-decoration : none;
+	color : #99FFFF;
+}
+
+A:hover  {
+	color : Red;
+}
+
+A:hover.index  {
+	color : Blue;
+	font-style : normal;
+	font-weight : bold;
+}
+

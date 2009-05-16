@@ -1,0 +1,547 @@
+
+<html>
+<head>
+<title>=8&gt; nomoa.com/bsd OpenBSD - phpNuke, a Portal Beginning</title><link rel="STYLESHEET" type="text/css" href="openbsd.css">
+<script language="JavaScript">
+<!--
+
+function newImage(arg) {
+	if (document.images) {
+		rslt = new Image();
+		rslt.src = arg;
+		return rslt;
+	}
+}
+
+function changeImages() {
+	if (document.images && (preloadFlag == true)) {
+		for (var i=0; i<changeImages.arguments.length; i+=2) {
+			document[changeImages.arguments[i]].src = changeImages.arguments[i+1];
+		}
+	}
+}
+
+var preloadFlag = false;
+function preloadImages() {
+	if (document.images) {
+		openbsd_over = newImage("mmedia/openbsd-over.gif");
+		openbsd_down = newImage("mmedia/openbsd-down.gif");
+		preloadFlag = true;
+	}
+}
+
+// -->
+</script>
+<!-- End Preload Script -->
+</head>
+
+<body bgcolor="#FFFACD" onLoad="preloadImages();">
+<p class="logo">
+<a class="anchBlue" href="http://www.nomoa.com/bsd" 
+   onMouseOver="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;"
+   onMouseOut="changeImages('openbsd', 'mmedia/openbsd.gif'); return true;"
+   onMouseDown="changeImages('openbsd', 'mmedia/openbsd-down.gif'); return true;"
+   onMouseUp="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;">
+   <img name="openbsd"  align="absMiddle" 
+        alt="OpenBSD ... The Only way to Go ..." border="0" height="50"
+        src="mmedia/openbsd.gif" width="368"></a>
+</p>
+
+<h1> phpNuke - A Portal Beginning</h1>
+<hr color="fuchsia">
+<p>Table of Contents: </p>
+<ul>
+  <li><a href="#introduction">Introduction</a> 
+  <li><a href="#NukeGet" class="anchBlue">Getting The Files </a>
+  <li><a href="#NukeInstall" class="anchBlue">Installation </a> 
+    <ul>
+	  <li class="anchBlue"><a href="#NukeInstallMove">Moving the Files to their 
+        Home </a> 
+      <li class="anchBlue"><a href="#NukeInstallMySQL">Configuring the MySQL Server 
+        </a> 
+		<ul>
+			
+          <li><a href="#NukeInstallMySQLdb">1st Stage - Create the Database.</a></li>
+			
+          <li><a href="#NukeInstallMySQLsecurity">Security Note</a></li>
+          <li><a href="#NukeInstallMySQLtbl">2nd Stage - Create and Fill the Tables</a></li>
+		</ul></li>
+      <li><a href="#NukeInstallStartup" class="anchBlue">Configuring for Startup 
+        </a> 
+    </ul>
+  </li>
+  <li><a href="#NukeGAdmin" class="anchBlue">Graphical Administration </a> 
+    <ul>
+      <li><a href="#NukeGAdminPassword"><span class="anchBlue">Set Change your 
+        Admin Password </span></a> 
+        <ul>
+          <li class="anchBlue"><a href="#NukeGAdminUser">Add an Unprivileged User</a>
+        </ul>
+      </li>
+      <li class="anchBlue"><a href="#NukeGAdminPreference">Site Information, Set, 
+        Configure the General Preferences </a> 
+      <li class="anchBlue"><a href="#NukeGAdminBLOCKS" class="anchBlue">Layout 
+        Information, BLOCKS </a>
+    </ul>
+  </li>
+  <li><a href="#NukeMetaTags" class="anchBlue">Meta Tags </a>
+  <li><a href="#author">Author and Copyright</a></li>
+</ul>
+<hr color="fuchsia">
+<h2><a name="introduction"></a>Introduction</h2>
+<p >Been looking for that piece of software to turn your website into a dynamic 
+  environment? Want to give your website users the opportunity to participate 
+  in a friendly to use community? Want forums, news articles ?</p>
+<p >What you are looking for is some form of web portal system. The current buzzword 
+  is Content Management System (CMS.)</p>
+<p >A very popular portal (CMS) system is <a href="http://www.phpnuke.org" class="anchBlue">phpNuke</a> 
+  and the derivative works <a href="http://www.myphpnuke.com" class="anchBlue">myphpnuke</a> 
+  and <a href="http://www.postnuke.com" class="anchBlue">postNuke</a>. In fact, 
+  on the postNuke site you will find a lot of references to other similar systems.</p>
+<p > These notes show specific intructions for installing the 4.x revisions of 
+  <a href="http://www.phpnuke.org" class="anchBlue">phpNuke</a>. The basic information 
+  is the same for revision 5. For more information refer to the respective web 
+  sites <a href="http://www.phpnuke.org">http://www.phpnuke.org</a>, <a href="http://www.myphpnuke.com" class="anchBlue">http://www.myphpnuke.com</a> 
+  and <a href="http://www.postnuke.com">http://www.postnuke.com</a></p>
+<p >If you have the time to learn to configure and install MySQL, PHP4 then you 
+  are already half way ready to install a great database driven web site.</p>
+<p >I 1st came across phpnuke while I was scrounging for a database driven portal 
+  manager for a high school I was working with and these notes (extending on the 
+  clear installation documentation already provided with the package) was a need 
+  by myself to detail some of the work that I went through to get the system up 
+  and running. Of course the hope is that it will make it easier to install on 
+  other sites.</p>
+<p >One seriously major attraction for me, the ability to run phpNuke on my MSWindowsX/PWS5 
+  laptop before I push it onto the OpenBSD/Apache/OpenSSL Server. This way I can 
+  test some of the things I want to do at the school (user-site) before I actually 
+  do it. Of course once I get the OpenBSD laptop going then I wont need to worry 
+  about WinX ?</p>
+<p >This installation uses <a href="apache.htm" class="anchBlue">Apache,</a> <a href="mysql.htm" class="anchBlue">MySQL</a> 
+  and <a href="php4_3.3c.htm" class="anchBlue">PHP 4</a> as the web, database, scripting 
+  Engine servers. Although this discussion is primarily for OpenBSD, I have had 
+  this installation successfully work on MSWindows (although the encryption code 
+  in nuke doesn't work.) phpNuke is primarily developed (and working) in Linux.</p>
+<h2><a name="NukeGet"></a>Getting the Files</h2>
+<p class="pFileReference">[ref: PHP-Nuke-5.0.tar.gz or PHP-Nuke-4.4.1a.tar.gz]</p>
+<p>The 1st thing to do is to download the source files for phpNuke from the <a href="http://www.phpnuke.org" class="anchBlue">http://www.phpnuke.org</a> 
+  website.</p>
+<p>At the writing of this guide, there were two releases with a very recent release 
+  of the 5.0 stream of phpnuke. As I have no lengthy experience, I can only recommend 
+  working with 5.0 as that is where development seems to be continuing.</p>
+<h2><a name="NukeInstall"></a>Installation</h2>
+<p class="pFileReference">[ref: PHP-Nuke-X.Y.Z.tar.gz]</p>
+<p>After you have downloaded the files, untar the file on your local drive and 
+  review two important files, INSTALL and README.</p>
+<p class="Code">~$ <b>tar -zxvf PHP-Nuke-X.Y.Z.tar.gz</b></p>
+<p class="Code">~$ <b>cd PHP-Nuke-X.Y.Z</b></p>
+<p class="Code">PHP-Nuke-X.Y.Z$ <b>ls</b></p>
+<p>Basic installation instructions are incorporated in the INSTALL text file.</p>
+<p>The tar file extracts two sub-directories from its root; html/ contains the 
+  php files that you will be using, and sql/ which contains the script instructions 
+  for configuring your MySQL database.</p>
+<h3><a name="NukeInstallMove"></a>Moving the files to their home</h3>
+<p class="pFileReference">[ref: ./html, ./sql, ~/public_html or /var/www/htdocs]</p>
+<p>Copy (or move) the files in the html/ directory to your home directory (eg. 
+  /var/www/htdocs or ~/public_html)</p>
+<p class="Code">PHP-Nuke-X.Y.Z$<b> cd html</b></p>
+<p class="Code">html$ <b>mv * ~/public_html</b></p>
+<p>Refer to the notes on <a href="apache.htm" class="anchBlue2">Apache</a> if 
+  you have any difficulties with this section. I would put the files into something 
+  like /var/www/nuke and modify Apache to point to this as the home directory. 
+  This way, I can keep the wonderful manuals in /var/www/htdocs for Apache, and 
+  mod_ssl. </p>
+<h3><a name="NukeInstallMySQL"></a>Configuring the MySQL Database</h3>
+<p class="pFileReference">[ref: phpnuke_mysql_create.sql, sql/nuke.sql]</p>
+<p>We will configure the MySQL Database in two stages. In the 1st stage we will 
+  configure the database to be used and the user through whom we will use. In 
+  the 2nd stage we will configure the tables in the database, and populate the 
+  table with some initial data.</p>
+<table width="80%" border="1" class="pScreenSmall">
+  <tr> 
+    <td nowrap class="pScreenSmall"> 
+      <p  class="pScreenSmall"> # phpnuke_mysql_create.sql <br>
+        #<br>
+        # You can simply direct this file to mysql at STDIN:<br>
+        # mysql --user username --password --host host &lt; nuke_NOMOA.sql<br>
+        # . username will need to have privileges to create a database and change 
+        mysql<br>
+        # . root access is the simplest if you run your own server, otherwise 
+        you can modify<br>
+        # . this script as you need and ask the ISP/Site Manager to configure 
+        your database<br>
+        # . for you.<br>
+        #============================================================================<br>
+        # YOU WILL WANT TO CHANGE -<br>
+        #<br>
+        # <font color="#0000FF"><b>NOMOAuser</b></font> &nbsp;-to- the username 
+        you wish to use (occurs TWICE) [16 character field]<br>
+        # <font color="#0000FF"><b>nukeNOMOA</b></font> &nbsp;-to- the database 
+        name you wish to use. (occurs TWICE) [64 character field]<br>
+        # <b><font color="#0000FF">NOpassword</font></b> -to- the Password you 
+        wish to encrypt (occurs ONCE)[16 character field]<br>
+        #============================================================================</p>
+      <p class="pScreenSmall">&nbsp;</p>
+      <p class="pScreenSmall">CONNECT mysql; </p>
+      <p class="pScreenSmall">&nbsp;</p>
+      <p class="pScreenSmall">INSERT INTO user ( host, user, password )<br>
+        &nbsp;&nbsp;VALUES (<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;'localhost',<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;'<font color="#0000FF"><b>NOMOAuser</b></font>',<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;password('<b><font color="#0000FF">NOpassword</font></b>')<br>
+        &nbsp;&nbsp;);</p>
+      <p class="pScreenSmall">&nbsp;</p>
+      <p class="pScreenSmall">INSERT INTO db (<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;host, db, user,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;Select_priv, Insert_priv, Update_priv, Delete_priv,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;Create_priv, Drop_priv )<br>
+        &nbsp;&nbsp;VALUES (<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;'localhost',<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;'<b><font color="#0000FF">nukeNOMOA</font></b>',<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;'<b><font color="#0000FF">NOMOAuser</font></b>',<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;'Y', 'Y', 'Y', 'Y',<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;'Y', 'Y'<br>
+        &nbsp;&nbsp;);</p>
+      <p class="pScreenSmall">&nbsp;</p>
+      <p class="pScreenSmall">CREATE DATABASE <b><font color="#0000FF">nukeNOMOA</font></b>;</p>
+      <p class="pScreenSmall">FLUSH PRIVILEGES;</p>
+      <p class="pScreenSmall">&nbsp;</p>
+      <p class="pScreenSmall"># done!</p>
+    </td>
+  </tr>
+  <tr>
+    <td nowrap class="pScreenSmall" align="center"><b>Figure 1 - MySQL script 
+      to create the user account, access privileges, and database</b></td>
+  </tr>
+</table>
+<h4><a name="NukeInstallMySQLdb"></a>1st Stage - Create the Database.</h4>
+<p> Use the above script to configure the user account, access privileges, and 
+  create the new database to be used. If you have a shell connection to your OpenBSD 
+  server, while this page is on the screen, then you can start mysql and paste 
+  the above script onto the terminal session.</p>
+<p>Otherwise, save the content into a text file, such as phpnuke_mysql_create.sql</p>
+<p class="Code">$ <b>mysql -u privilegeduser -p &lt; phpnuke_mysql_create.sql</b></p>
+<p class="Code">Password: ******** (password prompt)</p>
+<p class="kernelO">After the creation of the Database, and the user to make modifications 
+  to your database then the creation of the database tables differs between phpnuke 
+  4.x and phpnuke5.x/postnuke. In postnuke/myphnuke you can now continue with 
+  the installation instructions provided by those applications (provided scripts 
+  will create the tables.)</p>
+<h5 class="kernelO"><a name="NukeInstallMySQLsecurity"></a>Security Note:</h5>
+<p class="pScreenSmall">When the phpNuke server is initially launched, it will 
+  use a Super User access code of user-id: God, Password: password. It is very 
+  important that the first thing you do is change this.</p>
+<p class="pScreenSmall">An alternative, if you really do not want to even start 
+  the server with the default password is to modify the sql/nuke.sql in the following 
+  manner.</p>
+<p class="pFileReference">Edit sql/nuke.sql which has the following line: (line 
+  37 in my 5.0 release)</p>
+<table width="80%" border="1" class="pScreenOutput">
+  <tr>
+    <td class="pScreenSmall">INSERT INTO nuke_authors VALUES ('God','God','http://phpnuke.org','http://phpnuke.org','Password',1,0,0,0,0,0,0,0,0,0,0,0,1);</td>
+  </tr>
+</table>
+<p class="pFileReference">to read</p>
+<table width="80%" border="1" class="Code">
+  <tr> 
+    <td class="CodeSmall">
+      <p class="CodeSmall">INSERT INTO nuke_authors <font color="#FF0000"><b>( 
+        </b></font></p>
+      <p class="CodeSmall"> <b><font color="#FF0000">&nbsp;&nbsp;&nbsp;&nbsp;aid,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;name,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;url,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;email,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;pwd,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;counter, radminarticle, radmintopic, radminuser, 
+        radminsurvey, &nbsp;&nbsp;&nbsp;&nbsp;radminsection, radminlink, radminephem, 
+        radminfilem, radminfaq,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;radmindownload, radminreviews, radminsuper'</font></b></p>
+      <p class="CodeSmall"><b><font color="#FF0000">&nbsp;&nbsp;) </font></b></p>
+      <p class="CodeSmall">&nbsp;&nbsp;VALUES (</p>
+      <p class="CodeSmall">&nbsp;&nbsp;&nbsp;&nbsp;'<b><font color="#0000FF">MyAdminID</font></b>',</p>
+      <p class="CodeSmall">&nbsp;&nbsp;&nbsp;&nbsp;'God',</p>
+      <p class="CodeSmall">&nbsp;&nbsp;&nbsp;&nbsp;'http://my-site-details',</p>
+      <p class="CodeSmall">&nbsp;&nbsp;&nbsp;&nbsp;'some-email@my-site-details',</p>
+      <p class="CodeSmall">&nbsp;&nbsp;&nbsp;&nbsp;'<b><font color="#0000FF">MyAdminPassword</font></b>',</p>
+      <p class="CodeSmall">&nbsp;&nbsp;&nbsp;&nbsp;1,0,0,0,0,0,0,0,0,0,0,0,1</p>
+      <p class="CodeSmall">);</p>
+      </td>
+  </tr>
+</table>
+<p class="pScreenSmall">The <b><font color="#FF0000">field names</font></b> are 
+  included in the above INSERT statement for documentation, <font color="#FF0000"><b>(colored 
+  blue) </b></font>you can leave it out if you are trying to type the script manually.</p>
+<p class="pScreenSmall">&nbsp;</p>
+<p class="pScreenSmall">The <b><font color="#0000FF">Security</font></b> related 
+  changes to the script are <font color="#0000FF"><b>highlighted in BLUE</b></font></p>
+<p>The major concern here is that the password is stored in clear-text on Windows 
+  machines, I'll have to check on the OpenBSD box.<br>
+</p>
+<h4><a name="NukeInstallMySQLtbl"></a>2nd Stage - Create and Fill the Tables. 
+</h4>
+<p>Use the sql script supplied with phpnuke to create the database tables and 
+  populate the table with initial data. You can change the table contents within 
+  the administration module.</p>
+<p class="Code">$ <b>cd ~/PHP-NUKE-X.Y.Z/sql</b></p>
+<p class="Code">$ <b>ls</b></p>
+<p class="Code">nuke.sql</p>
+<p class="Code">&nbsp;</p>
+<p class="Code">$ <b>mysql -u privilegeduser -p <font color="#0000FF">nukeNOMOA</font> 
+  &lt; nuke.sql</b></p>
+<p class="Code">Password: ******** (password prompt)</p>
+<p>Please take note that &quot;<font color="#0000FF">nukeNOMOA</font>&quot; mentioned 
+  here is the database name you specified above in the script file 'phpnuke_mysql_create.sql' 
+  I am using a different database name just in case you are not able to use the 
+  default name 'nuke' because more than one person on your system is using phpNuke.</p>
+<h3><a name="NukeInstallStartup"></a>Configuring for Start-Up</h3>
+<p class="pFileReference">[ref: config.php]</p>
+<p>In this part of the configuration, we will configure phpNuke so we can start-up 
+  the web based administration system.</p>
+<p class="pFileReference">Edit the file <b>config.php</b> and make the following 
+  changes:</p>
+<table width="80%" border="1" class="Code">
+  <tr> 
+    <td class="Code"> $dbhost &nbsp;= &quot;localhost&quot;;<br>
+      $dbuname = &quot;<b><font color="#0000FF">NOMOAuser</font></b>&quot;;<br>
+      $dbpass &nbsp;= &quot;<b><font color="#0000FF">NOpassword</font></b>&quot;;<br>
+      $dbname &nbsp;= &quot;<b><font color="#0000FF">nukeNOMOA</font></b>&quot;;<br>
+      $system &nbsp;= 0; //1 for MS Windows, 0 for Unix</td>
+  </tr>
+</table>
+<p>Be sure to change the above user-name, database-password, and database-name 
+  to those which you defined earlier, and will be using.</p>
+<p>Save the file.</p>
+<p>The final console activity is to set the user-id, group-id and modes for the 
+  files.</p>
+<ul>
+  <li>use 'chown -R www:www' in the directory to set the user-id, group-id.</li>
+  <li>use 'chmod 770 directory' on all directories</li>
+  <li>use 'chmod 660 filename' on all files</li>
+</ul>
+<h2><a name="NukeGAdmin"></a>Graphical Administration</h2>
+<p>You should now be able to start up your Nuke'd website by launching the browser 
+  and pointing to http://your-site-details/ or something like http://your-site-details/nuke</p>
+<p>If you are having problems, refer to the notes on configuring your Apache server. 
+</p>
+<p>To begin administration, changes (as prescribed by the INSTALL documentation,) 
+  start-up your favourite browser to http://your-site-details/admin.php. When 
+  the page is started you should be require to login</p>
+
+<div align="center">
+<table width="60%" border="1" cellspacing="1" cellpadding="1" bgcolor="#FFFFFF">
+  <tr> 
+    <td> 
+      <center>
+        <font size="1"><b>Administration System Login</b></font> 
+      </center>
+    </td>
+  </tr>
+</table>
+<br>
+<table width="60%" border="0" cellspacing="1" cellpadding="0" bgcolor="#660000">
+  <tr><td>
+<table width="100%" border="0" cellspacing="1" cellpadding="8" bgcolor="#FFFFFF"><tr>
+          <td height="56"> 
+            <form action="admin.php" method="post">
+              <table border="0" width="249">
+                <tr>
+                  <td><font size="1">Admin ID</font></td>
+                  <td><input type="text" NAME="aid" SIZE="20" MAXLENGTH="20"></td></tr><tr>
+                  <td><font size="1">Password</font></td>
+                  <td><input type="password" NAME="pwd" SIZE="20" MAXLENGTH="18"></td></tr><tr><td><input type="hidden" NAME="op" value="login"><input type="submit" VALUE="Login"></td></tr></table></form></td></tr></table></td></tr></table>
+				  
+</div>				  
+<p>When you have successfully logged in as Administrator, then you should get 
+  the following display of Administration commands.</p>
+
+<div align="center">
+<table width="90%" border="1" cellspacing="4" cellpadding="4" bgcolor="#FFFFFF">
+  <tr><td>
+<center>
+        <font size="1"><b>Administration Menu</b>&nbsp;&nbsp;&nbsp;<b>Banners 
+        Administration</b></font><br>
+        <font size="1">[ Online Manual ]</font> 
+      </center>
+      <table border="0" width="100%" cellspacing="1">
+        <tr>
+          <td align="center"><FONT size="1"><b>Add Story</b></font></td>
+            <td align="center"><FONT size="1"><b><font color="#0000FF">Blocks</font></b></font></td>
+          <td align="center"><FONT size="1"><b>Download</b></font></td>
+            <td align="center"><FONT size="1"><b><font color="#0000FF">Edit Users</font></b></font></td>
+          <td align="center"><FONT size="1"><b>Ephemerids</b></font></td>
+          <td align="center"><FONT size="1"><b>FAQ</b></font></td>
+        </tr>
+        <tr>
+          <td align="center"><FONT size="1"><b>File Manager</b></font></td>
+          <td align="center"><FONT size="1"><b>Messages</b></font></td>
+            <td align="center"><FONT size="1"><b><font color="#0000FF">Edit Admins</font></b></font></td>
+            <td align="center"><FONT size="1"><b><font color="#0000FF">HTTP Referers</font></b></font></td>  <td align="center"><FONT size="1"><b><font color="#0000FF">Preferences</font></b></font></td>
+          <td align="center"><FONT size="1"><b>Reviews</b></font></td>
+        </tr>
+        <tr>
+          <td align="center"><FONT size="1"><b>Sections Manager</b></font></td>
+          <td align="center"><FONT size="1"><b>Surveys/Polls</b></font></td>
+            <td align="center"><FONT size="1"><b><font color="#0000FF">Topics Manager</font></b></font></td>
+            <td align="center"><FONT size="1"><b><font color="#0000FF">Web Links</font></b></font></td>
+          <td align="center"><FONT size="1"><b>Logout / Exit</b></font></td>
+        </tr>
+      </table>
+    </td>
+  </tr></table>
+ </div>
+<p>The following is a squence of minimal modifications I go through to customise 
+  my installation. I will leave the graphics and theme modifications for other 
+  sites more suited to that stuff.</p>
+<ul>
+  <li>Set, Change your Admin Password</li>
+  <ul>
+    <li>Add an unprivileged user</li>
+  </ul>
+  <li>Modify BLOCKS to display</li>
+  <li>Modify TOPICS</li>
+  <li>Modify HTTP-Refers</li>
+  <li>Modify WEB-Links</li>
+  <li>META Tags</li>
+</ul>
+<h3><a name="NukeGAdminPassword"></a>Set, Change your Admin Password</h3>
+<p>[Edit Admins] Use the Edit Admins Section to Modify your Admin password. We 
+  also change the Admin name from &quot;God&quot; to something else because the 
+  1st installation we put this on was a private school from one of our churches 
+  here.</p>
+<p>This is obviously where you will come at a later stage to add / remove administrators 
+  for your successful site.</p>
+<h4><a name="NukeGAdminUser"></a>Add an unprivileged User</h4>
+<p>[Edit Users] It's always good to differentiate between what are administrative 
+  tasks and personal tasks, so create for yourself an unprivileged user account 
+  for submitting messages and things that do not really need to be done by the 
+  administrator account. </p>
+<h3><a name="NukeGAdminPreferences"></a>Set, Configure the General Features for 
+  Your Site</h3>
+<p> [Preferences]. Change the general settings for your site in Preferences.</p>
+<p>The most basic information you can change here are: (check list)</p>
+<p><strong><big>[]</big></strong> Site Name<br>
+  <strong><big>[]</big></strong> Site URL<br>
+  <strong><big>[]</big></strong> Site Logo<br>
+  <strong><big>[]</big></strong> Site Slogan<br>
+  etc.<br>
+</p>
+The items which we make changes and you may really need to consider are:-<br>
+<strong><big>[]</big></strong> Activate Ultramode (say NO until you figure this 
+out)<br>
+<strong><big>[]</big></strong> Allow Anonymous Post (say NO if the experience 
+of others is an example)<br>
+<strong><big>[]</big></strong> Default Theme (This is where you can play with 
+your themes)<br>
+<strong><big>[]</big></strong> Locale Time Format (en_us, I haven't found out 
+where this setting is from)<br>
+<strong><big>[]</big></strong> Let Anonymous users to post new links? (NO if you 
+want some management of your links) <br>
+  <br>
+<strong><big>[]</big></strong> Mail New Stories to Admin (in our case &quot;YES&quot;)<br>
+  <br>
+<strong><big>[]</big></strong> Comments Moderation ==&gt; Moderation by Admin<br>
+<strong><big>[]</big></strong> Minimum User Password ==&gt; We require a minimum 
+length '8', try to force it so it isn't commonly used on other sites. We also 
+generate pass phrases for our internal users (and try to synch them with the other 
+server services we use.) 
+<h3><a name="NukeGAdminBLOCKS"></a>Modify BLOCKS to display</h3>
+<p>[Blocks] The Blocks section control a significant part of the layout of your 
+  website and these are things we had to seriously consider, or change within 
+  the Blocks section.</p>
+<p><b>Languages: </b>DEACTIVATE. We deactivated this because we were only dealing 
+  in English and Tongan (which we had not created a language file for.) More importantly, 
+  the language 'flags' were causing a display problem for us. Obviously this depends 
+  on your priority.</p>
+<p> <b>Main Menu</b>: EDIT and MAKE CHANGES</p>
+<p>In our configuration we needed to start without some of the basic features 
+  of the portal, this required editing the Main Menu not to display:<br>
+  ..:: Downloads ::.. most of my 1st start projects do not have any download files<br>
+  ..:: Members List ::.. most of my 1st start projects will not want to advertise 
+  users immediately<br>
+  ..:: Recommend Us ::.. put on hold until things are more reasonable ?</p>
+<p><br>
+  <b>Administration: </b>ACTIVATE this menu so it is easier to know when we're 
+  logged in as Administrator instead of as a regular user. Administrator menus 
+  allow us to quickly pounce into Administrator features without having to manually 
+  enter the URL address.</p>
+<p>We also provide a link here to sections on our Internal Web Services for Administration 
+  purposes. For example, we have a web area for configuring our Squid Caching 
+  Server. </p>
+<p><br>
+  <b>Random Headlines</b>: DEACTIVATE, we haven't connected well enough yet. Once 
+  we can get some of the other schools to publish notes online we can probably 
+  share information through this mechanism.</p>
+<p>On a BSD portal you would probably link this section to some of the other sites 
+  like <a href="http://daily.daemonnews.org" class="anchBlue">DaemonNews.org</a> 
+  (my favourite haunt) or <a href="http://www.deadly.org" class="anchBlue">OpenBSD 
+  Journal </a>.</p>
+<p><b>First Block Left:</b> EDIT and MAKE CHANGES.<br>
+  On one site we are using this as a special menu for tutorials that we have available 
+  internally. Since we are limiting access to the LAN (and local bandwidth users) 
+  this gives us a good categorisation area.</p>
+<p><b> First Block Right:</b> EDIT and MAKE CHANGES.<br>
+  On the same site as above we are using this to reference locally mirrored materials. 
+  Again, due to our bandwidth limitations we are blocking access to these areas 
+  from the Internet.</p>
+<p> <b>Information Block</b>: EDIT and MAKE CHANGES.</p>
+<p>I'm sure I can think up of something to go in here ?<br>
+</p>
+<h3><a name="NukeGAdminTopics"></a>Modify TOPICS</h3>
+<p>Topics, as I can understand it, is good for categorising dicussion areas. The 
+  Topics section then holds the archives of discussions/ articles published on 
+  the site.</p>
+<p>The sample topics are very Geekish, so I suggest that the 1st thing you do 
+  with topics is delete them all. (For the non-geek sites)</p>
+<h3>Modify HTTP-Referers</h3>
+<p>The material here are examples, and I think should be deleted until you figure 
+  out what it is used for.</p>
+<h3>Modify WEB-Links</h3>
+<p>Likewise, this section holds sample material.</p>
+<p>I do think that it would be great to set our favourite sites here (like phpnuke.org 
+  and nomoa.com/bsd ?)</p>
+<h2><a name="NukeMetaTags"></a>META Tags</h2>
+<p>Now, here is where some people do not do enough modifications.</p>
+<p>PHPnuke comes with a default META section for describing your site contents. 
+  You really need to change this to be accurate.</p>
+<p class="pFileReference"> Edit the file header.php (look around line 49 for the 
+  META setting KEYWORDS)</p>
+<p class="pScreenSmall"> echo &quot;&lt;META NAME=\&quot;KEYWORDS\&quot; CONTENT=\&quot;<font color="#0000FF"><b>News, 
+  news, New, New, Technology, technology, Headlines, headlines, Nuke, nuke, PHP-Nuke, 
+  phpnuke, php-nuke, Geek, geek, Geeks, geeks, Hacker, hacker, Hackers, hackers, 
+  Linux, linux, Windows, windows, Software, software, Download, download, Downloads, 
+  downloads, Free, FREE, free, Community, community, MP3, mp3, Forum, forum, Forums, 
+  forums, Bulletin, bulletin, Board, board, Boards, boards, PHP, php, Survey, 
+  survey, Kernel, kernel, Comment, comment, Comments, comments, Portal, portal, 
+  ODP, odp, Open, open, Open Source, OpenSource, Opensource, opensource, open 
+  source, Free Software, FreeSoftware, Freesoftware, free software, GNU, gnu, 
+  GPL, gpl, License, license, Unix, UNIX, *nix, unix, MySQL, mysql, SQL, sql, 
+  Database, DataBase, database, Mandrake, mandrake, Red Hat, RedHat, red hat, 
+  Slackware, slackware, SUSE, SuSE, suse, Debian, debian, Gnome, GNOME, gnome, 
+  Kde, KDE, kde, Enlightenment, enlightenment, Intercative, interactive, Programming, 
+  programming, Extreme, extreme, Game, game, Games, games, Web Site, web site, 
+  Weblog, WebLog, weblog, Guru, GURU, guru</b></font>\&quot;&gt;\n&quot;;</p>
+<p class="pFileReference">To Read Something Like This</p>
+<p class="pScreenSmall"> echo &quot;&lt;META NAME=\&quot;KEYWORDS\&quot; CONTENT=\&quot;<b><font color="#0000FF">THIS 
+  IS MY STUFF</font></b>\&quot;&gt;\n&quot;;</p>
+<p>The above php code just wraps the html tags &lt;meta name=&quot;KEYWORDS&quot; 
+  content=&quot;stuff-here&quot;&gt; Be careful with this modification as it may 
+  break the code. Make sure you leave the \&quot; ... \&quot; (escaped quotes) 
+  untouched. Your modifications should only be within the escaped quotes.</p>
+<h2><a name="author"></a>Author and Copyright</h2>
+ 
+<p>Copyright (c) 2000/1/2 Samiuela LV Taufa. All Rights Reserved.</p>
+<p>I reserve the right to be totally incorrect even at the best advice of betters. In other words, I'm probably wrong in enough places for you to call me an idiot, but don't 'cause you'll hurt my sensibilities, just tell me where I went wrong and I'll try again.</p>
+<p>You are permitted and encouraged to use this guide for fun or for profit as 
+  you see fit. If you republish this work in what-ever form, it would be nice 
+  (though not enforceable) to be credited.</p>
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+  <tr> 
+    <td class="block" valign="MIDDLE" width="100%" bgcolor="#cccccc"><strong> 
+      <p class="block">phpNuke, a Portal Beginning</p>
+      </strong></td>
+  </tr>
+</table>
+<p><font color="#808080" face="sans-serif" size="-2"><strong>Copyright&nbsp; &copy; 
+  2000/1/2 <a href="http://www.nomoa.com">NoMoa Publishers</a> All rights 
+  reserved.  Caveat Emptor</strong></font></p>
+</body>
+</html>

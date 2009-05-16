@@ -1,0 +1,360 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+
+<html>
+<head>
+	<title>=8&gt; nomoa.com/bsd OpenBSD - OpenSS# Secure Communications</title>
+	<link rel="STYLESHEET" type="text/css" href="openbsd.css">
+<script language="JavaScript">
+<!--
+
+function newImage(arg) {
+	if (document.images) {
+		rslt = new Image();
+		rslt.src = arg;
+		return rslt;
+	}
+}
+
+function changeImages() {
+	if (document.images && (preloadFlag == true)) {
+		for (var i=0; i<changeImages.arguments.length; i+=2) {
+			document[changeImages.arguments[i]].src = changeImages.arguments[i+1];
+		}
+	}
+}
+
+var preloadFlag = false;
+function preloadImages() {
+	if (document.images) {
+		openbsd_over = newImage("mmedia/openbsd-over.gif");
+		openbsd_down = newImage("mmedia/openbsd-down.gif");
+		preloadFlag = true;
+	}
+}
+
+// -->
+</script>
+<!-- End Preload Script -->
+</head>
+
+<body bgcolor="#FFFACD" onLoad="preloadImages();">
+<p class="logo">
+<a class="anchBlue" href="http://www.nomoa.com/bsd" 
+   onMouseOver="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;"
+   onMouseOut="changeImages('openbsd', 'mmedia/openbsd.gif'); return true;"
+   onMouseDown="changeImages('openbsd', 'mmedia/openbsd-down.gif'); return true;"
+   onMouseUp="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;">
+   <img name="openbsd"  align="absMiddle" 
+        alt="OpenBSD ... The Only way to Go ..." border="0" height="50"
+        src="mmedia/openbsd.gif" width="368"></a>
+</p>
+
+<h1>OpenSS# - Secured Communications</h1>
+
+<hr>
+
+<p>Table of Contents</p>
+<ul>
+  <li><a href="#intro">Introduction</a></li>
+  <li><a href="#createcerts">Self-signed Certificates</a></li>
+  <ul>
+    <li><a href="#sscKey" class="anchBlue">Generate a Signing Key</a></li>
+    <li><a href="#sscCSR">Server Certificate Signing Request</a></li>
+    <li><a href="#sscCRT" class="anchBlue">Signing the Certificate</a></li>
+    <li><a href="#sscTest" class="anchBlue">Testing the Keys</a></li>
+    <li><a href="#sscVirtualHosts" class="anchBlue">Virtual Hosts</a></li>
+  </ul>
+  <li><a href="#ssh">Remote Access with ssh</a> 
+    <ul>
+      <li><a href="#sshconfig">Configuring ssh</a></li>
+    </ul>
+  </li>
+  <li><a href="#sshd">sshd - your ssh server daemon</a> 
+    <ul>
+      <li><a href="#sshd.disableRoot">Disable Root Login</a></li>
+    </ul>
+  </li>
+  <li><a href="#scp">Copying a file through SSH</a></li>
+  <li><a href="#sshLinks" class="anchBlue">SSH Links</a></li>
+  <li><a href="#author">Author</a><a href=""></a></li>
+</ul>
+
+<hr>
+<h2><a name="intro"></a>Introduction</h2>
+
+<p>OpenBSD ships with built in support for OpenSSL and OpenSSH for secure encrypted 
+  end-to-end communication between a localhost and a remotehost. Following are 
+  notes on configuring and using SS# (pronounced S-S-Sharp, that's a pun)</p>
+<p>[Last verified with OpenBSD 3.5 June 2004]</p>
+<h2><a name="createcerts"></a>Creating Self-Signed Certificates</h2>
+<p class="pFileReference">[ref: <a href="http://www.openbsd.org/faq/">OpenBSD 
+  FAQ</a>]<br>
+  [ref: mod_ssl/ssl_faq.html#ToC17 - html documentation 
+  of mod_ssl]<br>
+  [local: <a href="openssl.htm">openss# - Secured Communications</a>]<br>
+[file: /var/www/conf/httpd.conf]</p>
+<p>SSL Communications assume the server has an authentication certificate which 
+  acts as a verification for whom the server publishes itself to be, and provides 
+  an envelope for the server's public key with which clients can encrypt communications 
+  bound for the server.</p>
+<p>Creating a certificate was initially meant for a third-party authority to assist 
+  you in verifying that the server is who they say they are, so the creation of 
+  a self signing certificates requires 3 stages (a) creating a private signing 
+  key (b) creating a certificate request, and (c) self-authenticating your certificate 
+  request.</p>
+<p>We are choosing our file names based on the standard OpenBSD/Apache configuration 
+  for SSLfiles</p>
+<p class="pFileReference">from /var/www/conf/httpd.conf</p>
+<table width="80%" border="0" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="pScreenOutput"> SSLCertificateFile &nbsp;&nbsp;&nbsp;/etc/ssl/<font color="#0000FF"><b>server.crt</b></font><br>
+      SSLCertificateKeyFile /etc/ssl/<font color="#0000ff"><b>private/server.key</b></font></td>
+  </tr>
+</table>
+<h3><a name="sscKey"></a>1. Generate a Signing key (1024 bit size) : </h3>
+<table class="Code">
+  <tr>
+    <td class="Code" nowrap> # <b>/usr/sbin/openssl genrsa -out /etc/ssl/private/<font color="#0000FF">server.</font>key 
+      1024 </b> </td>
+  </tr>
+</table>
+<p>The generated key acts as our RSA private key for our 'internal' CA (Certificate 
+  Authority.) <br>
+</p>
+<p> We can call the key anything we want, and the general mod_ssl example is ca.key, 
+  but in the above scenario we will use server.key. Check the mod_ssl documentation 
+  for why we are only using a key size of 1024.</p>
+<p><b>Security Warning:</b> When you gravitate to a production system you should 
+  (at minimum) use -des3 Triple DES encryption and use an authentication pass-phrase 
+  for this key. Otherwise, someone can simply steal your key file and sign, authorise 
+  other servers masquerading as you.</p>
+<h3><a name="sscCSR"></a>2. Generate a certificate signing request (csr)</h3>
+<p>We now generate a csr using the server key generated above (output will be 
+  PEM formatted.) </p>
+
+<table class="Code" width="80%">
+  <tr> 
+    <td class="Code" nowrap> # <b>/usr/sbin/openssl req -new \<br>
+      &nbsp;&nbsp;-key /etc/ssl/private/<font color="#0000FF">server.</font>key 
+      \<br>
+      &nbsp;&nbsp;-out /etc/ssl/private/<font color="#0000FF">server.</font>csr 
+      </b> </td>
+  </tr>
+</table>
+
+<p>The above certificate request will prompt you to reply to a number of questions, 
+  most of which can be left as the default. You will be asked for the Fully Qualified 
+  Domain Name for this host. In my experience this requires the legitimate DNS 
+  name that the host will be responding to.</p>
+<p>The last part of the above instructions is to ask for 'extra' attributes.</p>
+<table width="80%" border="0" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="pScreenOutput">Please enter the following 'extra' attributes<br>
+      to be sent with your certificate request<br>
+      A challenge password []:<br>
+      An optional company name []:</td>
+  </tr>
+</table>
+<p>For my test configuration (ie. I don't want to enter the password everytime 
+  I want to start Apache) I do not enter a 'challange password.' On a security 
+  conscious system, you probably want to specify a challenge password here and 
+  have someone on 24-hour availability incase the server restarts and someone 
+  must enter the 'challenge password' before the server starts.</p>
+<p>The concept is that you send the above CSR for a trusted third party to sign, 
+  and record in their system, so users who recieve your key can validate from 
+  the trusted third party that you are who you are. But we don't want no third 
+  party saying who we are (for now anyway.)</p>
+<h3><a name="sscCRT"></a>3. Create a self-signed certificate (X509 structure.)</h3>
+<p> the output will be PEM formatted. (The documentation discusses a script sign.sh 
+  to do this task for you, but I can only find CA.pl and CA.sh with similar 'purpose.') 
+</p>
+
+
+
+
+<table class="Code" width="80%" border="0">
+  <tr> 
+    <td class="Code" nowrap> 
+<p class="Code"> # <b>/usr/sbin/openssl x509 -req -days 365 \</b><br>
+        <b>&nbsp;&nbsp;-in &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/etc/ssl/private/<font color="#0000FF">server.</font>csr 
+        \</b><br>
+        <b>&nbsp;&nbsp;-signkey /etc/ssl/private/<font color="#0000FF">server.</font>key 
+        \</b><br>
+        <b>&nbsp; -out &nbsp;&nbsp;&nbsp;&nbsp;/etc/ssl/<font color="#0000FF">server.</font>crt</b> 
+      </p>
+    </td>
+  </tr>
+</table>
+<p>-x509 is the certificate structure we are using.<br>
+  -days 365 is the number of days for which we want the certificate to be valid</p>
+<h3><a name="sscTest"></a>Testing your Keys</h3>
+<p>You can test from a terminal connection the status of your keys by using the 
+  following commands</p>
+<table border="0" width="80%" class="Code">
+  <tr> 
+    <td nowrap class="Code"> # openssl rsa -noout -text -in /etc/ssl/private/<b><font color="#0000FF">server.</font></b>key 
+      <br>
+      # openssl req -noout -text -in /etc/ssl/private/<b><font color="#0000FF">server.</font></b>csr<br>
+      # openssl x509 -noout -text -in /etc/ssl/<b><font color="#0000FF">server.</font></b>crt</td>
+  </tr>
+</table>
+<h3><a name="sscVirtualHosts"></a>Virtual Hosts</h3>
+<p>Server CRTs for Virtual sites can be generated using the same above process, 
+  except you choose a different name for the CSR and CRT. One nice convention 
+  is to use the domain name of the site, for example: <br>
+  Certificate Request: <i>/etc/ssl/private/virtualsite.com.csr </i>and <br>
+  Certificate:<i> /etc/ssl/virtualsite.com.crt </i></p>
+<p>Within the Virtual Host configuration you will then need to specify the appropriate 
+  SSL Directive.</p>
+<table width="80%" border="0" class="pScreenOutput">
+  <tr>
+    <td class="pScreenOutput" nowrap> 
+      <p class="pScreenOutput">NameVirtualHost 192.168.101.49:*</p>
+      <p class="pScreenOutput">&lt;VirtualHost 192.168.101.49:*&gt;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;ServerAdmin samt@qsc.com<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;DocumentRoot /var/www/twig<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;ServerName virtualsite.com<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;ErrorLog logs/virtualsite.com-error_log<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;CustomLog logs/virtualsite.com-access_log common<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;SSLEngine on<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;SSLCipherSuite ALL:!ADH:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;SSLCertificateFile /etc/ssl/<b><font color="#0000FF">virtualsite.com.crt</font></b><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;SSLCertificateKeyFile /etc/ssl/private/server.key</p>
+      <p class="pScreenOutput">&lt;/VirtualHost&gt;</p>
+      </td>
+  </tr>
+</table>
+<p><b>Security Warning:</b> Remember I know less than you about this stuff, the 
+  above are just notations of something that worked. It doesn't mean it works 
+  well.<br>
+</p>
+<p>&nbsp; </p>
+<h2><a name="ssh"></a>Remote Access with ssh</h2>
+<p class="pFileReference">[ref: ssh(1)]<br>
+  [ref: <a href="http://www.openbsd.org/faq/faq4.html">OpenBSD FAQ4</a>]</p>
+<p>When the itch arrives and you just have to get a 'console' connection to that 
+  server, telnet is asking for someone to sniff your password and <a href="http://www.openbsd.com" class="anchBlue">OpenBSD's</a> 
+  <a href="www.openssh.com" class="anchBlue">OpenSSH</a> is the preferred, secureable 'terminal' 
+  access system. Ssh is the preferred method of remote access with OpenBSD. There 
+  are many features of ssh including the ability to provide a tunnel for other 
+  services. The clear advantage of ssh is the full encryption of all communications 
+  between the localhost and the remote host.</p>
+<p> For the MS Windows fans amongst us there are even ssh clients Windows can 
+  run as a terminal window or from the command-prompt.</p>
+<p>Communicating with a remote host is usually in the form shown below:</p>
+<table width="80%" border="0" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="Code">$ <b>ssh user-id@remotehost.example.com</b></td>
+  </tr>
+</table>
+<p>If you don't specify the user-id you wish to login as, then ssh will send the 
+  current user-id in which you started ssh (ie. if you are currently logged into 
+  your host as johndoe, then ssh remotehost.example.com will attempt to make the 
+  connection using your user-id, johndoe)</p>
+<h3><a name="sshconfig"></a>Configuring ssh</h3>
+<p class="pFileReference">[Ref: ssh(1)]</p>
+<p>ssh checks for its configuration from the command-line, then the user's configuration 
+  file ($HOME/.ssh/config), then the system-wide configuration file (/etc/ssh/ssh_config) 
+  The files are text files.</p>
+<p>Below is an excerpt of what I choose to include in the system wide /etc/ssh_config 
+  file </p>
+<p class="pFileReference">File: /etc/ssh/ssh_config</p>
+<table width="80%" border="0" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="pScreenOutput">UseRsh no<br>
+      FallBackToRsh no<br>
+      ForwardX11 no<br>
+      KeepAlive no<br>
+      Protocol 2,1 </td>
+  </tr>
+</table>
+<p>More documentation can be found in the man pages (ssh(1).) I choose not to 
+  UseRsh or FallBackToRsh because I want secure communications or none. I don't 
+  want to be forwarding X11 because I don't run X11 on the servers I'm connecting 
+  to. I don't want keepalive 'cause if I'm not doing something with the connection 
+  I would prefer it to dump me.</p>
+<h2><a name="sshd"></a> sshd - your ssh server daemon</h2>
+<p class="pFileReference">[ref: sshd(8)]</p>
+<table width="80%" border="0" class="pScreenOutput">
+  <tr> 
+    <td class="pScreenOutput">From the man page: sshd is the daemon that listens 
+      for connections from clients. It is normally started at boot from /etc/rc. 
+      It forks a new daemon for each incoming connection. The forked daemons handle 
+      key exchange, encryption, authentication, command execution, and data exchange. 
+      This implementation of sshd supports both SSH protocol version 1 and 2 simultaneously.</td>
+  </tr>
+</table>
+<p>System configuration is normally controlled by the /etc/ssh/sshd_config. Below 
+  is an excerpt of the config file </p>
+<p class="pFileReference"></p>
+<p class="pFileReference">File: /etc/ssh/sshd_config</p>
+<table width="80%" border="0" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="pScreenOutput">Port 22<br>
+      ListenAddress 0.0.0.0 <br>
+      ListenAddress ::<br>
+      HostKey /etc/ssh_host_key<br>
+      ServerKeyBits 1664</td>
+  </tr>
+  <tr> 
+    <td nowrap class="Code"><b>PermitRootLogin yes</b></td>
+  </tr>
+</table>
+<p>The Port directive specifies to listen on the ssh port (22,) obviously this 
+  line implies that you can specify a different port to listen to (or add additional 
+  ports) </p>
+<p>ListenAddress is specifying to listen on all active interfaces (both IPv4 and 
+  IPv6).</p>
+<p>HostKey specifies the location where the hosts key is to be located. /etc/ssh_host_key 
+  is the default location.</p>
+<p>ServerKeyBits specifies the size of the key to be generated, the number above 
+  is larger than the 568 normally used (is this more secure ?)</p>
+<h3><a name="sshd.disableRoot"></a>Disable Root Login</h3>
+<p>The afterboot(8) man page recommends that you disable direct login to root 
+  through the ssh daemon.</p>
+<table width="80%" border="0" class="pScreenOutput">
+  <tr> 
+    <td class="pScreenOutput">For security reasons, it is bad practice to log 
+      in as root during regular use and maintenance of the system. Instead, administrators 
+      are encouraged to add a &quot;regular&quot; user, add said user to the &quot;wheel&quot; 
+      group, then use the su and sudo commands when root privieges are required.</td>
+  </tr>
+</table>
+<p class="pFileReference">Edit the /etc/sshd_config file:</p>
+<table width="80%" border="0" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="Code"><b>PermitRootLogin No</b></td>
+  </tr>
+</table>
+<p>Check through the /etc/ssh/sshd_config for what looks interesting, and look 
+  through the man page for further information.</p>
+<h2><a name="scp"></a>Copying a file through SSH</h2>
+<p class="pFileReference">[Ref: scp(1)]</p>
+<p>scp is a utility that allows you to copy files between hosts using the ssh 
+  transport. With ssh2 there is also support for gzip style compression of files 
+  for transmission.</p>
+<table width="80%" border="0" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="Code">$ scp files user-id@host.example.com:path</td>
+  </tr>
+</table>
+<h2><a name="author"></a>Author and Copyright</h2>
+<p>Copyright (c) 2000/1/2 Samiuela LV Taufa. All Rights Reserved.</p>
+
+<p>You are permitted and encouraged to use this guide for fun or for profit as you see fit. If you republish this work in what-ever form, it would be nice (though not enforceable) to be credited.</p>
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+  <tr>
+    <td class="block" valign="MIDDLE" width="100%" bgcolor="#cccccc"><strong>
+      <p class="block">&nbsp;OpenSS# - Secure Communications</p>
+      </strong></td>
+  </tr>
+</table>
+<p><font color="#808080" face="sans-serif" size="-2"><strong>Copyright&nbsp; &copy; 
+  2000/1/2
+<a href="http://www.nomoa.com">NoMoa.COM</a> All rights reserved.</strong></font></p>
+
+
+</body>
+</html>
+

@@ -1,0 +1,581 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0//EN">
+<html>
+  <head>
+    <title>=8&gt; nomoa.com/bsd OpenBSD - multiboot with FAT Windows</title>
+    <link rel="STYLESHEET" type="text/css" href="openbsd.css">
+<script language="JavaScript">
+<!--
+
+function newImage(arg) {
+	if (document.images) {
+		rslt = new Image();
+		rslt.src = arg;
+		return rslt;
+	}
+}
+
+function changeImages() {
+	if (document.images && (preloadFlag == true)) {
+		for (var i=0; i<changeImages.arguments.length; i+=2) {
+			document[changeImages.arguments[i]].src = changeImages.arguments[i+1];
+		}
+	}
+}
+
+var preloadFlag = false;
+function preloadImages() {
+	if (document.images) {
+		openbsd_over = newImage("mmedia/openbsd-over.gif");
+		openbsd_down = newImage("mmedia/openbsd-down.gif");
+		preloadFlag = true;
+	}
+}
+
+// -->
+</script>
+<!-- End Preload Script -->
+</head>
+
+<body bgcolor="#fffacd" onLoad="preloadImages();">
+<p class="logo">
+<a class="anchBlue" onMouseDown="changeImages('openbsd', 
+   &#13;&#10; 'mmedia/openbsd-down.gif'); return true;"
+   href   
+   ="http://www.nomoa.com/bsd" onMouseOver  
+   ="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;" onMouseOut="changeImages('openbsd', 'mmedia/openbsd.gif'); return true;" onMouseUp="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;">
+   <img name="openbsd"  align="absMiddle" 
+        alt="OpenBSD ... The Only way to Go ..." border="0" height="50"
+        src="mmedia/openbsd.gif" width="368"></a>
+</p>
+ 
+<h1> MultiBoot - OpenBSD and FAT/NTFS Windows</h1>
+    
+
+<p>Table of Contents</p>
+<ul>
+  <li><a href="#introduction">Introduction</a> 
+  <li><a href="#fromdocs">From the Docs</a> 
+  <li>Hard Disk Preparation
+  <ul><li><a href="#partition">Partitioning the Hard Disk</a> 
+      <li><a href="#instOpenBSD">Installing OpenBSD</a>
+<ul>
+          <li><a href="#fdisk">fdisk</a></li>
+          <li><a href="#disklabel">disklabel</a></li>
+        </ul>
+  </ul>
+  <li><a href="#bootManagers">Different Boot Managers I have tried </a> 
+    <ul>
+      <li><a href="#osbs1">Installing OS Boot Selector</a> 
+      <li><a href="#osbs2b8">OS-BS 2.0Beta8</a> 
+      <li><a href="#mattsoft">mattsoft Boot Manager</a> 
+      <li><a href="#pm5">Partition Magic 5.0</a>
+      <li><a href="#GAG">GAG</a> 
+    </ul>
+  <li><a href="#ntfs">Windows NTFS File System and OpenBSD</a> 
+  <li><a href="#ReaderComments">Reader Comments </a> 
+  <li><a href="#relref">Relative Reference</a> 
+  <li><a href="#author">Author and Copyright</a></li>
+</ul>
+
+<hr color="fuchsia">
+<h2><a name="introduction"></a>Introduction</h2>
+<p> These instructions should work well for installing OpenBSD dual-boot with 
+  Microsoft Windows on the same hard-disk. Multi-booting between OpenBSD and other 
+  operating systems gives you the opportunity to learn the advanced features of 
+  OpenBSD while still using your favourite Windows applications in Microsoft Windows.</p>
+<p>These instructions discuss how you can use Boot Managers to configure your 
+  system to boot either OpenBSD or your MS Windows OS.</p>
+<p>The following introduction items will help you better understand the steps 
+  to configure dual-boot.</p>
+<ol>
+  <li>Read the section in INSTALL.386 titled <i>Preparing your System for OpenBSD 
+    Installation:</i> These 
+  instructions have not been tested on varied Hard Disks and controllers so make 
+  sure potential problems mentioned in the above document are not going to cause 
+  you problems. 
+  <li>Familiarise yourself with the OpenBSD fdisk program on another OpenBSD installation, 
+    by reading the <a href="http://www.openbsd.org/cgi-bin/man.cgi?query=fdisk&amp;apropos=0&amp;sektion=8&amp;format=html">online 
+    man page fdisk(8)</a> or the <a href="http://www.openbsd.org/faq/faq14.html">14.0 
+    Disk Setup FAQ. </a> You should at least have read through the FAQ on using 
+    fdisk and disklabel.</li>
+</ol>
+<p>Dualboot is achieved by using a third-party utility to configure the master 
+  boot sector (which also contains the master boot record) to support multiple 
+  operating system startup. OpenBSD ships with an early version of os-bs in the 
+  2.7/tools directory.</p>
+<p>For those who have already partitioned their hard disks, just read through 
+  the next section to get an idea another way you could have partitioned your 
+  system.</p>
+<h2><a name="fromdocs"></a>From the Documentation</h2>
+<p>Because it seems to come up often, here are really important stuff from the 
+  documentation (INSTALL.386) please read the rest of the file for more complete 
+  instructions. This is but a very brief summary</p>
+<ol>
+  <li>Backup, Backup, Backup. I've lost data doing this kind of stuff, and you 
+    are almost guaranteed of doing the same thing.</li>
+  <li>Research how DOS layed out the hard-disk (partitioning) and make sure how 
+    you do it in OpenBSD are compatible.</li>
+  <li>You will likely need to keep all bootable partitions below cylinder 1024. 
+    This is usually a limitation for many BIOS's, you may not have this limitation 
+    but many don't even check for this limitation and either can't dualboot or 
+    experience data-loss, filesystem errors. Again, check the documentation before 
+    you continue.</li>
+  <li>Create DOS partitions using DOS's fdisk, create Linux partitions using Linux's 
+    fdisk (or druid or whatever.) In short, use the partitioning software that 
+    comes with an operating system for creating their partition.</li>
+</ol>
+<h2>Hard Disk Preparation </h2>
+<h3><a name="partition"></a>Partitioning the Hard Disk</h3>
+<p><b>Warning. </b>The following is definitely going to wipe all information from 
+  your hard disk so make sure (a)&nbsp;you have backed up all data and programs 
+  (b)&nbsp;your back-ups are reliable (c)&nbsp;you can recover from your backup 
+  files.</p>
+<p>Partition the hard-disk using Microsoft Windows 98's fdisk program. Divide 
+  the size of your hard-disk as you wish and setup MSWindow's FAT partition as 
+  the primary partition. (FAT32 works well with these instructions) For example, 
+  on my 4GB HDD I'm just going to split the drive into two 2GB partitions.</p>
+<p>For those relatively new to fdisk partitioning you take a major risk. Read 
+  other documentation on FDISK before continuing.</p>
+<ol>
+  <li>FDISK will prompt during startup whether you wish to use Large File System 
+    support (which translates to FAT32) <b>select YES</b> for this option. 
+  <li>Delete all partitions 
+  <li>Create Primary MSDOS partition 
+  <li>Do not use the full drive but specify the amount of 
+  space you want to use (eg. 2GB on a 4GB drive) 
+  <li>Set the partition as ACTIVE 
+  <li>Exit FDISK 
+  <li>Restart the Computer</li>
+</ol>
+<p>Install MS Windows (or format the primary partition, C:, as bootable using 
+  format c: /s)</p>
+<h3><a name="instOpenBSD"></a>Installing OpenBSD</h3>
+<p>During the installation of OpenBSD you will need to give directions for configuring 
+  the Hard Disk. The following are guidelines for configuring the disk layout 
+  with 'fdisk' and 'disklabel' which are both automatically initiated by the installation 
+  process. </p>
+<h4><a name="fdisk"></a>fdisk</h4>
+<p>Follow the installation process for OpenBSD to the point when it informs you 
+  which hard-disks it has discovered on your system, and which disk you wish to 
+  designate as the boot disk.</p>
+
+<table border="0" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="pScreenOutput"> 
+      <p class="pScreenOutput">Available disks are: </p>
+      <p class="pScreenOutput">wd0 </p>
+      <p class="pScreenOutput">&nbsp;</p>
+      <p class="pScreenOutput">Which disk is the root disk? [wd0] <b>&lt;HIT ENTER&gt;</b></p>
+    </td>
+  </tr>
+</table>
+<p>On many 386 class machines wd0 will be the device name for the hard-disk, continuing 
+  with the installation and the next prompt should be whether you wish to use 
+  the complete hard-disk for OpenBSD's exclusive use.</p>
+<p class="pScreenOutput">Do you want to use the *entire* disk for OpenBSD? [no] 
+  <b>&lt;HIT ENTER&gt;</b> </p>
+<p>NO. If you are going to be using the same hard-disk for OpenBSD and Windows, 
+  then select NO as we choose to double-boot into at least another operating system 
+  on the same hard-disk.</p>
+<p>Selecting no should have started fdisk and placed the prompt inside fdisk working 
+  on the primary boot disk (wd0 in this example.) Do not use reinit. </p>
+<p class="pScreenOutput">Only LBA values are valid in ending cylinder for partition 
+  #3. </p>
+<p class="pScreenOutput">Enter 'help' for information </p>
+<p class="pScreenOutput">fdisk: 1&gt;</p>
+<p>Doing a "print" at this command prompt should list for us at least four partitions</p>
+<table border="0" width="800" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="pScreenOutput"> 
+      <p class="pScreenOutput">fdisk: 1&gt; <b>p</b></p>
+      <p class="pScreenOutput">Disk: wd0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; geometry: 
+        790/255/63 [12691350 sectors]<br>
+        <br>
+        Offset: 0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Signatures: 0xAA55,0x2F342F33<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Starting&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ending<br>
+        #: id&nbsp;&nbsp;cyl&nbsp;&nbsp;hd sec -&nbsp;&nbsp; cyl&nbsp;&nbsp;hd 
+        sec [&nbsp;&nbsp;&nbsp;&nbsp; start -&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+        size]<br>
+        -------------------------------------------------------------------------<br>
+        *0: 0B&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp; 1&nbsp;&nbsp; 1 -&nbsp;&nbsp; 
+        788 254&nbsp;&nbsp;63 [&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>63</b> 
+        -&nbsp;&nbsp; <b>12675222</b>] Win95 FAT-32<br>
+        &nbsp;1: 00&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp; 0&nbsp;&nbsp; 1 -&nbsp;&nbsp;&nbsp;&nbsp; 
+        0&nbsp;&nbsp; 0&nbsp;&nbsp; 0 [&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+        0 -&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0] unused<br>
+        &nbsp;2: 00&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp; 0&nbsp;&nbsp; 1 -&nbsp;&nbsp;&nbsp;&nbsp; 
+        0&nbsp;&nbsp; 0&nbsp;&nbsp; 0 [&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+        0 -&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0] unused<br>
+        &nbsp;3: 00&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp; 0&nbsp;&nbsp; 1 -&nbsp;&nbsp;&nbsp;&nbsp; 
+        0&nbsp;&nbsp; 0&nbsp;&nbsp; 0 [&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+        0 -&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0] unused 
+      </p>
+    </td>
+  </tr>
+</table>
+<p>&nbsp;</p>
+<p>The display shows the current allocation of partitions for the hard-drive. 
+  In our case example, the initial partition "0" is allocated to Windows 95 (FAT32). 
+  Since no other partition has been setup, partitions 1 through 3 are unallocated.</p>
+<p>We pull out the calculator and do a little maths. Add the Offset and Size of 
+  Partition 0 to find the offset where we will start our OpenBSD partition.</p>
+<p>DOS Offset X + Size Y = OpenBSD Offset Z<br>
+  <b>63</b> + <b>12,675,222</b> = 12,675,285 </p>
+<p><i>I've used commas for readability, do not use them when typing the results.<br>
+  12,675,285 is the final sector where the Win95 FAT-32 partition reaches, so 
+  we start our next (OpenBSD) on the next sector if possible. </i></p>
+<p><i>End 12,675,285; ==&gt; start 12,675,286?</i></p>
+<p>Now, we create the OpenBSD partition by editing an available partition. We're 
+  just picking 1, the next available partition slot from the above diagram.</p>
+<p class="pScreenOutput">&nbsp;</p>
+<p class="pScreenOutput">fdisk: 1&gt; <b>e 1</b></p>
+<p class="pScreenOutput">&nbsp;</p>
+<p>For the partition type we specify A6 (for OpenBSD). We will not edit the Cylinder/Head/Sector 
+  (CHS) mode. For tha partition offset we will use our calculated number above. 
+  For the partition size we can take the offered maximum size from the system 
+  (the rest of available drive space)</p>
+<table border="0" width="800" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="pScreenOutput"> 
+      <p class="pScreenOutput">&nbsp;</p>
+      <p class="pScreenOutput">fdisk: 1&gt; <b>e 1</b></p>
+      <p class="pScreenOutput">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+        Starting&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Ending<br>
+        &nbsp;#: id&nbsp; cyl&nbsp; hd sec -&nbsp;&nbsp; cyl&nbsp; hd sec [&nbsp;&nbsp;&nbsp;&nbsp; 
+        start -&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; size]<br>
+        -------------------------------------------------------------------------<br>
+        &nbsp;1: 00&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp; 0&nbsp;&nbsp; 1 -&nbsp;&nbsp;&nbsp;&nbsp; 
+        0&nbsp;&nbsp; 0&nbsp;&nbsp; 0 [&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+        0 -&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0] unused<br>
+        Partition id ('0' to disable)&nbsp; [0 - FF]: [0] (? for help) <b>A6</b><br>
+        Do you wish to edit in CHS mode? [n]<b>&lt;HIT ENTER&gt;</b><br>
+        Partition offset [0 - 12691350]: [0] <b>12675286</b><br>
+        Partition size [1 - 16066]: [0] <b>16066</b><br>
+        fdisk:*1&gt;</p>
+      <p class="pScreenOutput">&nbsp;</p>
+    </td>
+  </tr>
+</table>
+<p>&nbsp;</p>
+<p>The result of our venture can be displayed by using "p" print. Just in case 
+  we typed in something wrong. If you make a mistake you can go back by using 
+  "e" edit again, or just "exit" without saving changes.</p>
+<table border="0" width="800" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="pScreenOutput"> 
+      <p class="pScreenOutput">&nbsp;</p>
+      <p class="pScreenOutput">fdisk:*1&gt; <b>p</b><br>
+        Disk: wd0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; geometry: 790/255/63 [12691350 
+        sectors]<br>
+        Offset: 0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Signatures: 0xAA55,0x2F342F33<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Starting&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+        Ending<br>
+        &nbsp;#: id&nbsp; cyl&nbsp; hd sec -&nbsp;&nbsp; cyl&nbsp; hd sec [&nbsp;&nbsp;&nbsp;&nbsp; 
+        start -&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; size]<br>
+        -------------------------------------------------------------------------<br>
+        *0: 0B&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp; 1&nbsp;&nbsp; 1 -&nbsp;&nbsp; 788 
+        254&nbsp; 63 [&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 63 -&nbsp;&nbsp; 
+        12675222] Win95 FAT-32<br>
+        &nbsp;1: A6&nbsp; 788 254&nbsp; 63 -&nbsp;&nbsp; 789 254&nbsp; 63 [&nbsp; 
+        12675284 -&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 16066] OpenBSD<br>
+        &nbsp;2: 00&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp; 0&nbsp;&nbsp; 1 -&nbsp;&nbsp;&nbsp;&nbsp; 
+        0&nbsp;&nbsp; 0&nbsp;&nbsp; 0 [&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+        0 -&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0] unused<br>
+        &nbsp;3: 00&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp; 0&nbsp;&nbsp; 1 -&nbsp;&nbsp;&nbsp;&nbsp; 
+        0&nbsp;&nbsp; 0&nbsp;&nbsp; 0 [&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+        0 -&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0] unused<br>
+        fdisk:*1&gt;</p>
+      <p class="pScreenOutput">&nbsp;</p>
+      <p class="pScreenOutput">fdisk:*1&gt; <b>q</b> </p>
+      <p class="pScreenOutput">Writing current MBR to disk. </p>
+      <p class="pScreenOutput">&nbsp;</p>
+    </td>
+  </tr>
+</table>
+<p>&nbsp;</p>
+<p>After "q" Quit and Write, the changes you have been made are written to the 
+  Master Boot Record and you should be continued into the rest of the installation 
+  process. </p>
+<h4><a name="disklabel"></a>Disklabel</h4>
+<p>The installation process should continue with the disklabel, and should show 
+  the MSDOS partition as "i". Obviously you do not want to kill partition "i" 
+  or this will seriously cause problems (?-)</p>
+<table border="0" width="391" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="pScreenOutput"> 
+      <p class="pScreenOutput">Initial label editor (enter '?' for help at any 
+        prompt) </p>
+      <p class="pScreenOutput">&gt; <b>p</b> </p>
+      <p class="pScreenOutput">#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; size&nbsp;&nbsp; 
+        offset&nbsp;&nbsp;&nbsp; fstype&nbsp;&nbsp; [fsize bsize&nbsp;&nbsp; cpg]<br>
+        &nbsp; a:&nbsp;&nbsp;&nbsp; 16066 12675284&nbsp;&nbsp;&nbsp; unused&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+        0&nbsp;&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+        # (Cyl. 13412*- 13429)<br>
+        &nbsp; c: 12706470&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp; 
+        unused&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp; 
+        0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; # (Cyl.&nbsp;&nbsp;&nbsp; 
+        0 - 13445)<br>
+        &nbsp; <b>i</b>: <b>12675222</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>63</b>&nbsp;&nbsp;&nbsp;&nbsp; 
+        <b>MSDOS</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+        # (Cyl.&nbsp;&nbsp;&nbsp; 0*- 13412) </p>
+    </td>
+  </tr>
+</table>
+<p>&nbsp;</p>
+<p>Once you complete installing OpenBSD you can continue with the boot configuration.</p>
+<table border="0" width="391" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="pScreenOutput"> 
+      <p class="pScreenOutput"> from disklabel -e wd0<br>
+        Notes:<br>
+        Up to 16 partitions are valid, named from 'a' to 'p'. Partition 'a' is 
+        <br>
+        your root filesystem, 'b' is your swap, and 'c' should cover your whole 
+        <br>
+        disk. Any other partition is free for any use. 'size' and 'offset' are 
+        <br>
+        in 512-byte blocks. fstype should be '4.2BSD', 'swap', or 'none' or some 
+        <br>
+        other values. fsize/bsize/cpg should typically be '1024 8192 16' for a 
+        <br>
+        4.2BSD filesystem (or '512 4096 16' except on alpha, sun4, amiga, sun3...) 
+      </p>
+    </td>
+  </tr>
+</table>
+<h2><a name="bootManagers"></a>Different Boot Managers I have tried </h2>
+<p>I have listed the Boot Managers as I have found them, 1st through the OpenBSD 
+  CD distributions, ftp site, and as I have come across discussions in the mailing 
+  lists. Hopefully this non-alphabetic listing helps you if you have difficulty 
+  in obtaining a boot manager.</p>
+<p>Most of these Boot Managers have good documentation for installation and configuration. 
+  Please remember to read their documentation, together with this, to ensure your 
+  dual boot system works.</p>
+<p>My favourite, easiest to install (in most situations) is the GAG</p>
+<h3><a name="osbs1"></a>OS Boot Selector (os-bs 1.35)</h3>
+<p class="pFileReference">[ref: installation CD, go on and get radical, buy one. 
+  It is also available from the OpenBSD ftp site.]</p>
+<p>Operating System Boot Selector (OS-BS) is supplied as a self-extracting MSDOS 
+  program (os-bs135.exe) in the 2.X/tools directory. [It's there in 2.7, I think 
+  I recall seeing it in 2.6, and I have no idea where my 2.5 CDs gone to sleep, 
+  prior to that I didn't exist.]</p>
+<p>If you are installing OpenBSD from the Internet, download the os-bs135.exe 
+  and place it on the FAT partition or save it to a floppy diskette.</p>
+<ol>
+  <li>Extract the OS-BS 1.35 files onto a floppy disk (or 
+  onto your FAT partition, usually executing the program will extract files to 
+  the \OS-BS directory, for example: c:\os-bs) 
+  <li>Read the Instructions that come with OS-BS 
+  <li>Boot the machine to the MSDOS command prompt. 
+  <li>Execute the OS-BS.COM program</li>
+</ol>
+<p>The OS-BS program should display a list of partitions it recognises and prompt 
+  you to specify which partitions you wish to make bootable. After you have specified 
+  which partitions are bootable it will then list those partitions and ask you 
+  to </p>
+<ul>
+  <li>Specify which partitions to include in the boot menu 
+  <li>Give a label to the bootable partitions. 
+  <li>Specify which partition will be the default boot 
+  partition 
+  <li>Specify the delay during start-up for you to select an alternate partition 
+    to boot from</li>
+</ul>
+<p>Your Boot Manager has been configured, restart your computer and OS-BS will 
+  prompt you to choose which OS to boot.</p>
+<p>Features: </p>
+<ul>
+  <li>Boot Manager allows setting a default OS, and startup 
+  timer. 
+  <li>Install after both OSs have been installed 
+  <li>Tested with MS Windows FAT32 &amp; OpenBSD 2.7 
+  <li>Tested with MS Windows NTFS &amp; OpenBSD 2.7</li>
+</ul>
+<p>Note:</p>
+<ul>
+  <li>Does not support more than one hard-drive.</li>
+  <li>booteasy is another Boot Manager also available on the Distribution CDs 
+    and ftp site.</li>
+</ul>
+<h3 class="pFileReference"><a name="osbs2b8"></a> OS Boot Selector 2.0Beta8</h3>
+<p class="pFileReference">[ref: <a href="http://www.prz.tu-berlin.de/%7Ewolf/os-bs.html">http://www.prz.tu-berlin.de/~wolf/os-bs.html</a>]</p>
+<p>OS-BS 2.0Beta8 is an updated development from the 1.x serious <a href="http://www.prz.tu-berlin.de/%7Ewolf/os-bs.html">http://www.prz.tu-berlin.de/~wolf/os-bs.html</a> 
+  Fortunately a commercial venture bought up the distribution rights to the software, 
+  and fortunately the author released this version.</p>
+<p>The 2.0 beta looks much nicer than version 1.x, a more GUIsh (text Windows) 
+  with easy navigation.<a href="http://www.prz.tu-berlin.de/%7Ewolf/os-bs.html"> 
+  </a></p>
+<p><b>Warning</b> from the Readme File:</p>
+<table width="80%" border="1">
+  <tr>
+    <td class="pScreenOutput">Currently os-bs uses WITHOUT ASKING(!) the sectors 
+      2, 3, 4, 5 on cylinder 0, head 0 on the first disk. On almost all disks 
+      I ever saw these sectors (and the whole first track, except sector 1 which 
+      contains the Master Boot Record) are unused. (BTW, the reason why some boot 
+      viruses like this place...).</td>
+  </tr>
+</table>
+<p>If you don't like the warning above, don't use 2.0Beta8, buy the retail product 
+  or use 1.35. Of course it worked fine for me, but that's another story.</p>
+<p>There is some discussion in the documentation about how unco-operative most 
+  OS's are about where they must be located to boot. Fortunately OpenBSD has been 
+  real nice for me and there was no special configuration apart from just installing 
+  OpenBSD onto a second drive and setting up 2.0Beta8 (originally had it working 
+  fine with Partition Magic 5.0's Boot Manager)</p>
+<p>Windows NTFS Partition is listed as ID 07, System: OS/2 HPFS, QNX or Advanced 
+  Unix. </p>
+<p>Features: </p>
+<ul>
+  <li>Boot Manager allows setting a default OS, and startup 
+  timer. 
+  <li>Multiple Drive Support 
+  <li>Install after both OSs have been installed 
+  <li>Tested with MS Windows FAT32 &amp; OpenBSD 2.7 
+  <li>Tested with MS Windows NTFS &amp; OpenBSD 2.7</li>
+</ul>
+<h3 class="pFileReference"><a name="mattsoft"></a>mattsoft Boot Manager</h3>
+<p class="pFileReference">[ref: <a href="http://www.penguin.cz/%7Emhi/mbtmgr">http://www.penguin.cz/~mhi/mbtmgr</a>]</p>
+<p>A heap of configuration options. The latest release should be especially useful 
+  for Win9X users (ie. it comes with a Win32 installation program, although you 
+  have to drop back to DOS to complete the installation.)</p>
+<p>One interesting feature in mbtmgr is it supposedly allows you to specify which 
+  partition information to make visable to the OS you are configuring. For some 
+  reason this resolved an inability I had to configure my Win2000 FAT32 drive 
+  so I can mount it in OpenBSD (or Linux Mandrake 7.) hmmmm.</p>
+<p>I think the value of the Win32 installation is to get all the documentation 
+  (html files) onto your system, as well as letting you install stuff programmers 
+  love (assembly source code etc.) Urgghhh!!!! This boot manager seems to be maintained 
+  so if you want to program some boot stuff, there's technical information here 
+  that is most likely to be helpful, as well as like-hearted souls.</p>
+<p>Features: </p>
+<ul>
+  <li>Boot Manager allows setting a default OS, and startup 
+  timer. 
+  <li>Multiple Drive Support 
+  <li>Install after both OSs have been installed 
+  <li>Tested with MS Windows FAT32 &amp; OpenBSD 2.7 
+  <li>Tested with MS Windows NTFS &amp; OpenBSD 2.7</li>
+</ul>
+<h3 class="pFileReference"><a name="pm5"></a>Partition Magic 5.0 Boot Magic (Commercial 
+  Ware)</h3>
+<p>Almost forgot to put this in. Commercial software does work (although this 
+  one didn't live up the the speal for which I had originally bought the package.)</p>
+<p>Partition Magic's Boot Manager works fine with FAT32 and OpenBSD (across multiple 
+  drives even.) Real nice graphical screen after boot up, I can't remember what 
+  I did to install it, but it must have been easy otherwise I would have dug in 
+  to write something. </p>
+<p>Wonderful thing having well written manuals. Go commercial ware (now where 
+  did I put that CD, I've got to get my machine back together 8.p</p>
+<p>Features: </p>
+<ul>
+  <li>Boot Manager allows setting a default OS, and startup 
+  timer. 
+  <li>Multiple Drive Support 
+  <li>Install after both OSs have been installed 
+  <li>Tested with MS Windows FAT32 &amp; OpenBSD 2.7</li>
+</ul>
+<h3 class="pFileReference"><a name="GAG"></a>GAG</h3>
+<p class="anchBlue">[ref: <a href="http://www.rastersoft.com/gageng.htm">http://www.rastersoft.com/gageng.htm</a>]</p>
+<p>The best thing I liked about this ? You just create a boot disk (whether from 
+  Unix or DOS) and your ready to install. Unfortunately (?) this means that your 
+  system must support a 3 1/2&quot; High Density Floppy drive.</p>
+<p>Installation is well documented and a brief outline is listed:</p>
+<ol>
+  <li>Download the Image file from the Net</li>
+  <li>Extract the Files</li>
+  <li>Write the disk image using rawrite or ntrw, or from your unix box.</li>
+  <li>Boot from the floppy diskette</li>
+  <li>Set configuration using a nice easy to follow graphical system</li>
+</ol>
+<p>rawrite is supplied with the image file and also available together with ntrw 
+  from the CD Distribution or ftp site. The Unix instructions (for raw writing 
+  to the floppy disk) may be incorrect.</p>
+<p>I used the following to create the boot disk onto my floppy:</p>
+<table width="80%" border="1" class="Code">
+  <tr>
+    <td class="Code">dd if=disk.dsk of=/dev/fd0a bs=512 count=2880</td>
+  </tr>
+</table>
+<p>Features: </p>
+<ul>
+  <li>Boot Manager allows setting a default OS, and startup timer. 
+  <li>Supports booting from separate drives (eg. HD1, HD2, Floppy)
+  <li>Install after both OSs have been installed 
+  <li>Graphical installation and startup menu (nice sexy touch) 
+  <li>Well documented 
+  <li>Tested with MS Windows FAT32 &amp; OpenBSD 2.9</li>
+  <li>You don't need to keep looking for that DOS boot CD/floppy</li>
+</ul>
+<h2><a name="ntfs"></a>Windows NTFS File System and OpenBSD </h2>
+<p>Dualbooting is possible between an OpenBSD setup and Windows NT 4/2000 formatted 
+  with the NTFS file system. As most of the above Boot Managers require some FAT 
+  partition on which to install (ie execute from a DOS command prompt) I have 
+  previously had to follow the below long route to have the more secure NTFS file 
+  system and OpenBSD dualboot. Of course an advantage of retaining FAT32 is that 
+  you can mount that drive space into OpenBSD if you wish.</p>
+<p>You may not need to follow the procedures listed below, they were a just the 
+  configuration I went through to get it to work.</p>
+<p>1. Install Windows NT/2000 (FAT32 - use FAT for install, convert to NTFS afterwards.)<br>
+  2. Install OpenBSD<br>
+  3. Boot in DOS<br>
+  4. Install/Configure Dual-boot package <br>
+  (success using both mattsoft Boot Manager, GAG, and OS-BS 2.0B8)<br>
+  5. Boot in Windows NT/2000 and convert the FAT32 partition to NTFS</p>
+<p>Now I can multiboot between Windows 2000 (NTFS partition) and OpenBSD 2.7 (A6 
+  OpenBSD partition) </p>
+<h2 class="pFileReference"><a name="ReaderComments"></a>Reader Commentts</h2>
+<pre class="pFileReference">From sickrotten &lt;protected-email&gt;  Wed Mar 21 12:22:23 2001<br>Subject: OpenBSD articles</pre>
+<pre>HI, ,</pre>
+<pre>#1: Big-big tnx. for your _excellent_ OpenBSD tutorial !
+   I'm a newbie in the world of UNIX (btw. 1-2 weeks of OpenBSD-ing,
+   i never use any *NIX before), and i found your tutorial
+   very useful !</pre>
+<pre>#2: In section &quot;DualBoot&quot; you wrote about various bootmanagers.
+   I can recommend you one nice proggy called &quot;System Commander&quot; -
+   see it @ <a href="http://www.v-com.com">http://www.v-com.com</a> Besides multibooting    it also
+   allow partitioning/repartitioning HDDisks ;-) very good tool.
+   This prog. is commercial.</pre>
+<pre>
+   Fuf. English is tight for me ;-)</pre>
+<pre>// KOT (aka ROTTEN), Russia.
+</pre>
+<h2 class="pFileReference"><a name="relref"></a>Relative Reference </h2>
+<ul>
+  <li>FAQ 14. Disk Setup <a href="http://www.openbsd.org/faq/faq14.html">http://www.openbsd.org/faq/faq14.html</a> 
+  <li> <a href="http://www.openbsd.org/cgi-bin/man.cgi?query=fdisk&amp;apropos=0&amp;sektion=8&amp;format=html">man 
+    page fdisk(8)</a> 
+  <li><a href="http://geodsoft.com/howto/dualboot/">Dual and Multi Booting FreeBSD, 
+    Linux, and OpenBSD</a> George Shaffer's tutorial
+  <li> J. Joseph Max Katz' Using OSBS and Windows95 <a href="http://www.monkey.org/openbsd/FUQ/">http://www.monkey.org/openbsd/FUQ/</a> 
+  <li> OS-BS 2.0 Beta 8 - OS Boot Selector: <a href="http://www.prz.tu-berlin.de/%7Ewolf/os-bs.html">http://www.prz.tu-berlin.de/~wolf/os-bs.html</a> 
+  <li> The Retail Version of OS-BS, the tool that ships with OpenBSD <a href="http://www.bootmanager.com">http://www.bootmanager.com</a> 
+  <li>Mattsoft Boot Manager <a href="http://www.penguin.cz/%7Emhi/mbtmgr">http://www.penguin.cz/~mhi/mbtmgr</a> 
+  <li>The GNU GRUB Boot Loader <a href="http://www.linuxgazette.com/issue64/kohli.html" class="anchBlue">http://www.linuxgazette.com/issue64/kohli.html</a> 
+  </li>
+  <li>Jim Rees' Multi-booting OpenBSD <a href="http://www.citi.umich.edu/users/rees/openbsd/multi.html">http://www.citi.umich.edu/users/rees/openbsd/multi.html</a></li>
+  <li>Ranish Partition Manager - It will help you to install and dualboot Linux 
+    and multiple copies of Windows. <a href="http://www.ranish.com/part/">http://www.ranish.com/part/</a></li>
+  <li>XOSL Boot Manager - Extended Operating System Loader (XOSL) is the world's 
+    only full-featured free boot manager with a real, easy-to-use and full-blown 
+    graphical user interface. <a href="http://www.xosl.org/">http://www.xosl.org/</a></li>
+</ul>
+<h2><a name="author"></a>Author and Copyright</h2>
+<p>Copyright (c) 2000/1/2 Samiuela LV Taufa. All Rights Reserved.</p>
+
+<p>I reserve the right to be totally incorrect even at the best advice of betters. In other words, I'm probably wrong in enough places for you to call me an idiot, but don't 'cause you'll hurt my sensibilities, just tell me where I went wrong and I'll try again.</p>
+
+<p>You are permitted and encouraged to use this guide for fun or for profit as you see fit. If you republish this work in what-ever form, it would be nice (though not enforceable) to be credited.</p>
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+  <tr>
+    <td class="block" valign="center" width="100%" bgcolor="#cccccc"><strong>
+      <p class="block">Multi-booting, configuring Dualboot with OpenBSD</p>
+      </strong></td>
+  </tr>
+</table>
+<p><font color="#808080" face="sans-serif" size="-2"><strong>Copyright&nbsp; &copy; 
+  2000/1/2
+<a href="http://www.nomoa.com">NoMoa.COM</a> All rights reserved.</strong></font></p>
+  </body>
+</html>
+

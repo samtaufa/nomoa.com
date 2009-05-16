@@ -1,0 +1,457 @@
+
+<html>
+<head>
+<title>=8> nomoa.com/bsd OpenBSD - Apache serving up the Web</title><link rel="STYLESHEET" type="text/css" href="openbsd.css">
+<script language="JavaScript">
+<!--
+
+function newImage(arg) {
+	if (document.images) {
+		rslt = new Image();
+		rslt.src = arg;
+		return rslt;
+	}
+}
+
+function changeImages() {
+	if (document.images && (preloadFlag == true)) {
+		for (var i=0; i<changeImages.arguments.length; i+=2) {
+			document[changeImages.arguments[i]].src = changeImages.arguments[i+1];
+		}
+	}
+}
+
+var preloadFlag = false;
+function preloadImages() {
+	if (document.images) {
+		openbsd_over = newImage("mmedia/openbsd-over.gif");
+		openbsd_down = newImage("mmedia/openbsd-down.gif");
+		preloadFlag = true;
+	}
+}
+
+// -->
+</script>
+<!-- End Preload Script -->
+</head>
+
+<body bgcolor="#FFFACD" onLoad="preloadImages();">
+<p class="logo">
+<a class="anchBlue" href="http://www.nomoa.com/bsd" 
+   onMouseOver="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;"
+   onMouseOut="changeImages('openbsd', 'mmedia/openbsd.gif'); return true;"
+   onMouseDown="changeImages('openbsd', 'mmedia/openbsd-down.gif'); return true;"
+   onMouseUp="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;">
+   <img name="openbsd"  align="absMiddle" 
+        alt="OpenBSD ... The Only way to Go ..." border="0" height="50"
+        src="mmedia/openbsd.gif" width="368"></a>
+</p>
+
+<h1>Apache - Serving up the Web</h1>
+<hr color="fuchsia">
+<p>Table of Contents:</p>
+<ul>
+  <li><a href="#intro">Introduction</a> 
+  <li><a href="#setup">Setting Apache to start every time the system is started/restarted 
+    </a> 
+  <li><a href="#apachectl">Manually starting Apache </a> 
+  <li><a href="#test">Testing that it works </a> 
+  <li><a href="#mod_status">Setting some status configurations </a> 
+  <li><a href="#mod_userdir">Creating User personal web pages </a> 
+    <ul>
+      <li><a href="#restart"> Restart apache </a> 
+      <li><a href="#public_html"> Create public_html in user accounts </a> 
+      <li><a href="#userid"> Access user accounts with the URL form http://server-name/~user-id/ 
+        </a></li>
+    </ul>
+  <li><a href="#securessl">Securing the Site with SSL</a></li>
+  	
+  <ul>
+    <li>Problems with Browsers</li>
+    <li><a href="#secureVH">Securing Virtual Hosts</a></li>
+  </ul>
+  <li><a href="#author">Author and Copyright</a></li>
+</ul>
+<hr color="fuchsia">
+<h2><a name="intro"></a>Introduction</h2>
+<p>The Apache Web Server is installed as part of the OpenBSD base system. This 
+  guide will help you configure the web server: (Apache 1.3.12 is released with 
+  OpenBSD 2.7 and 1.3.9 with OpenBSD&nbsp;2.6)</p>
+<p>To see how configurable the Apache/OpenBSD combination is we also look at allowing 
+administrators to remotely review the server's status, we setup the system so 
+we allow users on our system to have their own personal web-space. Of course, 
+for the security counscious you probably want to turn some of these things off 
+after you get things up and running.</p>
+
+<h2><a name="setup"></a>Setting Apache to start every time the system is started/restarted</h2>
+
+<p>The first thing we consider about the Apache web-server is turning it on, and 
+  setting it up so it turns on automatically if the system is restarted. To do 
+  this we make single change to the startup configuration file: <a href="rc.conf.htm">/etc/rc.conf.local</a></p>
+<p class="pFileReference">Edit /etc/rc.conf.local to add the following line into 
+  <a href="rc.conf.htm#Section1">Section 1</a></p>
+<p class="Code">httpd_flags=""&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+  # note the use of two double-quotes
+<p class="pFileReference">This will override the settings in /etc/rc.conf which 
+  reads:<br>
+</p>
+<p class="pScreenOutput">httpd_flags=NO</p>
+<p><br>
+
+<p>Save the changes and when the computer is restarted, the /etc/rc routines will 
+  automatically launch the Apache server httpd with every system restart.</p>
+<a name="apachectl"><h2>Manually starting Apache</h2>
+</a>
+<p>We can test the Apache server without the need to restart 
+the computer. To manually start | restart the Apache server you can use the /usr/sbin/apachectl 
+program</p>
+<p class="Code">bash# <b>/usr/sbin/apachectl start</b></p>
+<p class="pScreenOutput"> /usr/sbin/apachectl start: httpd started</p>
+<p>Your server is up and running.</p>
+
+<h2><a name="test"></a>Testing that it works</h2>
+
+<p>We can test the web server because OpenBSD installs Apache with a sample website 
+  that is full of documentation. This sample website is placed into the <strong>Document 
+  Root </strong> directory&nbsp;/var/www/htdocs.</p>
+<p>To quickly view whether the web server is up and running, start your browser 
+  and test specify your server address. From a command prompt, check using <strong>lynx 
+  </strong> .</p>
+<table border="0" width="800" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="Code"> 
+      <p>bash# <b>lynx localhost</b></p>
+      
+    </td>
+  </tr>
+  <tr>
+    <td nowrap class="pScreenOutput">[ lynx displays the following ...]<br>
+      &nbsp;<br>
+      &nbsp;&nbsp; [OpenBSD]<br>
+      &nbsp;&nbsp;&nbsp; Apache<br>
+      &nbsp;<br>
+      &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;It 
+      Worked!<br>
+      &nbsp;<br>
+      &nbsp;&nbsp; If you can see this page, then the people who own this host 
+      have just<br>
+      &nbsp;&nbsp; activated the Apache Web server software included with their 
+      OpenBSD<br>
+      &nbsp;&nbsp; System. They now have to add content to this directory and 
+      replace this<br>
+      &nbsp;&nbsp; placeholder page, or else point the server at their real content.<br>
+      &nbsp;[ ... more stuff cut out ... ]</td>
+  </tr>
+</table>
+<h2><a name="mod_status"></a>Setting some status configurations</h2>
+ 
+<p>Can we get more information on what the Server is doing?</p>
+<p>The OpenBSD apache distribution is compiled with mod_status which allows us 
+  to configure the server so we can take a look at it's operational status. I 
+  put this in here as a another <span style="mso-spacerun:
+ yes">&nbsp; means for checking the server's functionality while setting it up. 
+  (AKA. what's an interesting task for changing the server configuration without 
+  having to do too much work.)</span></p>
+<p>To activate the server-status reports in Apache we need to make the following 
+  changes to the configuration file:</p>
+<p class="pFileReference">File: /var/www/conf/httpd.conf</p>
+<p>Change the lines that read:</p>
+<table border="0" width="800" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="pScreenOutput">#ExtendedStatus On<br>
+      &nbsp;<br>
+      #<br>
+      # Allow server status reports, with the URL of http://servername/server-status<br>
+      # Change the ".your_domain.com" to match your domain to enable.<br>
+      #<br>
+      #&lt;Location /server-status&gt;<br>
+      #&nbsp;&nbsp;&nbsp; SetHandler server-status<br>
+      #&nbsp;&nbsp;&nbsp; Order deny,allow<br>
+      #&nbsp;&nbsp;&nbsp; Deny from all<br>
+      #&nbsp;&nbsp;&nbsp; Allow from .your_domain.com<br>
+      #&lt;/Location&gt;</td>
+  </tr>
+</table>
+<p>To Read:<br>
+<table border="0" width="800" class="Code">
+  <tr>
+    <td nowrap class="Code">ExtendedStatus On<br>
+      &nbsp;<br>
+      &lt;Location /server-status&gt;<br>
+      &nbsp;&nbsp;&nbsp; SetHandler server-status<br>
+      &nbsp;&nbsp;&nbsp; Order deny,allow<br>
+      &nbsp;&nbsp;&nbsp; Deny from all<br>
+      &nbsp;&nbsp;&nbsp; Allow from 127.0.0.1<br>
+      &lt;/Location&gt;</td>
+  </tr>
+</table>
+<p>The above configuration let's you check the server status with at least two 
+  methods, opening a browser and pointing to the /server-status url or by using 
+  apachectl.</p>
+<p>Restart the server and check if server-status is accessible.</p>
+<table border="0" width="800" class="Code">
+  <tr> 
+    <td nowrap class="Code">bash# <b>apachectl restart</b><br>
+      bash# <b>apachectl status || lynx localhost/server-status</b><br>
+      &nbsp;</td>
+  </tr>
+</table>
+<table border="0" width="800" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="pScreenOutput"> [ displays the following ...]<br>
+      &nbsp;<br>
+      &nbsp;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+      Apache Server Status for server.domain.com<br>
+      <span style="mso-spacerun:
+ yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+      &nbsp;&nbsp; Server Version: Apache/1.3.12 (Unix) PHP/3.0.16 mod_ssl/2.6.2<br>
+      &nbsp;&nbsp; OpenSSL/0.9.5a<br>
+      &nbsp;&nbsp; Server Built: May 5 2000 21:00:37<br>
+      &nbsp;&nbsp;&nbsp;&nbsp; _________________________________________________________________</span> 
+      <br>
+      [ ... more stuff cut out ... ]</td>
+  </tr>
+</table>
+<p>If you try to connect to the http://server-name/server-status from a separate 
+  workstation on the network, you should get a <i>403 Forbidden error message 
+  (You don't have permission to access … ) </i>If you do want to give other workstations 
+  access to this page, then you can add further <i>Allow from </i>lines such as:</p>
+<p class="Code">&nbsp;&nbsp;&nbsp; Allow from 192.168.101.<br>
+  &nbsp;&nbsp;&nbsp; Allow from .breakline.com</p>
+<p>The above two lines will allow access to the <i>/server-status </i>from any 
+  client with <i>192.168.101.xyz </i>ip address, and any client with the domain 
+  suffix&nbsp; <i>breakline.com </i></p>
+
+<h2><a name="mod_userdir"></a>Creating User personal web pages</h2>
+
+<p>Apache let's you create alias' (conceptually similar to symbolic links ?) to 
+  any point on your server (and possibly beyond.) But one advantage of Apache 
+  is how easy it is to let every user on your system have their own private web 
+  space. Again, the OpenBSD distribution httpd has this feature built into the 
+  binary and it is a simple matter of just modifying the configuration file and 
+  restarting Apache to see things work.</p>
+<ol style="MARGIN-TOP: 0cm" type="1">
+  <li style="mso-list: l0 level1 lfo6; tab-stops: list 36.0pt">Modify configuration 
+    file /var/www/conf/httpd.conf 
+  <li style="mso-list: l0 level1 lfo6; tab-stops: list 36.0pt">Restart apache 
+  <li style="mso-list: l0 level1 lfo6; tab-stops: list 36.0pt">Create public_html 
+    in user accounts 
+  <li style="mso-list: l0 level1 lfo6; tab-stops: list 36.0pt">Access user accounts 
+    with the URL form http://server-name/~user-id/</li>
+</ol>
+<p>1. Our modifications to the configuration is to enable the mod_userdir.c module 
+  which let's Apache talk with your user accounts and their home directories. 
+  We specify which directory within each users home directory we will send http 
+  requests for files.</p>
+<p class="pFileReference">File: /var/www/conf/httpd.conf</p>
+<p>Change the lines that read:<br>
+<table border="0" width="800" class="pScreenOutput">
+  <tr>
+    <td nowrap class="pScreenOutput"> # UserDir: The name of the directory which 
+      is appended onto a user's home<br>
+      # directory if a ~user request is received. &nbsp; "disabled" turns this 
+      feature<br>
+      # off; other reasonable defaults are "public_dir" and ".html"<br>
+      #&nbsp;<br>
+      UserDir disabled<br>
+      #<br>
+      # Control access to UserDir directories. &nbsp; The following is an example 
+      &nbsp;&nbsp;<br>
+      # for a site where these directories are restricted to read-only and<br>
+      # are located under /home/&lt;username&gt;public_html<br>
+      # You will need to change this to match your site's home directories.<br>
+      #<br>
+      #&lt;Directory /home/*/public_html&gt;<br>
+      #&nbsp;&nbsp;&nbsp; AllowOverride FileInfo AuthConfig Limit<br>
+      #&nbsp;&nbsp;&nbsp; Options MultiViews Indexes SymLinksIfOwnerMatch IncludesNoExec<br>
+      #&nbsp;&nbsp;&nbsp; &lt;Limit GET POST OPTIONS PROPFIND&gt;<br>
+      #&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Order allow,deny<br>
+      #&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Allow from all<br>
+      #&nbsp;&nbsp;&nbsp; &lt;/Limit&gt;<br>
+      #&nbsp;&nbsp;&nbsp; &lt;Limit PUT DELETE PATCH PROPPATCH MKCOL COPY MOVE 
+      LOCK UNLOCK&gt;<br>
+      #&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Order deny,allow<br>
+      #&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Deny from all<br>
+      #&nbsp;&nbsp;&nbsp; &lt;/Limit&gt;<br>
+      #&lt;/Directory&gt;</td>
+  </tr>
+</table>
+<p>To read:<br>
+<table border="0" width="800" class="Code">
+  <tr> 
+    <td nowrap class="Code">#Enable the mod_userdir.c module<br>
+      UserDir public_html<br>
+      &nbsp;<br>
+      &lt;Directory /home/*/public_html&gt;<br>
+      &nbsp;&nbsp;&nbsp; AllowOverride FileInfo AuthConfig Limit<br>
+      &nbsp;&nbsp;&nbsp; Options MultiViews Indexes SymLinksIfOwnerMatch IncludesNoExec<br>
+      &nbsp;&nbsp;&nbsp; &lt;Limit GET POST OPTIONS PROPFIND&gt;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Order allow,deny<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Allow from all<br>
+      &nbsp;&nbsp;&nbsp; &lt;/Limit&gt;<br>
+      &nbsp;&nbsp;&nbsp; &lt;Limit PUT DELETE PATCH PROPPATCH MKCOL COPY MOVE 
+      LOCK UNLOCK&gt;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Order deny,allow<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Deny from all<br>
+      &nbsp;&nbsp;&nbsp; &lt;/Limit&gt;<br>
+      &lt;/Directory&gt;</td>
+  </tr>
+</table>
+<p>In the above example, we specify public_html as the directory each user-account 
+  can create and place their website. If user johndoe has&nbsp; his user directory 
+  at /home/johndoe then he needs to create a directory public_html from inside 
+  his home folder.</p>
+<p>/home/johndoe/public_html will be johndoe's website. &nbsp; All URL requests 
+  addressed as http://server-name/~johndoe will look into this directory.</p>
+<p>Note: If you want to use a directory name other than those specified in the 
+  httpd.conf file, then you may need to modify the mod_userdir source.</p>
+<h3><a name="restart"></a> Restart apache</h3>
+
+<p>Before the configuration goes into effect, we need to force httpd to re-read 
+  it's configuration file.</p>
+<p class="Code"># <b>apachectl restart</b></p>
+<p>Seems to simple, but if you forget to restart the server, you will be frustrated 
+  in trying to test the changes when the running server does not recognise them.</p>
+ 
+<h3><a name="public_html"></a>Create public_html in user accounts</h3>
+ 
+<p>For our example user johndoe we will create the public_html directory and create 
+  a dummy html file.</p>
+<table border="0" width="800" class="Code">
+  <tr> 
+    <td nowrap class="Code">bash# <b>su johndoe</b><br>
+      bash$ <b>cd ~</b><br>
+      bash$ <b>mkdir public_html</b> <br>
+      bash$ <b>cd public_html</b><br>
+      bash$ <b>echo "&lt;html&gt;&lt;body&gt;&lt;h1&gt;Success&lt;/h1&gt;Now, get 
+      real content&lt;/body&gt;&lt;/html&gt;" &gt; index.html</b><br>
+      bash$ <b>exit</b></td>
+  </tr>
+</table>
+<p>Of course, you could move or place some more sophisticated files into this 
+  directory, but this is an adequate start for a test.</p>
+
+<h3><a name="userid"></a>Access user accounts with the URL form http://server-name/~user-id/</h3>
+ 
+<p>Now we try to access the web page.</p>
+<table border="0" width="800" class="Code">
+  <tr> 
+    <td nowrap class="Code">bash# <b>lynx localhost/~johndoe/</b><br>
+      &nbsp;</td>
+  </tr>
+</table>
+<table border="0" width="800" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="pScreenOutput"> [ lynx displays the following ...]<br>
+      &nbsp;<br>
+      <span style="mso-spacerun:
+ yes">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+      Success<br>
+      &nbsp;<br>
+      &nbsp;&nbsp; Now, get real content<br>
+      </span>[ ... more stuff cut out ... ]</td>
+  </tr>
+</table>
+<p>Similarly from a GUI Browser you get &lt;h1&gt; settings for Success, and the 
+  rest of the page as plain text.</p>
+<p>You now not only have a working website (mydomain.com) but your users can also 
+  have their own web space (http://mydomain.com/~johndoe/)</p>
+<h3>Securing public_html</h3>
+<p>There are security concerns with opening web space for users since we do not 
+  want to explicitly trust all users will not leave holes in their websites that 
+  can be exploited. To minimise security holes with allow User space these are 
+  some precautions you can take.</p>
+<p>1. disable root having web space.</p>
+<p class="Code">UserDir disabled root</p>
+<p><i>(I'll add more as I find out about it, hopefully not because someone has 
+  successful whacked my system.)</i></p>
+<h2><a name="securessl"></a>Securing the Site with SSL</h2>
+<p>[ref: <a href="http://www.openbsd.org/faq/faq10.html#10.6">OpenBSD FAQ 10.6 
+  Setting up a Secure HTTP Server with SSL</a>]<br>
+  [local: <a href="openssl.htm">openss# - Secured Communications</a>] </p>
+<p>As we have chosen OpenBSD for its stability and Security advantages it only 
+  makes sense to setup Apache with SSL for secure communications on the NET. This 
+  is explained in detail on the <a href="http://www.openbsd.org/faq/faq10.html#10.6">OpenBSD 
+  FAQ 10.6 Setting up a Secure HTTP Server with SSL</a> and <a href="openssl.htm">notes 
+  on this site</a>.</p>
+<p>The 1st step is to install the SSL package (or compile from the OpenSSL sources.) 
+  OpenBSD 2.8 and later should have the OpenSSL package included in the default 
+  installation. For earlier versions, the instructions for installation should 
+  be:</p>
+<table border="0" width="800" class="Code">
+  <tr> 
+    <td nowrap class="Code">bash# pkg_add ftp://ftp.openbsd.org/pub/OpenBSD/2.6/${arch}/ssl26.tgz 
+      -or-<br>
+      bash# pkg_add ftp://ftp.openbsd.org/pub/OpenBSD/2.7/${arch}/ssl27.tgz </td>
+  </tr>
+</table>
+<p>The 2nd step is to <a href="openssl.htm">create an SSL server certificate</a>. 
+  Refer to the <a href="http://www.openbsd.org/faq/faq10.html#10.6">FAQ</a> or 
+  <a href="openssl.htm">Secured Communications</a> notes for creating an SSL and 
+  then continue below.</p>
+<p>After you have successfully created or recieved an SSL server certificate, 
+  we can stop the web server and restart it using the new certificate.</p>
+<p class="Code">bash# <b>apachectl stop</b></p>
+<p class="pScreenOutput"> /usr/sbin/apachectl stop: httpd stopped </p>
+<p class="Code">bash# <b>apachectl startssl</b></p>
+<p class="pScreenOutput">/usr/sbin/apachectl startssl: httpd started </p>
+<p>The necessary modifications for the Apache configuration file are already in 
+  place for OpenBSD 2.7. To ensure SSL is started when we restart the host we 
+  need to modify the /etc/rc.conf.local file and make the following changes.</p>
+<p>In <a href="rc.conf.htm">/etc/rc.conf.local</a> Section 1, the lines that read 
+  :</p>
+<table border="0" width="800" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="pScreenOutput">httpd_flags=""&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+      # or it could have httpd_flags=NO</td>
+  </tr>
+</table>
+<p>Should be changed to:</p>
+<table border="0" width="800" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="pScreenOutput">httpd_flags="-DSSL"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+      # note the use of two double-quotes</td>
+  </tr>
+</table>
+<h3>Problems with Browsers</h3>
+<p>I began having weird problems with SSL connections where the browser seemed 
+  to lose the sessions, connections.</p>
+<p class="anchBlue">Fortunately (not?) the environment I had was a controlled 
+  environment (MSIE 5.x) and we were eventually able to track the culprit down 
+  to an <a href="http://www.modssl.org/docs/2.8/ssl_faq.html#io-ie">MSIE deficiency</a>. 
+  Unfortunately there are problems with other browsers, so it will be best for 
+  you if you take a look at the <a href="http://www.modssl.org/docs/2.8/ssl_faq.html" class="anchBlue">FAQ.</a></p>
+<h3><a name="secureVH"></a>Securing Virtual Hosts</h3>
+<p class="pFileReference">[ref: <a href="http://www.incyte-studios.com/ssl.htm">http://www.incyte-studios.com/ssl.htm</a>]</p>
+<p>Trey Stout published an article for those who have a need to put several SSL 
+  hosts on a single machine.</p>
+<p> <a href="http://www.incyte-studios.com/ssl.htm">http://www.incyte-studios.com/ssl.htm</a></p>
+<h2>Compiling from Source</h2>
+<p>OpenBSD comes with Apache, but if you need to install a source version from 
+  the Apache site, you can use the following ./configure command to ensure the 
+  files are stored in the 'standard' OpenBSD locations.</p>
+<table border="0" width="800" class="Code">
+  <tr> 
+    <td nowrap class="Code">./configure --with-layout=&quot;OpenBSD&quot; check 
+      out /usr/src/usr.sbin/httpd/config.layout</td>
+  </tr>
+</table>
+<h2><a name="author"></a>Author and Copyright</h2> 
+<p>Copyright (c) 2000/1/2 Samiuela LV Taufa. All Rights Reserved.</p>
+<p>I reserve the right to be totally incorrect even at the best advice of betters. In other words, I'm probably wrong in enough places for you to call me an idiot, but don't 'cause you'll hurt my sensibilities, just tell me where I went wrong and I'll try again.</p>
+<p>You are permitted and encouraged to use this guide for fun or for profit as 
+  you see fit. If you republish this work in what-ever form, it would be nice 
+  (though not enforceable) to be credited.</p>
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+  <tr> 
+    <td class="block" valign="MIDDLE" width="100%" bgcolor="#cccccc"><strong> 
+      <p class="block">&nbsp;Apache - Serving up the Web</p>
+      </strong></td>
+  </tr>
+</table>
+<p><font color="#808080" face="sans-serif" size="-2"><strong>Copyright&nbsp; &copy; 
+  2000/1/2 <a href="http://www.nomoa.com">NoMoa Publishers</a> All rights 
+  reserved.  Caveat Emptor</strong></font></p>
+</body>
+</html>

@@ -1,0 +1,1066 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0//EN">
+<html>
+  <head>
+    <title>=8&gt; nomoa.com/bsd OpenBSD - XF86 3.3 a windows pretty face
+    </title>
+    <link rel="STYLESHEET" type="text/css" href="openbsd.css">
+<script language="JavaScript">
+<!--
+
+function newImage(arg) {
+	if (document.images) {
+		rslt = new Image();
+		rslt.src = arg;
+		return rslt;
+	}
+}
+
+function changeImages() {
+	if (document.images && (preloadFlag == true)) {
+		for (var i=0; i<changeImages.arguments.length; i+=2) {
+			document[changeImages.arguments[i]].src = changeImages.arguments[i+1];
+		}
+	}
+}
+
+var preloadFlag = false;
+function preloadImages() {
+	if (document.images) {
+		openbsd_over = newImage("mmedia/openbsd-over.gif");
+		openbsd_down = newImage("mmedia/openbsd-down.gif");
+		preloadFlag = true;
+	}
+}
+
+// -->
+</script>
+<!-- End Preload Script -->
+</head>
+
+<body bgcolor="#FFFACD" onLoad="preloadImages();">
+<p class="logo"> <a class="anchBlue" href="http://www.nomoa.com/bsd" 
+   onMouseOver="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;"
+   onMouseOut="changeImages('openbsd', 'mmedia/openbsd.gif'); return true;"
+   onMouseDown="changeImages('openbsd', 'mmedia/openbsd-down.gif'); return true;"
+   onMouseUp="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;"> 
+  <img name="openbsd"  align="absMiddle" 
+        alt="OpenBSD ... The Only way to Go ..." border="0" height="50"
+        src="mmedia/openbsd.gif" width="368"></a> <a href="http://www.kde.org" target="_top"><img src="mmedia/knbutton.gif" width="88" height="31" align="middle" border="0" alt="KDE"></a></p>
+  
+    
+<h1> XF86 3.3x X Windows System </h1>
+<hr color="Fuchsia">
+<p>Table of Contents</p>
+<ul>
+  <li><a href="#introduction">Introduction</a></li>
+  <li><a href="#files">Installing needed X-Files</a></li>
+  <li><a href="#allowX">Allowing X to run (kernel config)</a></li>
+  <li><a href="#determine">Determining your System Configuration </a></li>
+  <ul>
+    <li><a href="#xVideoCard" class="anchBlue">Video Card</a></li>
+    <li><a href="#xMouse" class="anchBlue">Mouse</a></li>
+  </ul>
+  <li><a href="#configure">Configuring the base X environment</a> 
+    <ul>
+      <li>XFree86 version 4.x</li>
+      <li><a href="#xEXConfig" class="anchBlue">Example: Pentium II, Intel EtherExpress 
+        3D AGP Card</a></li>
+    </ul>
+  </li>
+  <li><a href="#startx" class="anchBlue">Ready to Start </a> 
+    <ul>
+      <li><a href="#mouse" class="anchBlue">Configuring .xinitrc (User Customisations)</a></li>
+      <li><a href="#xdm" class="anchBlue">Using xdm the X display manager</a></li>
+      <li><a href="#mouse">Quick Troubleshoot - mouse not working</a></li>
+    </ul>
+  </li>
+  <li><a href="#kde">KDE X window manager and OpenBSD 2.7</a> 
+    <ul>
+      <li><a href="#bootkdelocal">Setting KDE as the default desktop</a> (local)</li>
+      <li><a href="#bootkde">Setting KDE as default desktop</a> (global)</li>
+    </ul>
+  <li><a href="#vesa" class="anchBlue">a VESA configuration for XFree86 4.x</a></li>
+  <li><a href="#vnc">vnc Remote Administration - in X11</a></li>
+  <li><a href="#Xnt" class="anchBlue">X Servers for Windows NT</a></li>
+  <li><a href="#author">Author and Copyright</a></li>
+</ul>
+<hr color="Fuchsia">
+<h2><a name="introduction"></a>Introduction</h2>
+<p class="pFileReference">Security Issues: xf86(4) </p>
+<p>Unix/BSDs provide a great sturdy platform for running services that just need 
+  to be &quot;going and going and ...&quot; For this type of environment the Windowing 
+  Graphical User Interface is mostly unnecessary (or maybe totally unnecessary.) 
+  But a Win GUI augments the tough exterior of the sturdy server with a more approachable 
+  look for those new to Unix/BSDs who are used to a desktop environment (ala MS 
+  Windows.) OpenBSD is as adept as other *NIX systems in displaying a nice gui 
+  and a flexible GUI provides a platform for non-*NIX people to be introduced 
+  to, operate and maintain the general configurations of a a secure OpenBSD box. 
+</p>
+<p>These instructions were tested in OpenBSD 2.6, 2.7 where the kde installation 
+  was to /opt/kde and XFree86 3.3.x was the only X around (kind of).</p>
+<p>When all else fails, consult the extensive documentation provided with XFree86 
+  (copied onto your hard-drive at /usr/X11R6/lib/X11/doc)</p>
+    <h2>
+      <a name="files">Installing needed X-Files</a>
+    </h2>
+    
+<p class="pFileReference">files: included as part of base files (2.x/ARCH)</p>
+<p>If you did not include the X Windows during the system installation, you can 
+  manually extract the files. The distribution files are xbase[26|27].tgz, xserv[26|27].tgz, 
+  and xshare[26|27].tgz. From the root directory / untar the files and then configure 
+  ld to look for the X libraries that you have newly installed. </p>
+    
+<table border="0" width="80%" class="Code">
+  <tr>
+    <td nowrap>
+      <p class="Code"># <b>cd / </b><br>
+        # <b>tar -zxf /[path-to-x]/xbase##.tgz</b> <br>
+        # <b>tar -zxf /[path-to-x]/xfont##.tgz</b> <br>
+        # <b>tar -zxf /[path-to-x]/xlink ##.tgz</b> <br>
+        # <b>tar -zxf /[path-to-x]/xserv##.tgz</b> <br>
+        # <b>tar -zxf /[path-to-x]/xshare##.tgz </b><br>
+        # <b>ldconfig -m /usr/X11R6/lib </b></p>
+    </td>
+  </tr>
+</table>
+<p>
+      You may also wish to include the new X, bin directory into your path /usr/X11R6/bin.
+    </p>
+ 
+<h2><a name="allowX"></a> Allowing X to run (kernel config)</h2>
+
+<p class="pFileReference"> [ref: xf86(4), /usr/X11R6/lib/X11/doc]<br>
+  File: /etc/sysctl.conf </p>
+    <p>
+      To allow the X11 server to start, the following option needs to be allowed. This option will have been set for you if  you answered yes during installation that you intend to install X.
+    </p>
+    
+<p class="pFileReference"> File: /etc/sysctl.conf <br>
+    </p>
+    <p class="Code">
+      #machdep.allowaperture=1
+    </p>
+    <p>
+      To read:
+      <br>
+    </p>
+    <p class="Code">
+      machdep.allowaperture=1
+    </p>
+    
+<p> If you need to make the changes above, you will need to restart the computer 
+  for the kernel configuration to take effect. </p>
+<p>Depending on your Video Card, you may need to set the value to 2. If the above 
+  does not work for you, review the notes on the video card.</p>
+
+<h2> <a name="determine"></a> Determining your System Configuration </h2>
+
+<p class="pFileReference"> Utility: SuperProbe<br>
+  [Ref: /dev/MAKEDEV]<br>
+  [Ref: /usr/X11R6/lib/X11/doc/README.* (various files on configuration the mouse,and 
+  videochips)] </p>
+    <p>
+      To configure, initialise X for your system you will need to know a few details about the hardware on which you
+      are installing X. The basic information is regarding the display devices (video card, monitor) and the mouse
+      (pointing device.)
+    </p>
+    
+<h3> <a name="xVideoCard"></a>Video Card: </h3>
+<p><em>/usr/X11R6/bin/SuperProbe</em> will interrogate your video card to give 
+  you details required during configuration. The output from the program will 
+  include the following items you should write down. </p>
+    <table border="0" width="80%" class="Code">
+  <tr> 
+    <td nowrap> 
+      <p class="Code">First video: ** <br>
+        Chipset: ** <br>
+        Memory:&nbsp; ** <br>
+        RAMDAC:&nbsp; ** </p>
+    </td>
+  </tr>
+</table>
+<p> Example 1: Micron Millenia Pro2 with a Diamond Stealth 3D 2000 the output 
+  is: </p>
+    
+<table border="0" width="80%" class="Code">
+  <tr> 
+    <td nowrap> 
+      <p class="Code"># /usr/X11R6/bin/SuperProbe </p>
+    </td>
+  </tr>
+</table>
+<table border="0" class="pScreenOutput" width="80%">
+  <tr>
+    <td nowrap class="pScreenOutput">[ SuperProbe displays the following ...] 
+      <br>
+      [ ... stuff cut out ... ] <br>
+      First video: Super-VGA <br>
+      Chipset: S3 ViRGE (PCI Probed) <br>
+      Memory:&nbsp; 4096 Kbytes <br>
+      RAMDAC:&nbsp; Generic 8-bit pseudo-color DAC <br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (with 6-bit wide lookup 
+      tables (or in 6-bit mode))</td>
+  </tr>
+</table>
+    
+<p>Additional documentation on configuring this card (chipset) can be found in 
+  /usr/X11R6/lib/X11/doc/README.S3V </p>
+    
+<p> Example 2: Compaq Prolinea 575e with built-in video (?) </p>
+    <table border="0" width="80%" class="Code">
+  <tr> 
+    <td nowrap> 
+      <p class="Code"># /usr/X11R6/bin/SuperProbe </p>
+    </td>
+  </tr>
+</table>
+<table border="0" width="80%" class="pScreenOutput">
+  <tr> 
+    <td nowrap> 
+      <p class="pScreenOutput">[ SuperProbe displays the following ...] <br>
+      </p>
+      <p class="pScreenOutput">&nbsp; </p>
+      <p class="pScreenOutput"> [ ... stuff cut out ... ] </p>
+      <p class="pScreenOutput"> <br>
+        First video: Super-VGA <br>
+        Chipset: Cirrus CL-GD5434 (PCI Probed) <br>
+        Memory:&nbsp; 1024 Kbytes <br>
+        RAMDAC:&nbsp; Cirrus Logic Built-in 15/16/24-bit DAC <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (with 6-bit wide lookup 
+        tables (or in 6-bit mode)) </p>
+      </td>
+  </tr>
+</table>
+<p> Additional documentation on configuring this card (chipset) can be found in 
+  /usr/X11R6/lib/X11/doc/README.cirrus </p>
+<h3> <a name="xMouse"></a>Mouse: </h3>
+<p>In OpenBSD [2.6|2.7|2.8] the standard i386 configuration uses the following 
+  devices for your pointing device (mouse) [ref:&nbsp;/dev/MAKEDEV]. The device 
+  definitions below use an asterix (*) to designate where the unit number should 
+  be placed (eg. mms* would be replaced by mms0 or mms1 etc.) </p>
+    
+<table cellpadding="0" cellspacing="0" class="Code">
+  <tr>
+        
+    <td class="Code" valign="top"> </td>
+        <td class="Code">
+        </td>
+      </tr>
+      <tr>
+        
+    <td class="Code" valign="top"> /dev/mms* </td>
+        <td class="Code">
+          Microsoft bus mouse
+        </td>
+      </tr>
+      <tr>
+        
+    <td class="Code" valign="top"> /dev/lms* </td>
+        <td class="Code">
+          Logitech bus mouse
+        </td>
+      </tr>
+      <tr>
+        
+    <td class="Code" valign="top"> /dev/pms* </td>
+        <td class="Code">
+          PS/2 Mouse
+        </td>
+      </tr>
+      <tr>
+        
+    <td class="Code" valign="top"> /dev/tty* </td>
+        <td class="Code">
+          Serial Port where serial mice could be placed.
+        </td>
+      </tr>
+      <tr>
+        
+    <td class="Code" valign="top"> /dev/mouse </td>
+        <td class="Code">
+          (A link you create to whichever device above actually holds your mouse.)
+        </td>
+      </tr>
+    </table>
+    
+<p>With OpenBSD 2.9, the generic Mouse device wsmouse is used minimising the amount 
+  of work.</p>
+<p>Example 1, Micron Millenia Pro2 using a serial mouse plugged into the DOS labelled 
+  Serial Port A, this means that the Serial Mouse is connected to /dev/tty00 so 
+  I use the following command to link /dev/mouse to /dev/tty00. Note: A ps/2 mouse 
+  port exists but I only had a serial mouse, which was plugged into the serial 
+  port.</p>
+    
+<table border="0" width="80%" class="Code">
+  <tr> 
+    <td nowrap> 
+      <p class="Code"># <b>ln -fs /dev/tty00 /dev/mouse </b></p>
+    </td>
+  </tr>
+</table>
+<p>With OpenBSD 2.9 onwards if the mouse is detected by the OS it will be as /dev/wsmouse0</p>
+<p>Example 2: Compaq Prolinea 575e where I use a PS/2 mouse on the motherboard 
+  ps/2 mouse slot, this means that the mouse is connected to /dev/pms0 so I use 
+  the following command to link /dev/mouse to /dev/pms0</p>
+    
+<table border="0" width="80%" class="Code">
+  <tr> 
+    <td nowrap> 
+      <p class="Code"># <b>ln -fs /dev/pms0 /dev/mouse </b></p>
+    </td>
+  </tr>
+</table>
+<p>With OpenBSD 2.9 onwards if the mouse is detected by the OS it will be as /dev/wsmouse0</p>
+<p>Example 3: Toshiba Satellite Pro 4600 where I use the J-stick device and a 
+  USB Mouse. In OpenBSD 3.0 Dmesg shows that the two devices have been detected:</p>
+<pre>pmsi0 at pckbc0 (aux slot)<br>pckbc0: using irq 12 for aux slot<br>wsmouse0 at pmsi0 mux 0<br>ums0 at uhub0 port 1 configuration 1 interface 0<br>ums0: Microsoft Microsoft IntelliMouse\M-. Optical, rev 1.10/1.21, addr 2, iclass 3/1<br>ums0: 5 buttons and Z dir.<br>wsmouse1 at ums0 mux 0</pre>
+<p>The mouse device (J-stick) connected on the PS/2 Port (pmsi0) has been assigned 
+  to wsmouse0. The USB Mouse, which it even detects as a Microsoft IntelliMouse, 
+  connected on the USB Port (uhub0 port 1) has been assigned to wsmouse1.</p>
+<p>Now, when configuring X in XFree86 3.3.x OpenBSD 2.6|2.7|2.8 I can just say 
+  that the mouse is /dev/mouse, regardless of what options it gives. </p>
+    
+<p> Is there any advantage to creating the /dev/mouse link ? In my limited experience 
+  using OpenBSD 2.6|2.7|2.8 the /dev/mouse link lets me use the mouse with the 
+  XF86Setup program. Without the /dev/mouse link the auto-detect routines in XF86Setup 
+  often do not find the mouse and using the keyboard to navigate XF86Setup is 
+  not an easy task.</p>
+<p>With OpenBSD 2.9|3.0 the wsmouse device is automatically detected by the GUI 
+  installation programs.</p>
+<a name="configure">
+<h2> Configuring the base X environment </h2>
+</a> 
+<p class="pFileReference"> [Ref: /usr/X11R6/lib/X11/doc/QuickStart.doc]<br>
+  Utility: XF86Setup, xf86config </p>
+<p>
+      When X Windows starts it is going to look for its configuration file at: /etc/XF86Config. We create the file
+      through using one of two programs XF86Setup or xf86config.&nbsp; Either program will be asking questions that
+      include a request for the information collected above (Video, Mouse).
+    </p>
+    
+<p> <i><b>XF86Setup</b></i> uses a windowing environment for configuring X. </p>
+<p><i> <b>xf86config</b></i> is a very terse installation process, but is readily 
+  accessible from the keyboard with no need for the mouse. </p>
+    
+<p> Both programs cover a step-by-step process of asking you to verify/specify 
+  the devices you have on your computer that X will use. More details on this 
+  process is covered in the QuickStart.doc (see above for location of the file.) 
+</p>
+    
+<p>If the graphical XF86Setup doesn't work well for you, then use xf86config in 
+  one terminal (eg. Ctrl+Alt+F1) and open up QuickStart.doc in another screen 
+  (Ctrl+Alt+F2). You can then use the QuickStart as an active step-by-step guide 
+  to creating the XF86Config file. </p>
+<h3>XFree86 rev 4.x</h3>
+<p>For XFree86 rev 4.x you can use the xf86cfg program which is similar to xf86config 
+  in behaviour. I've only had experience with installing 4.x on a laptop (where 
+  xf86cfg would not work until after I'd manually configured an XF86Config file, 
+  shown later below.)</p>
+<hr>
+<h3><a name="xEXConfig"></a>Example: Pentium II, Intel EtherExpress 3D AGP Card</h3>
+<p>System: Pentium II Iwill Motherboard <br>
+  Video Card: Intel Ether Express 3D AGP Video Card<br>
+  Video Monitor: 17&quot; SVGA<br>
+  Pointing Device: PS/2 Mouse</p>
+<p> For some reason XF86Setup doesn't recognise the mouse </p>
+<p>on Screen 1 (Ctrl+Alt+F1) login and start xf86config:</p>
+<table border="0" width="80%" class="pScreenOutput">
+  <tr> 
+    <td nowrap> 
+      <p class="pScreenOutput">OpenBSD/i386 (myhostname) (ttyC0)</p>
+    </td>
+  </tr>
+</table>
+<table border="0" width="80%" class="Code">
+  <tr> 
+    <td nowrap> 
+      <p class="Code">login: <b>root</b><br>
+        password: </p>
+      <p class="Code">&nbsp;</p>
+      <p class="Code">/root # <b>xf86config</b></p>
+</td>
+  </tr>
+</table>
+<table border="0" width="80%" class="pScreenOutput">
+  <tr> 
+    <td> 
+      <p class="pScreenOutput">[ . . . xf86config will display . . . ]</p>
+      <p class="pScreenOutput">This program will create a basic XF86Config File, 
+        based on menu selections you make</p>
+      <p class="pScreenOutput">&nbsp;</p>
+      <p class="pScreenOutput">[ . . . stuff cut-out . . . ]</p>
+      </td>
+  </tr>
+</table>
+<p>on Screen 2 (Ctl+Alt+F2) login and load the QuickStart.doc:</p>
+<table border="0" width="80%" class="pScreenOutput">
+  <tr> 
+    <td nowrap> 
+      <p class="pScreenOutput">OpenBSD/i386 (myhostname) (ttyC1)</p>
+    </td>
+  </tr>
+</table>
+<table border="0" width="80%" class="Code">
+  <tr> 
+    <td nowrap> 
+      <p class="Code">login: <b>myuserid</b><br>
+        password:</p>
+      <p class="Code">&nbsp;</p>
+      <p class="Code">myuserid $ <b>less /usr/X11R6/lib/X11/doc/QuickStart.doc</b></p>
+</td>
+  </tr>
+</table>
+<table border="0" width="80%" class="pScreenOutput">
+  <tr> 
+    <td nowrap> 
+      <p class="pScreenOutput">[ . . . less will display . . . ] </p>
+      <p class="pScreenOutput" align="center">Joe Moss<br>
+        <br>
+        27 February 1998<br>
+        <br>
+        Abstract </p>
+      <p class="pScreenOutput" align="center">&nbsp;</p>
+      <p class="pScreenOutput">[ . . . stuff cut-out . . . ]</p>
+      </td>
+  </tr>
+</table>
+<p>Scroll through the documentation to the xf86config section: </p>
+<p class="pScreenOutput">4. Running xf86config</p>
+<p class="pScreenOutput">&nbsp;</p>
+<p class="pScreenOutput">From a text screen, run the xf86config program. ...</p>
+<p>On Screen 1. Follow the directions on Screen 2 (Ctrl+Alt+F2) answer the questions 
+  on Screen 1 (Ctrl+Alt+F1)</p>
+<p>We begin the bombardment of questions from xf86config</p>
+<p>* Mouse Type ? <br>
+  &nbsp;&nbsp;&gt; I pick the PS/2 Mouse (QuickStart 4.3)</p>
+<p> * I'm asked further questions which I ignore until I am asked about the Mouse 
+  Device<br>
+  &nbsp;&nbsp;&gt; I pick /dev/mouse (because I've configured it earlier as in 
+  the above notes)</p>
+<p>* Keyboard settings ? <br>
+  &nbsp;&nbsp;&gt; I just accept the defaults by hitting &lt;Enter&gt; according 
+  to <br>
+  &nbsp;&nbsp;&gt; (QuickStart 4.4)</p>
+<p>* Monitor characteristics<br>
+  &nbsp;&nbsp;&gt; You might get in trouble using my settings, so double-check<br>
+  &nbsp;&nbsp;&gt; (QuickStart 4.5) </p>
+<p>* Graphics Card ?<br>
+  &nbsp;&nbsp;&nbsp;&gt; because I don't know how to answer this I'll use the 
+  card database<br>
+  &nbsp;&nbsp;&nbsp;&gt; (QuickStart 4.6)</p>
+<p>* Which X Server to use<br>
+  &nbsp;&nbsp;&nbsp;&gt; When I picked the card from the database it gave me the 
+  suggested server<br>
+  &nbsp;&nbsp;&nbsp;&gt; so I use the suggested server<br>
+  &nbsp;&nbsp;&nbsp;&gt; (QuickStart 4.7)</p>
+<p>* How much memory I have on the card (I have 8MB)<br>
+  &nbsp;&nbsp;&nbsp;&gt; I manually specify how much RAM I have.<br>
+  &nbsp;&nbsp;&nbsp;&gt; (QuickStart 4.8)</p>
+<p>* What Type of RAMDAC/ClockChips ?<br>
+  &nbsp;&nbsp;&nbsp;&gt; I just skip this section for my system, check the documentation 
+  for your response.</p>
+<p>* Run the probe to check the video configuration?<br>
+  &nbsp;&nbsp;&nbsp;&gt; I don't run the probe.</p>
+<p>* Select the Resolution ?<br>
+  &nbsp;&nbsp;&nbsp;&gt; Look this one up in the notes<br>
+  &nbsp;&nbsp;&nbsp;&gt; (QuickStart 4.9)</p>
+<p>The rest is pretty much straight forward as per QuickStart documentation.</p>
+<p>After completing the above xf86config, I now have a functional XF86Config file, 
+  but I hate it and want to 'tweak' a few things. I could dive into the /etc/XF86Config 
+  file or, now that it is working I can startup <b>XF86Setup</b>.</p>
+<p><b>XF86Setup</b>, now that it is working, let's me change the Resolution settings 
+  (somehow doing 640x480 has lost its appeal) and now I have a default setting 
+  of 16bit Colour using 1024 x 768. (As my dear friend would say, woo hooo)</p>
+<hr>
+<h2><a name="startx"></a>Ready to Start</h2>
+<p><b>Starting:</b></p>
+<p>Both setup programs should create a workable server, and you can test it by 
+  using the <i>startx</i> script. </p>
+    
+<p class="Code"> # /usr/X11R6/bin/startx </p>
+<p><b>Stopping:</b></p>
+<p>To Get out of X, use Ctrl+Alt+Backspace</p>
+<p><b>Testing:</b></p>
+<p>Often, I screw up the resolution, or the color mode configuration. One simple 
+  way of starting X into a different configuration than that which is in the configuration 
+  file, is to use the following example.</p>
+<p>To start X Window using 256 color mode:</p>
+<p class="Code"># startx -- -bbp 8</p>
+<p>To start X Window in true colour mode, use the following command</p>
+<p class="Code"># startx -- -bbp 32</p>
+<p>'startx' is a script to initialise services for the X Window environment which 
+  in the default OpenBSD configuration starts up a simple 'window manager' and 
+  a number of 'xterm' connections.</p>
+<h3><a name="xinitrc"></a>Configuring .xinitrc</h3>
+<p class="pFileReference"> </p>
+<p class="pFileReference">[ref: Red Hat Linux Administrator's Handbook 2nd ed. 
+  Mohammed J. Kabir]</p>
+<p>To allow user customisation, the startx script looks for system wide files 
+  and their corresponding version in the user home directory. If the user files 
+  are not found then the global version is used, otherwise the local user version 
+  is used. In this way, your users can have their own custom visual displays when 
+  they start up in X Window.</p>
+<p>The global configuration files are xserverrc and xinitrc. The user custom versions 
+  are ~/.xserverrc and ~/.xinitrc</p>
+<p>xserverrc or ~/.xserverrc contain details of which X servers to start, while</p>
+<p>xinitrc or ~/.xinitrc contain details of which client applications are going 
+  to be run after the X Window system has started. When the script exits, the 
+  X server is also terminated.</p>
+<p class="pFileReference">File: ~/.xinitrc</p>
+<table border="0" class="Code" width="80%">
+  <tr> 
+    <td nowrap class="Code"> #!/bin/sh<br> 
+	export PATH=$PATH:/opt/kde/bin:/usr/X11R6/bin<br> 
+    /opt/kde/bin/startkde </td>
+  </tr>
+</table>
+<p>After creating the above file, then you need to make the file executable by 
+  performing the following command.</p>
+<p class="Code">$ cd ~</p>
+<p class="Code">$ chmod a+x .xinitrc</p>
+<h3><a name="xdm"></a>Using xdm, the X display manager</h3>
+<p class="pFileReference">[ref: rc.conf(8), xdm(1)]</p>
+<p>To automatically start the machine with the X environment, configuration changes 
+  are made in the /etc/rc.conf.local file </p>
+<p> To enable the X manager to begin on startup, create or change options in <a href="rc.conf.htm#Section1" class="anchBlue">Section 
+  1</a> of the <a href="rc.conf.htm" class="anchBlue">/etc/rc.conf.local</a> file</p>
+<p class="pFileReference"> Edit the File: /etc/rc.conf.local and add a line that 
+  reads as follows in Section 1: </p>
+<p class="Code"> xdm_flags=""&nbsp; # note the use of two double-quotes </p>
+<p>The above setting will override the general settings in /etc/rc.conf which 
+  reads as follows:</p>
+<p class="pScreenOutput"> xdm_flags=NO </p>
+<p> When you restart your machine, xdm will start and greet you with a dialog 
+  prompt for your username and password. </p>
+<p>One mail discussion recommends that you should use xdm_flags=&quot;-udpPort 
+  0&quot; to stop xdm from listening to the Network.</p>
+<p class="pScreenOutput"> From the man pages</p>
+<p class="pScreenOutput"><b>-udpPort port_number</b><br>
+  Specifies the value for the DisplayManager.request&shy;Port resource. This sets 
+  the port-number which xdm will monitor for XDMCP requests. As XDMCP uses the 
+  registered well-known UDP port 177, this resource should not be changed except 
+  for debugging. If set to 0 xdm will not listen for XDMCP or Chooser requests.<br>
+</p>
+<h3><a name="mouse"></a>Quick Troubleshoot - mouse not working </h3>
+
+<p class="pFileReference"> [ref: /usr/X11R6/lib/X11/doc/README.mouse]<br>
+[ref: /dev/MAKEDEV]</p>
+    <p>
+      If starting X there is no mouse, you may find it easier to edit the /etc/XF86Config file directly instead of
+      re-running the configuration programs. The /etc/XF86Config file is separated into different sections relating to
+      providing information for X on the hardware and file locations.
+    </p>
+    <p>
+      Section "Pointer" specifies the details of what X is to search for to find about your mouse (pointing device) and
+      it's hardware location. The important parameters here are:-
+    </p>
+    <p class="Code">
+      Protocol "Microsoft"
+      <br>
+      Device "/dev/mouse"
+    </p>
+    
+<p> If you are not using a Microsoft Mouse compatible mouse, then you can make 
+  the change here if you know what 'protocol' your mouse is using [ref: README.mouse]. 
+  The Device section is where I've had previous problems with the mouse and changing 
+  it here to:&nbsp; Device "/dev/pms0" or which ever port the device is connected 
+  is faster than having to re-run xf86config (where a mistake in the menus can 
+  cause other problems.) <a name="kde"> </a></p>
+<a name="kde">
+<h2>KDE X window manager and OpenBSD 2.7 </h2>
+</a> 
+<p>
+      <a href="ftp://ftp.kde.org/">ftp://ftp.kde.org</a> – location for latest release <a href="http://www.kde.org/">
+      http://www.kde.org</a> website to find mirrors to the folder.
+    </p>
+    <p>
+      Unfortunately I couldn't get the packaged version of kde-1.1.2 to work, so I went with the tar release from the
+      KDE ftp sites.
+    </p>
+    <h3>
+      Doing the non-package version.
+    </h3>
+    
+<p class="pFileReference"> [Ref: i386_openbsd27-README, i386_openbsd25-README] 
+</p>
+    
+<p> Get the tar release of kde-1.1.2 for OpenBSD from the KDE site (or mirrors) 
+  and store it somewhere on your system (eg: /home/user/tmp)</p>
+    
+<table border="0" width="80%" class="Code">
+  <tr> 
+    <td nowrap> 
+      <p class="Code">i386_OpenBSD27-kdeadmin-1.1.2.tgz </p>
+      <p class="Code"> i386_OpenBSD27-kdebase-1.1.2.tgz </p>
+      <p class="Code"> i386_OpenBSD27-kdegames-1.1.2.tgz </p>
+      <p class="Code"> i386_OpenBSD27-kdegraphics-1.1.2.tgz </p>
+      <p class="Code"> i386_OpenBSD27-kdelibs-1.1.2.tgz </p>
+      <p class="Code"> i386_OpenBSD27-kdemultimedia-1.1.2.tgz </p>
+      <p class="Code"> i386_OpenBSD27-kdenetwork-1.1.2.tgz </p>
+      <p class="Code"> i386_OpenBSD27-kdesupport-1.1.2.tgz <br>
+        i386_OpenBSD27-kdeutils-1.1.2.tgz <br>
+        i386_OpenBSD27-korganizer.tgz<br>
+        i386_OpenBSD27-qt144.tgz </p>
+</td>
+  </tr>
+</table>
+<p> The kde binaries were compiled with /opt/kde as their expected base directory. 
+  Extract the files into their expected location (/opt/kde) by moving to the /opt 
+  directory, or mkdir /opt and then cd into it.</p>
+    
+<table border="0" width="80%" class="Code">
+  <tr> 
+    <td nowrap> 
+      <p class="Code"># <b>mkdir /opt</b> <br>
+        # <b>cd /opt</b> </p>
+      <p class="Code"> # <b>tar –zxf /<font color="#0000FF">[path-to-files]</font>/i386_OpenBSD27-kdeadmin-1.1.2.tgz</b> 
+      </p>
+      <p class="Code"> #&nbsp; ... </p>
+      <p class="Code"> #&nbsp; ... </p>
+      <p class="Code"> # <b>tar -zxf /<font color="#0000FF">[path-to-files]</font>/i386_OpenBSD27-kdeutils-1.1.2.tgz</b></p>
+      <p class="Code"># <b>tar -zxf /<font color="#0000FF">[path-to-files]</font>/i386_OpenBSD27-qt144.tgz 
+        </b></p>
+</td>
+  </tr>
+</table>
+<p>
+      Side Note: If the files are downloaded onto another machine within your LAN (or your Internet link is fast) then
+      you can try using the ftp redirection commands:
+    </p>
+     
+    
+<table border="0" width="80%" class="Code">
+  <tr> 
+    <td nowrap> 
+      <p class="Code"># <b>cd /opt</b></p>
+      <p class="Code"># <b>ftp ftp.mymirror.com</b></p>
+      <p class="Code">&nbsp;</p>
+      <p class="Code">{ login stuff ... go to appropriate directory }</p>
+      <p class="Code">&nbsp;</p>
+      <p class="Code">ftp&gt;&nbsp;<b>bi</b> </p>
+      <p class="Code"> ftp&gt; <b>get i386_OpenBSD27-kdeadmin-1.1.2.tgz "| tar 
+        -zxf -"</b> </p>
+      <p class="Code"> ftp&gt;&nbsp; ... </p>
+      <p class="Code"> ftp&gt;&nbsp; ... </p>
+      <p class="Code"> ftp&gt; <b>get i386_OpenBSD27-kdeutils-1.1.2.tgz "| tar 
+        -zxf -"</b></p>
+      <p class="Code">ftp&gt; <b>get i386_OpenBSD27-korganizer.tgz "| tar -zxf 
+        -"</b></p>
+      <p class="Code">ftp&gt; <b>get i386_OpenBSD27-qt144.tgz "| tar -zxf -" </b></p>
+    </td>
+  </tr>
+</table>
+<p> Configure ld so it looks in the kde/lib directory for dynamically loadable 
+  libraries</p>
+    
+<table border="0" width="80%" class="Code">
+  <tr> 
+    <td nowrap> 
+      <p class="Code"># <b>/usr/sbin/ldconfig -m /opt/kde/lib </b></p>
+    </td>
+  </tr>
+</table>
+<p>&nbsp;</p>
+    
+<h2><a name="bootkdelocal"></a>Setting KDE as default desktop (local user)</h2>
+<p>When xdm starts a user X session, it will investigate the users ~/.xsession 
+  file if the user has specified a particular environment. To ensure KDE is your 
+  interface of choice, you can specify the following information:</p>
+<p>File: ~/.xsession</p>
+<table border="0" class="dns" width="80%">
+  <tr> 
+    <td nowrap class="dns"> 
+      <pre>#!/bin/sh
+export PATH=$PATH:/opt/kde/bin:/usr/X11R6/bin
+/opt/kde/bin/startkde</pre>
+    </td>
+  </tr>
+</table>
+<p>After creating the above file, then you need to make the file executable by 
+  performing the following command.</p>
+<p class="Code">$ cd ~</p>
+<p class="Code">$ chmod a+x .xsession</p>
+<h2><a name="bootkde"></a>Setting KDE as default desktop (system wide)    </h2>
+	
+    
+<p> When xdm starts a user session, it follows its own rules on how to setup that 
+  client. The information/configurations for all users are set in the file /usr/X11R6/lib/X11/xdm/Xsession 
+</p>
+    
+<p class="pFileReference"> File: /usr/X11R6/lib/X11/xdm/Xsession </p>
+    
+<p> To have xdm launch KDE as the GLOBAL default user environment, then make the 
+  following modifications to the file Xsession: Change the section in the Xsession 
+  file that reads: </p>
+    
+<table border="0" class="pScreenOutput" width="80%">
+  <tr> 
+    <td nowrap class="pScreenOutput"><p class="pScreenOutput">if [ -f "$startup" ]; then <br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exec "$startup" <br>
+      else <br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if [ -f "$resources" ]; 
+      then <br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+      xrdb -load "$resources" <br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fi <br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;xterm &amp; <br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exec fvwm <br>
+      fi </p></td>
+  </tr>
+</table>
+<p>To read as follows </p>
+<table border="0" class="pScreenOutput" width="80%">
+  <tr> 
+    <td nowrap> 
+      
+      <p class="pScreenOutput"> if [ -f "$startup" ]; then<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exec "$startup" <br>
+        else <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if [ -f "$resources" ]; 
+        then <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+        xrdb -load "$resources" <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fi</p>
+      </td>
+  </tr>
+</table>
+<table border="0" class="Code" width="80%">
+  <tr> 
+    <td nowrap>
+      <p class="Code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>#</b>xterm 
+        &amp; <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>#</b>exec fvwm <br>
+        &nbsp; <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>&nbsp;export PATH=$PATH:/opt/kde/bin:/usr/X11R6/bin 
+        <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/opt/kde/bin/startkde</b></p>
+      </td>
+  </tr>
+</table>
+<table border="0" class="pScreenOutput" width="80%">
+  <tr> 
+    <td nowrap>
+<p class="pScreenOutput"> fi</p>
+      </td>
+  </tr>
+</table>
+<p>The above is a really ugly hack because I can't figure out how to get KDE's 
+  kdm to run as the default xdm. (I do want kdm don't I?) </p>
+<p>If you want more directories in your path than you could add it above, or you 
+  can edit your ~/.bashrc file.</p>
+<p>If you do not want to make KDE the global default Windowing Environment then 
+  you can make the changes to the user file ~/.xsession When xdm attempts to start 
+  an Xsession it will first look into the user's home directory for the file .xsession. 
+  If the file .xsession is found then this will be executed instead of the changes 
+  above. </p>
+<h2><a name="vesa"></a>a VESA configuration for XFree86 4.x</h2>
+<p>The following is a sample VESA /etc/X11/XF86Config I used for my laptop. This 
+  configuration is nice in how it handles multiple pointer devices and has been 
+  used by other laptop owners with a different configuration than specified in 
+  the comments.</p>
+<p>The configuration file works with my:</p>
+<p>OpenBSD 2.9 &amp; 3.0 Beta snapshot August 2001 w/ XFree86 4.1.0<br>
+  FreeBSD 4.3, Linux-Mandrake 8.0 w/ XFree86 4.0.3<br>
+  Toshiba Satellite Pro 4600, 15 inch Super VGA<br>
+  16MB Trident CyberBlade XP</p>
+<p>and has also been reported to work with the following configuration.</p>
+<p>OpenBSD 2.9 /w XFree86 4.0.3<br>
+  Dell Inspiron (laptop) 8000, 15 inch Super XGA+<br>
+  32MB DDR 4X AGP NVIDIA GeForce 2 Go</p>
+<p>The only changes made in this file, from the original files by hme were to 
+  specify the OpenBSD specific port devices and keyboard type.</p>
+<table border="0" class="dns" width="80%">
+  <tr> 
+    <td nowrap>
+      <pre>
+# $Id: x-windows3.htm,v 1.1.1.1 2002/06/10 02:09:58 samt Exp $
+#
+# XF86Config (XFree86 4.0.2) file for Toshiba Satellite Pro 4600.
+#
+# This is a Trident CyberBlade XP graphics card with 16 MByte memory.
+# SVGA graphics is supported up to 1600x1200 @ 85 Hz.
+# The LCD is a 15 inch 1024x768 TFT.
+#
+# The card is not recognised by the trident driver, and the vga driver
+# gives only 320x200 pixels.  So the generic vesa driver is used, which
+# supports up to 1280x1024.
+#
+# This file is bascially created with xf86config for an unsupported VGA card.
+# However, then the Driver was changed from "vga" to "vesa", the DefaultDepth
+# from 8 bpp to 16 bpp, and the Modes list reduced to "1024x768" only.
+#
+# If you add a "1280x1024" mode at the end of the Modes line,
+# you will have a 640x480 viewport on that size of screen, scrolled by
+# mouse movement.  If you put that mode in front of "1024x768" you will
+# have a 1024x768 viewport on a 1280x1024 screen, but cannot scroll to
+# the right or bottom edge.
+#
+# 24 bpp and 32 bpp do not work, I suspect the card does not support
+# 24 bpp and the vesa driver does not support more than 24 bpp.
+#
+# This file is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+#
+# (C) 2001 United Kingdom Astronomy Technology Centre.
+# Horst Meyerdierks &lt;hme over-at roe.ac.uk&gt;.
+# Some sections courtesy of Helmut Bluhm.
+#
+# 2001/03/03: Original version.
+# 2001/03/04: Modified keyboard section, minor addition to mouse section.
+# 2001/03/08: Minor tweaking of keyboard section.
+# 2001/04/27: Remove references to pc101 in keyboard section,
+#             to make my UK keyboard work with Red Hat 7.1 XFree86 4.0.3.
+# 2001/05/23: Dual mouse sections for simultaneous use of PS/2 and USB mice,
+#             also both with IMPS/2 and ZAxisMapping.
+# 2001/06/01: Swap InputDevice lines in ServerLayout to initialise USB mouse
+#             last (after keyboard).
+
+Section "Module"
+    Load        "dbe"   # Double buffer extension
+    SubSection  "extmod"
+      Option    "omit xfree86-dga"   # don't initialise the DGA extension
+    EndSubSection
+    Load        "type1"
+    Load        "freetype"
+EndSection
+
+Section "Files"
+    RgbPath    "/usr/X11R6/lib/X11/rgb"
+    FontPath   "/usr/X11R6/lib/X11/fonts/local/"
+    FontPath   "/usr/X11R6/lib/X11/fonts/misc/"
+    FontPath   "/usr/X11R6/lib/X11/fonts/75dpi/:unscaled"
+    FontPath   "/usr/X11R6/lib/X11/fonts/100dpi/:unscaled"
+    FontPath   "/usr/X11R6/lib/X11/fonts/Type1/"
+    FontPath   "/usr/X11R6/lib/X11/fonts/Speedo/"
+    FontPath   "/usr/X11R6/lib/X11/fonts/75dpi/"
+    FontPath   "/usr/X11R6/lib/X11/fonts/100dpi/"
+    FontPath   "/usr/local/AbiSuite/fonts/"
+EndSection
+
+Section "ServerFlags"
+EndSection
+
+Section "InputDevice"
+    Identifier  "Keyboard1"
+    Driver      "Keyboard"
+    Option "AutoRepeat"  "500 30"
+    Option "LeftAlt"     "Meta"
+    Option "RightAlt"    "Meta"
+    Option "ScrollLock"  "Compose"
+    Option "RightCtl"    "Control"
+    Option "XkbKeycodes" "xfree86"
+    Option "XkbTypes"    "default"
+    Option "XkbCompat"   "default"
+    Option "XkbRules"    "xfree86"
+    Option "XkbLayout"   "us"
+EndSection
+
+Section "InputDevice"
+    Identifier  "USBMouse"
+    Driver      "mouse"
+    Option "Protocol"    "wsmouse"
+    Option "Device"      "/dev/wsmouse1"
+    Option "Emulate3Buttons"
+    Option "Emulate3Timeout" "150"
+    Option "ZAxisMapping" "4 5"
+EndSection
+
+Section "InputDevice"
+    Identifier  "Internal"
+    Driver      "mouse"
+    Option "Protocol"    "wsmouse"
+    Option "Device"      "/dev/wsmouse0"
+    Option "Emulate3Buttons"
+    Option "Emulate3Timeout" "150"
+    Option "ZAxisMapping" "4 5"
+EndSection
+
+Section "Monitor"
+    Identifier  "Tosh 4600 LCD"
+    HorizSync   31.5 - 82.0
+    VertRefresh 50-90
+EndSection
+
+Section "Device"
+    Identifier  "Standard VGA"
+    VendorName  "Unknown"
+    BoardName   "Unknown"
+#   Chipset     "generic"
+    Driver      "vga"
+#   BusID       "PCI:0:10:0"
+#   VideoRam     256
+#   Clocks       25.2 28.3
+EndSection
+
+Section "Device"
+    Identifier  "Trident XP"
+    Driver      "vesa"
+        # unsupported card
+    #VideoRam    16384
+    # Insert Clocks lines here if appropriate
+EndSection
+
+Section "Screen"
+    Identifier  "Screen 1"
+    Device      "Trident XP"
+    Monitor     "Tosh 4600 LCD"
+    DefaultDepth 16
+    Subsection "Display"
+        Depth       8
+        Modes       "1024x768"
+        ViewPort    0 0
+    EndSubsection
+    Subsection "Display"
+        Depth       16
+        Modes       "1024x768"
+        ViewPort    0 0
+    EndSubsection
+EndSection
+
+Section "ServerLayout"
+    Identifier  "Simple Layout"
+    Screen      "Screen 1"
+    InputDevice "Internal"  "CorePointer"
+    InputDevice "Keyboard1" "CoreKeyboard"
+    InputDevice "USBMouse"  "SendCoreEvents"
+EndSection</pre>
+    </td>
+  </tr>
+</table>
+<p>My apologies to the purist, I tried to maintain where I got the above information 
+  (some Toshiba site in Japan) but didn't do a good job of that so I do not have 
+  a link to the original source.</p>
+<h2><a name="vnc"></a>vnc Remote Administration - in X11 </h2>
+	
+ 
+<p class="pFileReference"> package: vnc-3.3.2r3.tar.gz (available as package)<br>
+  Windows Binaries: vnc-3.3.3r2_x86_win32.tgz<br>
+  [ref: /usr/local/share/docs/vnc/*.html]</p>
+<p> VNC is a neat set of programs to allow remote access to the GUI environment 
+  from either a separate X box, or a Windows box. If you're like me and have too 
+  many monitors giving off heat, it is nice to work from one keyboard and minimise 
+  the number of powered-on monitors. Of course, it is also helpful if the system 
+  is in another location and you need a GUI environment to do some work. </p>
+<p>Install the package</p>
+    
+<table border="0" class="Code" width="80%">
+  <tr> 
+    <td nowrap> 
+      <p class="Code"># <b>pkg_add /<font color="#0000FF">[path-to-package]</font>/vnc-3.3.2r3.tgz 
+        </b></p>
+    </td>
+  </tr>
+</table>
+<p> The installation will create a ~/.vnc folder which will hold the pid files 
+  indicating which pid different VNC servers may be running on the machine serving 
+  up X enquiries. The directory will contain *.pid, *.log files for running vncs. 
+  The xstartup file is the x initialisation file.&nbsp; The simplest solution 
+  is to copy the existing ~/.xinitrc as the new xstartup file.</p>
+    
+<table border="0" class="Code" width="80%">
+  <tr> 
+    <td nowrap> 
+      <p class="Code"># <b>cp ~/.vnc/xstartup ~/.vnc/xstartup- </b><br>
+        # <b>cp ~/.xinitrc ~/.vnc/xstartup </b></p>
+    </td>
+  </tr>
+</table>
+<p>
+      Start the X vnc server (vncserver) at the command line and you will be prompted to enter a server password. There
+      is a critical security issue with maintaining this password since it automatically logs the user in as the client
+      running the server.&nbsp; Which will be required when using a client to access the machine.&nbsp;
+    </p>
+    
+<p> After the server has started it will notify at the terminal which 'display' 
+  the X will be serving on. For example, <span class="c3">localhost:0 is the physically 
+  connected screen and <span class="c3">server:1 is the 1<sup>st</sup> available 
+  outside X client.</span></span></p>
+<table border="0" class="Code" width="80%">
+  <tr> 
+    <td nowrap> 
+      <p class="Code"># <b>vncserver</b></p>
+    </td>
+  </tr>
+</table>
+<table border="0" class="pScreenOutput" width="80%">
+  <tr> 
+    <td nowrap> 
+      <p class="pScreenOutput">&nbsp;</p>
+      <p class="pScreenOutput">You will require a password to access your desktops.<br>
+        <br>
+        Password:<b>&lt;-- password is not echoed</b><br>
+        Verify: <b>&nbsp;&lt;-- not echoed</b><br>
+        <br>
+        New 'X' desktop is iwill:2<br>
+        <br>
+        Starting applications specified in /root/.vnc/xstartup<br>
+        Log file is /root/.vnc/iwill:2.log </p>
+      </td>
+  </tr>
+</table>
+<p>I now have vncserver running at desktop [ iwill:2 ] and session information 
+  logging to iwill:2.log. The desktop is at &quot;iwill&quot; since that is my 
+  machine hostname, and it is giving me the vncserver on display 2.</p>
+<p>The password is stored as an encrypted file in ~/.vnc/passwd so don't let anyone 
+  else get at it. The password will be used for all vncserver sessions (including 
+  new vncserver configurations) until I delete the file.</p>
+<p>From my Windows 2000 machine I can now use vncViewer to connect to my OpenBSD 
+  box. After installing the vnc programs on the Win2000 box I start &quot;Run 
+  vnc Viewer&quot; and answer the dialog boxes:</p>
+<table border="0" class="pScreenOutput" width="80%">
+  <tr> 
+    <td nowrap> 
+      <p class="pScreenOutput">VNC server - &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ 
+        iwill:2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;] 
+        <br>
+        Session Password - &nbsp;[&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]</p>
+    </td>
+  </tr>
+</table>
+<p>Now I'm browsing the OpenBSD box using KDE on Windows 2000, great for those 
+  KDE Games?</p>
+<p>For further information on stopping vncserver (vncserver -kill :2) and other 
+  options, browse the documentation (no man or info pages) supplied as html in 
+  the /usr/local/share/doc directory. </p>
+<h2><a name="Xnt"></a>X Servers for Windows NT</h2>
+<p>As I do most of my work under Windows NT (2000 etc.) it is always useful to 
+  be able to use the one keyboard/screen combination to access all the computers. 
+  Usually, since most administration work for OpenBSD is character based, I am 
+  more than satisfied with using an SSH connection. Some people prefer a full 
+  X environment; X for Windows can be searched on google, and some of the below 
+  might be useful. Apart from vnc above, I haven't used them, but have come across 
+  their reference on the web and in lists.</p>
+<h4>Freeware</h4>
+<p>Mix-NT<br>
+  CygWin <a href="http://sources.redhat.com/cygwin/">http://sources.redhat.com/cygwin/<br>
+  </a>vnc <a href="http://www.uk.research.att.com/vnc/">http://www.uk.research.att.com/vnc/</a></p>
+<h4>Shareware</h4>
+<p>XWin32 - <a href="http://www.starnet.com/products/">http://www.starnet.com/products/<br>
+  </a>XWinPro</p>
+<h4>Commercial</h4>
+<p>Hummingbird Xceed - <a href="http://www.hummingbird.com/products/nc/exceed/index.html">http://www.hummingbird.com/products/nc/exceed/index.html</a></p>
+<h4>Unknown</h4>
+<p>Reflections X - <a href="http://www.wrq.com/products/reflection/rsx/">http://www.wrq.com/products/reflection/rsx/<br>
+  </a>Kea X - <a href="http://www.attachmate.com/products/profile/0,1016,3194_1,00.html">http://www.attachmate.com/products/profile/0,1016,3194_1,00.html<br>
+  </a>Chameleon - ?<br>
+  <a href="http://www.microimages.com/">? - http://www.microimages.com/</a></p>
+<h2><a name="author"></a>Author and Copyright</h2>
+<p>Copyright (c) 2000/1/2 Samiuela LV Taufa. All Rights Reserved.</p>
+
+<p>You are permitted and encouraged to use this guide for fun or for profit as you see fit. If you republish this work in what-ever form, it would be nice (though not enforceable) to be credited.</p>
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+  <tr>
+    <td class="block" valign="MIDDLE" width="100%" bgcolor="#cccccc"><strong>
+      <p class="block">&nbsp;X a pretty face on OpenBSD</p>
+      </strong></td>
+  </tr>
+</table>
+<p><font color="#808080" face="sans-serif" size="-2"><strong>Copyright&nbsp; &copy; 
+  2000/1/2
+<a href="http://www.nomoa.com">NoMoa.COM</a> All rights reserved.</strong></font></p>
+	
+  </body>
+</html>
+

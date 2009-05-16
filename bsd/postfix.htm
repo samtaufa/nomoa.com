@@ -1,0 +1,2000 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+  <title>=8&gt; nomoa.com/bsd OpenBSD - Serving Virtual User Account Mail</title>
+  <link rel="STYLESHEET" type="text/css" href="openbsd.css">
+  <script language="JavaScript">
+<!--
+
+function newImage(arg) {
+	if (document.images) {
+		rslt = new Image();
+		rslt.src = arg;
+		return rslt;
+	}
+}
+
+function changeImages() {
+	if (document.images && (preloadFlag == true)) {
+		for (var i=0; i<changeImages.arguments.length; i+=2) {
+			document[changeImages.arguments[i]].src = changeImages.arguments[i+1];
+		}
+	}
+}
+
+var preloadFlag = false;
+function preloadImages() {
+	if (document.images) {
+		openbsd_over = newImage("mmedia/openbsd-over.gif");
+		openbsd_down = newImage("mmedia/openbsd-down.gif");
+		preloadFlag = true;
+	}
+}
+
+// -->
+  </script><!-- End Preload Script -->
+	<style type="text/css">
+.style1 {
+	background-color: #DCDCDC;
+}
+.style4 {
+	font-weight: bold;
+	color: blue;
+	letter-spacing: -1pt;
+}
+.style5 {
+	font-family: Verdana, Geneva, Arial, Helvetica, sans-serif;
+	font-size: small;
+}
+.style6 {
+	color: #0066FF;
+}
+.style7 {
+	margin-top: 19px;
+}
+.style8 {
+	font-family: Verdana, Geneva, Arial, Helvetica, sans-serif;
+	font-weight: normal;
+}
+.style10 {
+	border-width: 0px;
+}
+.style18 {
+	border-left-style: none;
+	border-left-width: medium;
+	border-top-style: none;
+	border-top-width: medium;
+	border-bottom-style: solid;
+	border-bottom-width: 1px;
+}
+.style19 {
+	border-right-style: none;
+	border-right-width: medium;
+	border-top-style: none;
+	border-top-width: medium;
+	border-bottom-style: solid;
+	border-bottom-width: 1px;
+}
+.style20 {
+	border-left-style: none;
+	border-left-width: medium;
+	border-top-style: none;
+	border-top-width: medium;
+	border-bottom-style: none;
+	border-bottom-width: medium;
+}
+.style21 {
+	border-right-style: none;
+	border-right-width: medium;
+	border-top-style: none;
+	border-top-width: medium;
+	border-bottom-style: none;
+	border-bottom-width: medium;
+}
+.style22 {
+	border-left-style: none;
+	border-left-width: medium;
+	border-top-style: solid;
+	border-top-width: 1px;
+	border-bottom-style: none;
+	border-bottom-width: medium;
+}
+.style23 {
+	border-right-style: none;
+	border-right-width: medium;
+	border-top-style: solid;
+	border-top-width: 1px;
+	border-bottom-style: none;
+	border-bottom-width: medium;
+}
+</style>
+</head>
+<body onload="preloadImages();" bgcolor="#fffacd">
+<p class="logo">
+<a class="anchBlue" href="http://www.nomoa.com/bsd"
+ onmouseover="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;"
+ onmouseout="changeImages('openbsd', 'mmedia/openbsd.gif'); return true;"
+ onmousedown="changeImages('openbsd', 'mmedia/openbsd-down.gif'); return true;"
+ onmouseup="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;">
+<img name="openbsd" alt="OpenBSD ... The Only way to Go ..."
+ src="mmedia/openbsd.gif" align="middle" border="0" height="50"
+ width="368"></a></p>
+<h1> postfix - Serving Up e-mail for Virtual Users</h1>
+<hr color="fuchsia">
+<p> Table of Contents: </p>
+<ul>
+  <li><a href="#introduction">Introduction</a></li>
+	<ul><li><a href="#1.1Objectives">Objectives</a></li>
+		<li><a href="#1.2Requirements">Requirements</li></a>
+		<ul><li>The DNS Server</li>
+			<li>The Mail Transport Agent - postfix</li>
+			<li>POP3, IMAP Server - dovecot</li>
+			<li>Authentication Database - MySQL</li>
+			<li>GUI User Management System - postfixadmin</li></ul></ul>
+	<li><a href="InstallingPostfix">Installing Postfix</a>
+	<ul>
+	<li><a href="#2.1InstallingThePort">Installing the Port</a></li>
+	<li><a href="#2.2ReadTheDocument">Read the Documentation</a></li>
+	<li><a href="#2.3EnablePostfix">Enable Postfix</a></li>
+	<li><a href="#2.4CustomisePostfix">Customise Postfix for your local install</a></li>
+	<li><a href="#2.5EnableAutomaticStartup">Enable automatic startup on System Restart</a></li>
+	<li><a href="#2.6CompleteDisablingSendmail">Complete Disabling Sendmail</a></li>
+	<li><a href="#2.7VerifyAliasConfiguration">Verify Alias Configuration</a></li>
+	</ul>
+	<li><a href="#StartingPostfix">Starting Postfix</li></a>
+	<ul>
+		<li><a href="#3.1RestartSyslogd">Restart syslogd</a> </li>
+		<li><a href="#3.2KillExistingSessionOfSendmail">Kill existing session of 
+		Sendmail</a> </li>
+		<li><a href="#3.3RebuildTheAliasFile">Rebuild alias file</a> </li>
+		<li><a href="#3.4CheckFilesAndConfiguration">Check files and configuration</a> </li>
+		<li><a href="#3.5StartPostfix">Start postfix</a> </li>
+	</ul>
+	<li><a href="#TestingTheMailServer">Testing SMTP</li></a>
+	<ul>
+		<li><a href="#4.1telnet">telnet localhost smtp</a></li>
+		<li><a href="#4.2MailLog">Mail Log</a></li>
+		<li><a href="#4.3mail">/usr/bin/mail</a></li>
+		<li><a href="#4.4Summary">Summary</a></li>
+	</ul>
+	<li><a href="#ConfiguringAVirtualEmailService_Basic">Configuring a Virtual Email Service - basic test install</li></a>
+	<ul>
+		<li>&nbsp;<a href="#5.1BaseConfiguration">Base Configuration for virtual hosting</a>
+		<ul>
+			<li><a href="#5.1.1MainConfiguration">Main Configuration</a> </li>
+			<li><a href="#5.1.2DiskLayout">Disk Layout for Virtual Domains</a></li>
+			<li><a href="#5.1.3VirtualDomains">Virtual Domains</a></li>
+			<li><a href="#5.1.4VirtualMailbox">Virtual Mailbox </li>
+			</a>
+			<ul><li>Virtual Accounts - alpha.example.org</li>
+				<li>Virtual Accounts - beta.example.org</li>
+				<li>Virtual Accounts - gamma.example.org</li></ul>
+			<li><a href="#5.1.5VirtualAliases">Virtual Aliases (currently broken) </li>
+			</a>
+			<ul><li>Virtual Alias - alpha.example.org</li>
+				<li>Virtual Alias - beta.example.org</li>
+				<li>Virtual Alias - gamma.example.org</li></ul>
+		</ul>
+		</li>
+		<li><a href="#5.2CreateTheSystemUserAccount">Create system user account for managing virtual mail</a> </li>
+		<li><a href="#5.3TestingConfiguration">Testing Configuration</li></a>
+		<ul>
+			<li><a href="#5.3.1postconf">postconf</a></li>
+			<li><a href="#5.3.1telnet">telnet localhost smtp</a></li>
+			<li><a href="#5.3.2MailLog">Mail Log</a></li>
+			<li><a href="#5.3.3MailStore">Mail Store</a></li>
+		</ul>
+	</ul>
+	<li><a href="#6ConfiguringVirtualEmail_MySQL">Configuring a Virtual Email Service - MySQL</li></a>
+	<ul>
+		<li><a href="#6.1ConfiguringMySQL">Configure MySQL </li>
+		</a>
+		<ul>
+			<li><a href="#6.1.1CreatingTheDatabase">Creating the Database</a></li>
+			<li><a href="#6.1.2CreatingTheAliasTable">Creating the Alias Table</a></li>
+			<li><a href="#6.1.3CreatingTheDomainTable">Creating the Domain Table</a></li>
+			<li><a href="#6.1.4CreatingTheMailboxTable">Creating the Mailbox Table</a></li>
+			<li><a href="#6.1.5OtherTablesForPostfixadmin">Other Tables for postfixadmin</a></li>
+		</ul>
+		</ul>
+	<ul>
+		<li><a href="#6.2PopulatingTheTables">Populating the Tables</a>
+		<ul>
+			<li><a href="#6.2.1SuperAdministratorAccount">Super Administrator Account</a></li>
+		<li><a href="#6.2.2VirtualDomains">Virtual Domains</a></li>
+		<li><a href="#6.2.3VirtualMailbox">Virtual Mailboxes</li></a>
+			<ul>
+			<li>Virtual Users for alpha.example.org</li>
+			<li>Virtual Users for beta.example.org</li>
+			<li>Virtual Users for gamma.example.org</li>
+			</ul>
+			<li><a href="#6.2.4VerifyOurSettings">Verify our settings</a></li>
+		</ul>
+		<li><a href="#6.3CreateTheSystemUserAccount">Create system user account for managing virtual mail</a> 
+		<li><a href="#6.4ConfiguringPostfix">Configuring Postfix</li></a>
+			<li><a href="#6.5CreatingThePostfixToMySQLSettingsFile">Creating the Postfix to MySQL settings files</a>
+		
+			<ul>
+				<li><a href="#6.5.1VirtualDomains">Virtual Domains</a></li>
+				<li><a href="#6.5.2VirtualMailbox">Virtual Mailbox</a></li>
+				<li><a href="#6.5.3VirtualAliases">Virtual Aliases</a><li>
+				<a href="#6.5.4RestartPostfix">Restart Postfix</a></ul>
+		</ul>
+	<ul>
+		<li><a href="#6.6Testing">Testing</a>
+		<ul>
+			<li><a href="#6.6.1telnet">telnet localhost smtp</a></li>
+			<li><a href="#6.6.2MailLog">Mail Log</a></li>
+			<li><a href="#6.6.3MailStore">Mail Store</a></li>
+			<li><a href="#6.2.5MySQLLogFile">MySQL Log File</a></li>
+		</ul>
+	</ul>
+	<li>Configuring a Virtual Email Service - MySQL</li>
+	high load server</li>
+	<li>Reference Resources</li>
+	<li><a href="#author">Author and Copyright</a></li>
+</ul>
+<hr color="fuchsia">
+<h2><a name="introduction"></a>Introduction</h2>
+<p class="pFileReference">[Ref: OpenBSD 4.0 release, postfix-2.3.2] </p>
+<p> OpenBSD ships preconfigured with Sendmail <a href="http://www.sendmail.org">
+http://www.Sendmail.org</a> as the mail server (MTA.)</p>
+<p> We wanted to use virtual user accounts for email for a number of reasons, 
+and chose Postfix. This collection of notes will hopefully assist the new mail 
+administrator into installing and verifying a virtual user accounts mail 
+service.</p>
+<h3> <a name="1.1Objectives"></a>Objectives</h3>
+<p> We&#39;ve installed a few virtual user mail servers, through trial and error, even with the better guides out 
+there, and hopefully these notes adds useful tests, log 
+reviews during the install process to confidently reach a successful install every-time.</p>
+<p> These guides will therefore install and test a </p>
+<ul>
+	<li>base Postfix no virtual accounts, before progressing to</li>
+	<li>Virtual Accounts using hash files, before progressing to</li>
+	<li>Virtual Accounts using MySQL</li>
+</ul>
+<p> This installation exercise we are going to install three virtual domains 
+on a single host, with three virtual accounts for each virtual domain:</p>
+<table align="center" class="style10">
+	<tr>
+		<td style="width: 255px" class="style22"> <strong>Host</strong></td>
+		<td style="width: 609px" class="style23">myhost.example.org</td>
+	</tr>
+	<tr>
+		<td style="width: 255px" class="style20">
+<strong>Virtual Mail Base Directory</strong></td>
+		<td style="width: 609px" class="style21">/var/spool/postfix/vmail</td>
+	</tr>
+	<tr>
+		<td style="width: 255px" class="style20">
+<strong>Virtual Domain</strong></td>
+		<td style="width: 609px" class="style21">alpha.example.org ~ <strong>users</strong>: 
+alfred, bob, charlie</td>
+	</tr>
+	<tr>
+		<td style="width: 255px" class="style20">
+<strong>Virtual Domain</strong></td>
+		<td style="width: 609px" class="style21">beta.example.org ~ <strong>users</strong>: 
+auntie, bill, chou</td>
+	</tr>
+	<tr>
+		<td style="width: 255px" class="style18">
+<strong>Virtual Domain</strong></td>
+		<td style="width: 609px" class="style19">gamma.example.org ~ <strong>users</strong>: 
+alistair, ben, cinder</td>
+	</tr>
+</table>
+<p> Using OpenBSD&#39;s Postfix configuration, we will store the virtual mailboxes 
+in: /var/spool/postfix/vmail</p>
+<h3> <a name="1.2Requirements"></a>Requirements</h3>
+<p> An operational mail server requires a number of applications/services 
+working together to provide the final &#39;product&#39; that users take for granted as 
+&#39;e-mail.&#39; MOst of these tools are documented together with this documentation on 
+installing, testing Postfix. The tools we are putting together for a smooth mail 
+operation are:</p>
+<ul>
+	<li>The DNS Server</li>
+	<li>The Mail Transport Agent - Mail Server:
+	Postfix</li>
+	<li>POP3, IMAP Server for clients - <a href="dovecot.htm">Dovecot</a><a href="http://www.dovecot.org">
+	<img alt="dovecot.org" longdesc="(dovecot.org)" src="mmedia/link.gif" width="19" height="8" border="0"></a></li>
+	<li>Authentication Database - <a href="mysql.htm">MySQL</a>
+	<a href="http://www.mysql.com">
+	<img alt="http://www.mysql.com" longdesc="mysql.org" src="mmedia/link.gif" width="19" height="8" border="0"></a></li>
+	<li>GUI Management Tool - <a href="postfixadmin.htm">postfixadmin</a> 
+	<a href="http://high5.net">
+	<img alt="http://high5.net" longdesc="http://high5.net" src="mmedia/link.gif" width="19" height="8" border="0"></a></li>
+</ul>
+<h4> The DNS Server</h4>
+<p> One infrastructure that is very key to ensuring that your email server 
+really works, is the Global DNS. We do not show you how to configure your DNS so 
+email can go to your box, or email is accepted from your box, but there are
+<a href="http://bind8nt.meiway.com/itsaDNSmess.cfm">good tips</a> on the 
+Internet on what to do.</p>
+<h4> The Mail Transport Agent - Mail Server: Postfix</h4>
+<p> The rest of this documentation is dedicated to the installation, and 
+configuration of Postfix as a Virtual User Account Mail Server.</p>
+<p> postfix is found in the ports collection for OpenBSD, and you can get 
+further information from the developer site <a href="http://www.postfix.org">
+http://www.postfix.org</a> </p>
+<h4> POP3, IMAP Server for clients - Dovecot</h4>
+<p> The installation of a POP3, IMAP server to work with this virtual user 
+account configuration of Postfix <a href="dovecot.htm">follows the link 
+dovecot.htm</a>.</p>
+<p> We purposely provide that documentation separately to ensure we can :</p>
+<ul>
+	<li>provide 
+more validation and testing sequences for <a href="dovecot.htm">a dovecot installation</a>.</li>
+	<li>allow testing of postfix independent of either Dovecot (or any other 
+	POP3, IMAP server) or a GUI Management tool.</li>
+</ul>
+<h4> Authentication Database - MySQL</h4>
+<p> Although virtual user accounts can be managed and created using text/hash 
+database files, 
+a large install can be managed better using a database server backend because other 
+tools can interact with the database server, be used for managing users.</p>
+<p> This documentation will describe how to configure the MySQL 
+database server for virtual user accounts. Our documentation for installing and testing MySQL for OpenBSD 
+<a href="mysql.htm">follows the 
+link mysql.htm.</a></p>
+<h4> GUI Management Tool - postfixadmin</h4>
+<p> postfixadmin is a wonderful Web GUI tool for managing your postfix 
+installation.</p>
+<p> <span lang="en-us">This sample installation should work tested without the 
+need for postfixadmin. I would advise installing postfixadmin for a simplified 
+mechanism for managing virtual user accounts.</span></p>
+<p> Our documentation for installing and configuring postfixadmin
+<a href="postfixadmin.htm">follows the link postfixadmin.htm</a></p>
+<h2> <a name="InstallingPostfix"></a>Installing Postfix</h2>
+<p> The dovecot, mysql flavor of Postfix is not normally available as a 
+pre-built package, so the best way to get it is to install the ports tree and 
+build the package manually.</p>
+<h3> <a name="2.1InstallingThePort"></a>Installing the Port</h3>
+<p> To build the package from ports, we go into the postfix/stable port and make 
+a flavor.</p>
+<p class="Code"> # cd /usr/ports/mail/postfix/stable</p>
+<p class="Code"> # make show=FLAVORS</p>
+<p class="pScreenOutput"> sasl2 ldap mysql pgsql dovecot</p>
+<p class="Code"> # env FLAVOR=&quot;mysql dovecot&quot; make package</p>
+<p class="Code"> # env FLAVOR=&quot;mysql dovecot&quot; make install</p>
+<table class="Code" width="800">
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">
+		--- postfix-2.3.2-mysql-dovecot -------------------<br>
+		-&gt; Creating /etc/mailer.conf.postfix<br>
+		-&gt; Creating Postfix spool directory and chroot area under /var/spool/postfix<br>
+		<br>
+&nbsp;&nbsp;&nbsp; Warning: you still need to <strong>edit myorigin/mydestination/mynetworks</strong><br>
+&nbsp;&nbsp;&nbsp; parameter settings in /etc/postfix/main.cf.<br>
+		<br>
+&nbsp;&nbsp;&nbsp; See also http://www.postfix.org/faq.html for information about<br>
+&nbsp;&nbsp;&nbsp; dialup sites or about sites inside a firewalled network.<br>
+		<br>
+&nbsp;&nbsp;&nbsp; BTW: <strong>Check your /etc/mail/aliases</strong> file and be sure to set up<br>
+&nbsp;&nbsp;&nbsp; aliases that send mail for root and postmaster to a real person,<br>
+&nbsp;&nbsp;&nbsp; then <strong>run /usr/local/sbin/newaliases</strong>.<br>
+		<br>
+		+---------------<br>
+		| Configuration files has been installed in /etc/postfix.<br>
+		| Please update these files to meet your needs.<br>
+		+---------------<br>
+		+---------------<br>
+		| Postfix can be set up to replace Sendmail entirely. Please read the<br>
+		| documentation at file:/usr/local/share/doc/postfix/html/index.html or<br>
+		| http://www.postfix.org/ carefully before you decide to do this!<br>
+		|<br>
+		| To replace Sendmail with postfix you have to install a new mailer.conf<br>
+		| using the following command:<br>
+		|<br>
+		|&nbsp;&nbsp;&nbsp;&nbsp; /usr/local/sbin/postfix-enable<br>
+		|<br>
+		| If you want to restore Sendmail, this is done using the following command:<br>
+		|<br>
+		|&nbsp;&nbsp;&nbsp;&nbsp; /usr/local/sbin/postfix-disable</td>
+    </tr>
+</table>
+<p>The package build gives us a number of tasks to perform before we can assume 
+that postfix is minimally installed.</p>
+<ol>
+	<li>Read the documentation</li>
+	<li>Enable Postfix using provided script</li>
+	<li>Customise Postfix for your local install</li>
+	<li>Enable automatic startup on System Restart (i.e. edit startup 
+	configuration file: /etc/rc.conf.local)</li>
+	<li>Complete Disabling Sendmail (i.e. edit root&#39;s crontab to disable 
+	Sendmail)</li>
+	<li>Verify alias configuration</li>
+</ol>
+<h3><a name="2.2ReadTheDocument"></a>1. Read the documentation</h3>
+<p>The documentation is made available in html format so let&#39;s put it into our 
+webspace for future reading.</p>
+<table class="Code" width="800">
+    <tr>
+      <td class="Code_td" nowrap="nowrap">
+		<strong># mkdir -p /var/www/htdocs/manual<br>
+		# cp -R /usr/local/share/doc/postfix/html /var/www/htdocs/manual/postfix</strong></td>
+    </tr>
+</table>
+<p>If you&#39;ve previously <a href="apache.htm">enabled the standard OpenBSD apache</a> distribution then 
+you should now be able to browse the Postfix documentation locally at 
+<a href="http://www.example.org/manual/postfix/">http://www.example.org/manual/postfix/</a>. 
+If you have enabled the Apache server and have no intentions of doing so, then 
+you can read the official documentation at
+<a href="http://www.postfix.org/docs.html">http://www.postfix.org/docs.html</a>.</p>
+<h3><a name="2.3EnablePostfix"></a>2. Enable Postfix using OpenBSD provided script postfix-enable</h3>
+<p>The OpenBSD port provides a script &#39;postfix-enable&#39; that will back-up the 
+standard Sendmail installation, and install postfix.</p>
+<table class="Code" width="800">
+    <tr>
+      <td class="Code_td" nowrap="nowrap">
+		<strong># /usr/local/sbin/postfix-enable</strong></td>
+    </tr>
+</table>
+<table class="Code" width="800">
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">
+		old /etc/mailer.conf saved as /etc/mailer.conf.pre-postfix<br>
+		postfix /etc/mailer.conf enabled<br>
+		<br>
+		NOTE: do not forget to add Sendmail_flags=&quot;-bd&quot; to<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; /etc/rc.conf.local to startup postfix correctly.<br>
+		<br>
+		NOTE: do not forget to add &quot;-a /var/spool/postfix/dev/log&quot; to<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; syslogd_flags in /etc/rc.conf.local and restart syslogd.<br>
+		<br>
+		NOTE: do not forget to remove the &quot;Sendmail clientmqueue runner&quot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; from root's crontab.</td>
+    </tr>
+</table>
+<h3> <a name="2.4CustomisePostfix"></a>3. Customise Postfix for your local install</h3>
+<p class="pFileReference"> [ref: <a href="http://www.postfix.org/INSTALL.html#mandatory">
+http://www.postfix.org/INSTALL.html#mandatory</a> ]</p>
+<p> To customise Postfix for our local install, we need to modify Postfix&#39;s main configuration file: /etc/postfix/main.cf</p>
+<table class="Code" width="800">
+    <tr>
+      <td nowrap="nowrap" class="heading">
+		File Fragment: /etc/postfix/main.cf</td>
+    </tr>
+    <tr>
+      <td class="Code_td" nowrap="nowrap">
+		<p>myhostname = <span class="style6">myhost.example.org</span> <br>
+		mydomain = <span class="style6">example.org<br>
+		</span>myorigin = $mydomain<br>
+		alias_database = hash:/etc/postfix/aliases<br>
+		smtpd_banner = $myhostname ESMTP $mail_name<br>
+		parent_domain_matches_subdomains =</p>
+		</td>
+    </tr>
+</table>
+<p>Notes: </p>
+<p>You can use <em>mynetworks</em> to set your network. If you don&#39;t know 
+how to make this setting, you can leave it and postfix will automatically set 
+the known ip addresses on your servers configuration. </p>
+<p class="manReference">[ref:
+<a href="http://www.postfix.org/postconf.5.html#parent_domain_matches_subdomains">
+http://www.postfix.org/postconf.5.html#parent_domain_matches_subdomains</a> ]</p>
+<p class="pScreenOutput"><strong>parent_domain_matches_subdomains</strong> 
+(default: see &quot;postconf -d&quot; output)<br>
+What Postfix features match subdomains of &quot;domain.tld&quot; automatically, instead of 
+requiring an explicit &quot;.domain.tld&quot; pattern. This is planned backwards 
+compatibility: eventually, all Postfix features are expected to require explicit 
+&quot;.domain.tld&quot; style patterns when you really want to match subdomains. </p>
+<p>After making the above changes, we need to rebuild the &#39;hash&#39; files with the 
+following commands.</p>
+<p class="Code"># /usr/local/sbin/postalias /etc/aliases</p>
+<p class="Code"># /usr/local/sbin/newaliases</p>
+<p>Likewise, we need to run the above commands after changes to related files 
+(for example: /etc/aliases or /etc/postfix/aliases)</p>
+<p>After postfix has been started, you can then use <em>&quot;</em><em>postconf | grep 
+mynetworks&quot;</em> as a basis for fine-tuning your configuration.</p>
+<h3> <a name="2.5EnableAutomaticStartup"></a>4. Enable automatic startup on System Restart</h3>
+<p>To enable Postfix to start with each system start, we make the following edits 
+to the startup configuration file: /etc/rc.conf.local</p>
+<ul>
+	<li>&nbsp;add &quot;-a /var/spool/postfix/dev/log&quot; to syslogd_flags</li>
+	<li>&nbsp;add &quot;-bd&quot; to Sendmail_flags.</li>
+</ul>
+<p>You should have something like the following in your /etc/rc.conf.local</p>
+<table class="Code" width="800">
+    <tr class="heading">
+      <td nowrap="nowrap" class="heading">
+		File: /etc/rc.conf.local</td>
+    </tr>
+    <tr>
+      <td class="Code_td" nowrap="nowrap">
+		<p>syslogd_flags=&quot;-a /var/spool/postfix/dev/log&quot;<br>
+		Sendmail_flags=&quot;-bd&quot;</p>
+		</td>
+    </tr>
+</table>
+<p> Explaining the &quot;-a /var/spool/postfix/dev/log&quot; (from the man pages)</p>
+<p class="pScreenOutput"> syslogd(8)</p>
+<p class="pScreenOutput"> syslogd reads and logs messages to the system console, 
+log files, other machines and/or users as specified by its configuration file.<br>
+<br>
+-a path<br>
+Specify a location where syslogd should place an additional log socket. Up to 
+about 20 additional logging sockets can be speci-<br>
+fied. The primary use for this is to place additional log sockets in /dev/log of 
+various chroot filespaces.</p>
+<p>Explaining Sendmail -bd (from the man pages)</p>
+<p class="pScreenOutput">Sendmail(8)</p>
+<p class="pScreenOutput">&nbsp;-bd Run as a daemon. Sendmail will fork and run 
+in the background listening on socket 25 for incoming SMTP connections. By 
+default, Sendmail will also listen on socket 587 for RFC 2476 message 
+submission. This is normally run from /etc/rc.</p>
+<p>&nbsp;</p>
+<h3> <a name="2.6CompleteDisablingSendmail"></a>5. Complete Disabling Sendmail</h3>
+<p> To complete the installation of Postfix, and disabling of Sendmail, we need 
+to edit root&#39;s crontab and disable supplied Sendmail behaviour</p>
+<ul>
+	<li>comment out the Sendmail clientmqueue runner</li>
+</ul>
+<p>To be safe, you should just comment out the relevant line, (just in case you 
+need or want to go back to Sendmail.) We use &quot;crontab -e&quot; and add &quot;#&quot; hashes to 
+&#39;comment&#39; out the execution of the Sendmail line shown below.</p>
+<table class="Code" width="800">
+    <tr class="heading">
+      <td nowrap="nowrap" class="heading">
+		# crontab -e</td>
+    </tr>
+    <tr>
+      <td class="Code_td" nowrap="nowrap">
+		<p>#minute hour mday month wday command<br>
+		#<br>
+		# Sendmail clientmqueue runner<br>
+		#*/30 * * * * /usr/sbin/Sendmail -L sm-msp-queue -Ac -q</p>
+		</td>
+    </tr>
+</table>
+<h3><a name="2.7VerifyAliasConfiguration"></a>6. Verify alias configuration</h3>
+<p>Take a look at your /etc/postfix/aliases file which will contain some default 
+aliases that you should manage.</p>
+<p class="pScreenOutput">alias_database = hash:/etc/postfix/aliases</p>
+<p>For a basic, test install then there shouldn&#39;t be any real need to change 
+this file. You should remember when you&#39;re ready for a full install then you 
+should review this file for aliases such as root, postmaster, webmaster and 
+ensure they are routed to the correct &#39;person.&#39; </p>
+<p>From the file: The program &quot;newaliases&quot; must be run after this file is 
+updated for any changes to show through to Postfix.</p>
+<p class="Code"> &nbsp;<strong># /usr/local/sbin/newaliases</strong></p>
+<h2><a name="StartingPostfix"></a>Starting Postfix</h2>
+<p class="pFileReference">[ref: postfix(1)]</p>
+<p>Now, we are ready to make some fundamental tests, so let&#39;s start Postfix 
+which at this stage is a nice 5 step process.</p>
+<ol>
+	<li>Restart syslogd (using pkill -HUP)</li>
+	<li>Kill existing session of Sendmail (using pkill)</li>
+	<li>Rebuild the alias file (using newaliases)</li>
+	<li>Check files and configuration (using postfix check)</li>
+	<li>Start postfix (using our &#39;new&#39; Sendmail)</li>
+</ol>
+<table class="Code" width="800">
+    <tr>
+      <td class="Code" nowrap="nowrap">
+		<strong># pkill -HUP syslogd<br>
+		# pkill Sendmail<br>
+		# /usr/local/sbin/newaliases<br>
+		# /usr/local/sbin/postfix check<br>
+		# /usr/local/sbin/Sendmail -bd -q30m</strong></td>
+    </tr>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">
+		<strong>postfix/postfix-script: starting the Postfix mail system</strong></td>
+    </tr>
+</table>
+<h3><a name="3.1RestartSyslogd"></a>1. Restart syslogd </h3>
+<p>We are sending the SIGHUP (hangup) to syslogd,<span class="style5"> </span>
+from the man page.</p>
+<p class="manReference">syslogd(8)</p>
+<p class="pScreenOutput">syslogd reads its configuration file when it starts up 
+and whenever it receives a hangup signal.</p>
+<h3><a name="3.2KillExistingSessionOfSendmail"></a>2 Kill existing session of 
+Sendmail </h3>
+<p>We want to force the Sendmail program to die, from the man page</p>
+<p class="manReference">pkill(1)</p>
+<p class="pScreenOutput">The pkill command searches the process table on the 
+running system and signals all processes that match the criteria given on the 
+command line.</p>
+<p>The default signal TERM is sent when no other signal is specified, so we&#39;re 
+just telling Sendmail to die.</p>
+<h3><a name="3.3RebuildTheAliasFile"></a>3. Rebuild the alias file</h3>
+<p>Be careful to specify the full path with these commands. Remember that we 
+have not deleted the old files from the original Sendmail installation, so it is 
+very important that we use the full path of the programs /usr/local/sbin where 
+postfix commands have been installed. If you do&nbsp; not use the full path, 
+then we do not know, but you will most likely be running the OpenBSD Sendmail 
+installation, which is not what we want here.</p>
+<p class="pScreenOutput">/usr/local/sbin/newaliases</p>
+<h3><a name="3.4CheckFilesAndConfiguration"></a>4. Check files and configuration</h3>
+<p class="pFileReference">[Ref: postconf(1), postfix(1)]</p>
+<p>Postfix comes with rudimentary testing of file (<em>using postfix check</em>) and configuration settings(<em>using 
+postconf</em>), so 
+its a good habit to give it a test run before doing anything else.</p>
+<p>The first quick test can be performed using the postfix command</p>
+<p class="manReference">postfix(1)</p>
+<p class="pScreenOutput">The following commands are implemented:<br>
+		<br>
+		<strong>check </strong>Warn about bad directory/file ownership or 
+		permissions, and create missing directories.</p>
+<p>Essentially, just run the program and if it doesn&#39;t give you error messages, 
+then we are one step closer with &#39;fewer&#39; errors in our setup.</p>
+<p class="Code"># postfix check</p>
+<p>The second test can be performed using the postconf &quot;Postfix configuration 
+utility&quot; , from the man pages</p>
+		<p class="manReference"><strong>postconf(</strong>1)</p>
+<p class="pScreenOutput"><strong>-n </strong>Print parameter settings that are not left at 
+		their built-in default value, because they are explicitly specified in 
+		main.cf.</p>
+		<p>This essentially lets us quickly find out any blatant errors. For 
+		example, an output could look like this.</p>
+<table class="Code" width="800">
+    <tr>
+      <td class="Code" nowrap="nowrap">
+		<strong># postconf </strong>| grep ^my</td>
+    </tr>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">mydestination = $myhostname, localhost.$mydomain, localhost<br>
+mydomain = example.org<br>
+myhostname = myhost.example.org<br>
+mynetworks = 127.0.0.0/8 public_ip/23 192.168.1.0/24 192.168.2.0/24 [::1]/128 
+		...IPV6_Addresses<br>
+mynetworks_style = subnet<br>
+myorigin = $mydomain</td>
+    </tr>
+</table>
+<p>A quick perusal of the postconf output should give us an idea if we forgot or 
+incorrectly put some information in.</p>
+<p>Using &quot;postconf -n&quot; is a good way to check for typing mistakes that can lead 
+to many lost hours due the system being misconfigured and we&#39;re still trying to 
+solve a problem with the wrong expections because the settings we placed in the 
+configuration have not been set because of a typing mistake.</p>
+<p>At this point in our install, there has been no serious changes to the configuration files.</p>
+<h3><a name="3.5StartPostfix"></a>5. Start postfix </h3>
+<p>After the above testing, validation, we should be able to start postfix with 
+the postfix command, or in our example we will use the &#39;new&#39; Sendmail command.</p>
+<p class="Code"># /usr/local/sbin/Sendmail -bd -q30m</p>
+<h2><a name="TestingTheMailServer"></a>Testing the mail server</h2>
+<p class="pFileReference">[ref: <a href="http://www.tnpi.biz/internet/mail/forge.shtml" class="anchBlue">The Network People, Inc. Mail Server Testing</a> ] </p>
+<p>We should now be able to test whether the server&#39;s &#39;face&#39; to the world 
+(smtp) is 
+working. </p>
+<p>To simplify testing, we will perform the tests on server itself. Where 
+possible/practical, you 
+should also run the tests from an external client to verify expected behaviour with an active firewall or other systems between your 
+Postfix/SMTP Server and 
+your clients.</p>
+<p>This test procedure will only test a few basic commands, writing myself a 
+message, my system user account is samt (and you can use any valid user account 
+on the system)</p>
+<h3><a name="4.1telnet"></a>telnet localhost smtp</h3>
+<p class="ScreenSession">Screen Session</p>
+<table class="Code" width="800">
+  <tbody>
+    <tr>
+      <td class="Code" nowrap="nowrap"><strong>$ telnet localhost smtp </strong> </td>
+    </tr>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">
+		Trying ::1...<br>
+Connected to localhost.<br>
+Escape character is '^]'.<br>
+220 myhost.example.org ESMTP Postfix
+		</td>
+    </tr>
+    <tr>
+      <td class="Code" nowrap="nowrap"><strong>EHLO example.org</strong></td>
+    </tr>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">250-myhost.example.org <br>
+		250-PIPELINING <br>
+		250-SIZE 10240000 <br>
+		250-VRFY <br>
+		250-ETRN <br>
+		250-ENHANCEDSTATUSCODES <br>
+		250-8BITMIME <br>
+		250 DSN </td>
+    </tr>
+    <tr class="Code_td">
+      <td class="style1" nowrap="nowrap"><strong>MAIL FROM: &lt;samt@example.org&gt;</strong></td>
+    </tr>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">250 2.1.0 Ok </td>
+    </tr>
+    <tr class="Code_td">
+      <td class="style1" nowrap="nowrap"><strong>RCPT TO: &lt;samt@example.org&gt;</strong></td>
+    </tr>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">250 2.1.5 Ok </td>
+    </tr>
+    <tr class="Code_td">
+      <td nowrap="nowrap"><strong>DATA</strong></td>
+    </tr>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">354 Enter mail, end with &quot;.&quot; on a line by itself</td>
+    </tr>
+    <tr class="Code_td">
+      <td nowrap="nowrap"><strong>Subject: This is my subject line<br>
+        <br>
+        I continue writing until I'm out of interesting things to say<br>
+      which is not that far away<br>
+      <br>
+      .</strong></td>
+    </tr>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">250 2.0.0 Ok: queued as 
+		699ACBA2D7 </td>
+    </tr>
+    <tr class="Code_td">
+      <td nowrap="nowrap"><strong>QUIT</strong></td>
+    </tr>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">221 2.0.0 Bye <br>
+		Connection closed by foreign host. </td>
+    </tr>
+  </tbody>
+</table>
+<p>I&#39;ve just used capital letters for the SMTP commands, but obviously they work 
+fine with lowercase.</p>
+<p>If your server is not yet online with a valid DNS record, then you can test 
+using RCPT TO: samt@localhost.</p>
+<h3><a name="4.2MailLog"></a>Mail Log</h3>
+<p>The corresponding log messages will look something like the below.</p>
+<p class="ScreenSession">Screen Session</p>
+<table class="Code" width="800">
+  <tbody>
+    <tr>
+      <td class="Code" nowrap="nowrap"># tail -f /var/log/maillog</td>
+    </tr>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">
+		<p>starting the Postfix mail system<br>
+		daemon started -- version 2.3.2, configuration 
+		/etc/postfix<br>
+		connect from localhost[::1]<br>
+		5E4A5BA2D4: client=localhost[::1]<br>
+		5E4A5BA2D4: 
+		message-id=&lt;20061212080251.5E4A5BA2D4@hostname.example.org&gt;<br>
+		5E4A5BA2D4: from=&lt;samt@example.org&gt;, size=457, nrcpt=1 (queue active)<br>
+		5E4A5BA2D4: to=&lt;samt@example.org&gt;, relay=local, 
+		delay=77, delays=77/0.05/0/0.03, dsn=2.0.0, status=sent (delivered to 
+		mailbox)<br>
+		5E4A5BA2D4: removed<br>
+		disconnect from localhost[::1]</p>
+		</td>
+    </tr>
+  </tbody>
+</table>
+<p>&#39;tail&#39; is a unix program to look at the recent additions to a file, and in 
+our case we&#39;re looking at the log file for &#39;mail&#39; related programs. Using the 
+&quot;-f&quot; parameter tells &#39;tail&#39; to continue looking at the recent additions to the 
+file (such that updates to the file are displayed on the screen for us.) Use 
+Ctrl+C (i.e. hold the Ctrl key while pressing C) to break out of the log review 
+session shown above</p>
+<h3><a name="4.3mail"></a>mail(1)</h3>
+<p class="pFileReference">[Ref: mail(1) ]</p>
+<p>While we&#39;re testing with real system user accounts, we can use the unix 
+&#39;mail&#39; program to check our mail message. </p>
+<p class="ScreenSession">Screen Session</p>
+<table class="Code" width="800">
+  <tbody>
+    <tr>
+      <td class="Code" nowrap="nowrap"># /usr/<span class="style1">bin/mail -u 
+		samt</span></td>
+    </tr>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">
+		<p>Mail version 8.1.2 01/15/2001. Type ? for help.<br>
+		&quot;/var/mail/samt&quot;: 1 message 1 new<br>
+		&gt;N 1 samt@example.org Tue Dec 12 21:03 18/605 This is my subject line</p>
+		</td>
+    </tr>
+    <tr>
+      <td class="Code" nowrap="nowrap">
+		&amp; <strong>more 1</strong></td>
+    </tr>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">
+		<p>Message 1:<br>
+		From samt@example.org Tue Dec 12 21:03:54 2006<br>
+		X-Original-To: samt@myhost.example.org<br>
+		Delivered-To: samt@myhost.example.org<br>
+		Subject: This is my subject line<br>
+		From: samt@example.org<br>
+		To: undisclosed-recipients:; </p>
+		<p>I continue writing until I&#39;m out of interesting things to say<br>
+		which is not that far away</p>
+		</td>
+    </tr>
+    <tr>
+      <td class="Code" nowrap="nowrap">
+		&amp; <strong>q</strong></td>
+    </tr>
+    <tr>
+      <td class="pScreenOutput" nowrap="nowrap">
+		Saved 1 message in mbox</td>
+    </tr>
+  </tbody>
+</table>
+<p>In the above example, we enter mail for the user samt (&quot;-u samt&quot;) and the 
+&#39;mail&#39; client shows a list of current email for user &#39;samt&#39; and then gives us 
+the &quot;&amp;&quot; ampersand prompt.</p>
+<p>We can read the email message by typing the message number, and &#39;mail&#39; 
+supports the use of a screen &#39;pager&#39; such as &#39;more&#39; so that we can scroll 
+through longer messages.</p>
+<p>Quit. We quit out of &#39;mail&#39; using the &#39;q&#39; command.</p>
+<p>The above reference to the log files and mail client is to provide you with more tools for validating your installation.</p>
+<h3><a name="4.4Summary"></a>Summary</h3>
+<p>We now have a fully functional email server that can receive email messages, 
+and store those messages for users.</p>
+<h2><a name="ConfiguringAVirtualEmailService_Basic"></a>Configuring a Virtual Email Service - basic test install</h2>
+<p>[ref: Postfix Virtual Domain Hosting Howto
+<a href="http://www.example.org/manual/postfix/VIRTUAL_README.html">
+http://www.example.org/manual/postfix/VIRTUAL_README.html</a> ]</p>
+<p>I&#39;ve always had difficulty in getting the full featured database driven 
+virtual email working, so we will go through a slow installation process of 
+installing the non-database driven version first to make sure all other 
+configuration items are correct within Postfix.</p>
+<ol>
+	<li>&nbsp;Base Configuration for virtual hosting<ul>
+		<li>Main Configuration</li>
+		<li>Virtual Mailbox</li>
+		<li>Virtual Aliases (broken)</li>
+	</ul>
+	</li>
+	<li>Create system user account for managing virtual mail</li>
+	<li>Virtual Mail Accounts</li>
+</ol>
+<h3><a name="5.1BaseConfiguration"></a>1. Base Configuration for virtual hosting</h3>
+<h4><a name="5.1.1MainConfiguration"></a>Main Configuration</h4>
+<p>We&#39;ll put in some basic configuration information for virtual hosting into 
+Postfix&#39;s main.cf</p>
+<table class="Code" width="800">
+    <tr>
+      <td nowrap="nowrap" class="heading">
+		File Fragment: /etc/postfix/main.cf</td>
+    </tr>
+    <tr>
+      <td class="Code_td" nowrap="nowrap">
+		<p>###### Virtual Mailbox Services - Local<br>
+		</p>
+		<p>mydestination = $myhostname, localhost.$mydomain, localhost, $mydomain,
+		<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+		mail.$mydomain, www.$mydomain, ftp.$mydomain, <br>
+		<br>
+		virtual_mailbox_base = /var/spool/postfix/vmail<br>
+		virtual_mailbox_domains = hash:/etc/postfix/virtual/mailbox/domains<br>
+		virtual_mailbox_maps = hash:/etc/postfix/virtual/mailbox/alpha.example.org,
+		<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+		hash:/etc/postfix/virtual/mailbox/beta.example.org, <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+		hash:/etc/postfix/virtual/mailbox/gamma.example.org<br>
+		virtual_minimum_uid = 900<br>
+		virtual_transport = virtual<br>
+		virtual_uid_maps = <strong>static:901</strong><br>
+		virtual_gid_maps = <strong>static:901</strong></p>
+		</td>
+    </tr>
+</table>
+<p>Notes:</p>
+<ul>
+	<li>The <a href="http://www.postfix.org/postconf.5.html#virtual_minimum_uid">virtual_minimum_uid</a> has to be less than or equal to 
+	<a href="http://www.postfix.org/postconf.5.html#virtual_uid_maps">virtual_uid_maps</a> and 
+	<a href="http://www.postfix.org/postconf.5.html#virtual_gid_maps">virtual_gid_maps</a>, otherwise you will get an error during 
+mail receipt processing.</li>
+	<li>The selected &quot;901&quot; value seems to be arbitrary, although it must be maintained 
+	through a few other places in these instructions and in the
+	<a href="dovecot.htm">dovecot</a> instructions. I don&#39;t know whether this 
+	&#39;901&#39; clashes with any other OpenBSD port, but I specifically chose it to be 
+	below the standard starting ID used for normal user accounts which tend to 
+	start from 1,000.</li>
+</ul>
+<h4><a name="5.1.2DiskLayout"></a>Disk Layout for Virtual Domains</h4>
+<p>We need to layout our files mentioned in the configuration file above and I 
+have chosen the following which is hopefully scaleable if you want to use this 
+as the basis (ignoring the simpler database solution reviewed later.)</p>
+<ul>
+	<li>/etc/postfix/virtual - the base directory to store virtual related 
+	configurations</li>
+	<li>./alias - for virtual alias files
+	<ul>
+		<li>file: common</li>
+	</ul></li>
+
+	<li>./mailbox - for virtual mailbox files
+	<ul>
+		<li>file: domains</li>
+		<li>file: alpha.example.org</li>
+		<li>file: beta.example.org</li>
+		<li>file: gamma.example.org</li>
+	</ul></li>
+	</ul>
+<p class="ScreenSession">Screen Session</p>
+<p class="Code"># mv /etc/postfix/virtual /etc/postfix/virtual_aliases<br>
+# mkdir -p /etc/postfix/virtual/mailbox</p>
+<p class="Code"># mkdir -p /etc/postfix/virtual/aliases</p>
+<p class="Code"># mv /etc/postfix/virtual_aliases /etc/postfix/virtual/aliases/common<br>
+# touch /etc/postfix/virtual/mailbox/domains<br>
+# touch /etc/postfix/virtual/mailbox/alpha.example.org<br>
+# touch /etc/postfix/virtual/mailbox/beta.example.org<br>
+# touch /etc/postfix/virtual/mailbox/gamma.example.org</p>
+<p>We move the current virtual alias file from /etc/postfix/virtual to 
+/etc/postfix/virtual/aliases.</p>
+<h4><a name="5.1.3VirtualDomains"></a>Virtual Domains</h4>
+<p>We specify for postfix which virtual domains we want it to receive email with 
+the following configuration option:</p>
+<p class="pFileReference">File Fragment: /etc/postfix/main.cf</p>
+<p class="pScreenOutput">virtual_mailbox_domains = hash:/etc/postfix/virtual/domains</p>
+<p class="pFileReference">File:/etc/postfix/virtual/mailbox/domains</p>
+<p class="Code">alpha.example.org&nbsp;&nbsp;&nbsp;&nbsp; IGNORED_PARAMETER</p>
+<p class="Code">beta.example.org&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+IGNORED_PARAMETER</p>
+<p class="Code">gamma.example.org&nbsp; IGNORED_PARAMETER</p>
+<p class="style7">After creating or making any changes to the above domains 
+file, recreate the hash database using postmap</p>
+<p class="Code"># /usr/local/sbin/postmap /etc/postfix/virtual/mailbox/domains</p>
+<h4><a name="5.1.4VirtualMailbox"></a>Virtual Mailbox</h4>
+<p>For OpenBSD, the default chroot&#39;d postfix installation stores its files in /var/spool/postfix 
+so we&#39;ll specify the location for virtual email accounts within that structure.</p>
+<p class="pFileReference">File Fragment: /etc/postfix/main.cf</p>
+<p class="pScreenOutput">virtual_mailbox_base = /var/spool/postfix/vmail</p>
+<p>When setting up virtual mailboxes (in this manner), it makes sense to 
+structure the directories for scalability and to prevent clashing namespaces. 
+Prior to setting up accounts we&#39;ll consider that our mailbox accounts will be 
+structured by domain. For example:</p>
+<ul>
+	<li>/var/spool/postfix/vmail/<strong>alpha.example.org</strong>/accountX</li>
+	<li>/var/spool/postfix/vmail/<strong>alpha.example.org</strong>/accountY</li>
+	<li>/var/spool/postfix/vmail/<strong>alpha.example.org</strong>/accountZ</li>
+	<li>/var/spool/postfix/vmail/<strong>beta.example.org</strong>/accountX</li>
+	<li>/var/spool/postfix/vmail/<strong>beta.example.org</strong>/accountY</li>
+	<li>/var/spool/postfix/vmail/<strong>beta.example.org</strong>/accountZ</li>
+	<li>/var/spool/postfix/vmail/<strong>gamma.example.org</strong>/AccountX</li>
+	<li>/var/spool/postfix/vmail/<strong>gamma.example.org</strong>/AccountY</li>
+	<li>/var/spool/postfix/vmail/<strong>gamma.example.org</strong>/AccountZ</li>
+</ul>
+<p>We can now create some sample user accounts into our virtual mailbox</p>
+<p class="pFileReference">File Fragment: /etc/postfix/main.cf</p>
+<p class="pScreenOutput">virtual_mailbox_maps = 
+hash:/etc/postfix/virtual/mailbox/alpha.example.org, <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+hash:/etc/postfix/virtual/mailbox/beta.example.org, <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+hash:/etc/postfix/virtual/mailbox/gamma.example.org</p>
+<p>Obviously, each valid user needs a corresponding mailbox storage space. The 
+mailbox file is specified relative to the virtual_mailbox_base shown above and 
+since we already have our directory design structure above, we can go ahead and 
+create some accounts.</p>
+<h5>Virtual Accounts - alpha.example.org</h5>
+<table class="Code" width="800">
+    <tr>
+      <td nowrap="nowrap" class="heading">
+		File: /etc/postfix/virtual/mailbox/alpha.example.org</td>
+    </tr>
+    <tr>
+      <td class="Code_td" nowrap="nowrap">
+		<p>#account&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+		--&gt; Storage location</p>
+		</td>
+    </tr>
+</table>
+<table class="Code" width="800">
+    <tr>
+      <td class="Code_td" nowrap="nowrap">
+		<p><a href="mailto:info@example.org"><span class="style4">alfred</span>@alpha.example.org</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+		alpha.example.org/alfred/<br>
+		<a href="mailto:sales@example.org">bob@alpha.example.org</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+		alpha.example.org/bob/<br>
+		<a href="mailto:charlie@alpha.example.org">charlie@alpha.example.org</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+		alpha.example.org/charlie/</p>
+		</td>
+    </tr>
+</table>
+<p class="style7">After creating or making any changes to the above 
+alpha.example.org file, recreate the hash database using postmap</p>
+<p class="Code"># /usr/local/sbin/postmap 
+/etc/postfix/virtual/mailbox/alpha.example.org</p>
+<h5>Virtual Accounts - beta.example.org</h5>
+<p>&nbsp;</p>
+<table class="Code" width="800">
+    <tr>
+      <td nowrap="nowrap" class="heading">
+		File: /etc/postfix/virtual/mailbox/beta.example.org</td>
+    </tr>
+    <tr>
+      <td class="Code_td" nowrap="nowrap">
+		<p>#account&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+		--&gt; Storage location</p>
+		</td>
+    </tr>
+</table>
+<table class="Code" width="800">
+    <tr>
+      <td class="Code_td" nowrap="nowrap">
+		<p><a href="mailto:aunti@beta.example.org">auntie@beta.example.org</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+		beta.example.org/auntie/<br>
+		<a href="mailto:bill@beta.example.org">bill@beta.example.org</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+		beta.example.org/bill/<br>
+		<a href="mailto:chou@beta.example.org">chou@beta.example.org</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+		beta.example.org/chou/</p>
+		</td>
+    </tr>
+</table>
+<p class="style7">After creating or making any changes to the above 
+beta.example.org file, recreate the hash database using postmap</p>
+<p class="Code"># /usr/local/sbin/postmap 
+/etc/postfix/virtual/mailbox/beta.example.org</p>
+<h5>Virtual Accounts - gamma.example.org</h5>
+<p>&nbsp;</p>
+<table class="Code" width="800">
+    <tr>
+      <td nowrap="nowrap" class="heading">
+		File: /etc/postfix/virtual/mailbox/gamma.example.org</td>
+    </tr>
+    <tr>
+      <td class="Code_td" nowrap="nowrap">
+		<p>#account&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+		--&gt; Storage location</p>
+		</td>
+    </tr>
+</table>
+<table class="Code" width="800">
+    <tr>
+      <td class="Code_td" nowrap="nowrap">
+		<p><a href="mailto:alistair@gamma.example.org">
+		alistair@gamma.example.org</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+		gamma.example.org/alistair/<br>
+		<a href="mailto:ben@gamma.example.org">ben@gamma.example.org</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+		gamma.example.org/ben/<br>
+		<a href="mailto:cinder@gamma.example.org">cinder@gamma.example.org</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+		gamma.example.org/cinder/</p>
+		</td>
+    </tr>
+</table>
+<p class="style7">After creating or making any changes to the above 
+gamma.example.org file, recreate the hash database using postmap</p>
+<p class="Code"># /usr/local/sbin/postmap 
+/etc/postfix/virtual/mailbox/gamma.example.org</p>
+<p>We must now tell postfix to re-read its configuration files, by using postfix 
+reload.</p>
+		<p class="Code"># /usr/local/sbin/postfix reload</p>
+<p>Mailbox files (above) can use either mbox or maildir format. To use maildir 
+format, include a slash at the end of the filename. For a discussion of the 
+relative differences you can follow the link to:
+<a href="http://www.courier-mta.org/mbox-vs-maildir/">Benchmarking mbox versus 
+maildir</a>, in short if your have a modern Unix OS (post 2004?) you should not 
+have any problems using maildirs as an efficient scalable system. But read the 
+benchmark and search the web for your own edification. </p>
+<p>I have chosen for this example to use separate files per domain, merely for 
+illustration of the flexibility of the system (and if you are insane enough to 
+manage it manually you can at least let the file structure assist you in some 
+manner.)</p>
+<p>NOT WORKING YET. </p>
+<h4><a name="5.1.5VirtualAliases"></a>Virtual Aliases (broken)</h4>
+<p>NOT WORKING YET. </p>
+<p><em>Do not use yet.</em></p>
+<p><em>I am not yet sure how virtual aliasing work, or its restrictions but below 
+documents some thinking of how to install it. Unfortunately I haven&#39;t found any 
+workable samples on the Internet and likewise tools such as webmin do not use virtual_alias_maps (as far as I can read.) 
+While, the same below configuration (hash) works fine when used in combinaton 
+with mysql for all other virtual_alias_*</em></p>
+<p><em>Note: With this exercise, virtual_alias_maps works fine using mysql (and 
+thus postfixadmin)</em></p>
+<p>We can also create some aliases for virtual accounts</p>
+<p class="pFileReference">File Fragment: /etc/postfix/main.cf</p>
+<p class="pScreenOutput">virtual_alias_maps = hash:/etc/postfix/virtual/alias/alpha.example.org,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+hash:/etc/postfix/virtual/alias/beta.example.org,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+hash:/etc/postfix/virtual/alias/gamma.example.org</p>
+<h5>Virtual Alias - alpha.example.org</h5>
+<table class="Code" width="800">
+    <tr>
+      <td nowrap="nowrap" class="heading">
+		File: /etc/postfix/virtual/alias/alpha.example.org</td>
+    </tr>
+    <tr>
+      <td class="Code_td" nowrap="nowrap">
+		<p>&nbsp;</p>
+		</td>
+    </tr>
+</table>
+<table class="Code" width="800">
+    <tr>
+      <td class="Code_td" nowrap="nowrap">
+		<p>alpha.example.org&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+		IGNORED_PARAMETER</p>
+		<p>
+		postmaster@alpha.example.org&nbsp;&nbsp;&nbsp; 
+		alfred@alpha.example.org<br>
+		sales@alpha.example.org&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+		alfred@alpha.example.org<br>
+		marketing@alpha.example.org&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bob@alpha.example.org<br>
+		
+		info@alpha.example.org&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+		bob@alpha.example.org&nbsp; <br>
+		
+		accounting@alpha.example.org&nbsp;&nbsp;&nbsp;&nbsp; 
+		charlie@alpha.example.org&nbsp; </p>
+		</td>
+    </tr>
+</table>
+<p class="style7">After creating or making any changes to the above 
+alias/alpha.example.org file, recreate the hash database using postmap</p>
+<p class="Code"># /usr/local/sbin/postmap 
+/etc/postfix/virtual/alias/alpha.example.org</p>
+<p class="Code"># /usr/local/sbin/postfix reload</p>
+<h5>Virtual Alias - beta.example.org</h5>
+<table class="Code" width="800">
+    <tr>
+      <td nowrap="nowrap" class="heading">
+		File: /etc/postfix/virtual/alias/beta.example.org</td>
+    </tr>
+    <tr>
+      <td class="Code_td" nowrap="nowrap">
+		<p>&nbsp;</p>
+		</td>
+    </tr>
+</table>
+<table class="Code" width="800">
+    <tr>
+      <td class="Code_td" nowrap="nowrap">
+		<p>beta.example.org&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+		IGNORED_PARAMETER</p>
+		<p>
+		postmaster@beta.example.org&nbsp;&nbsp;&nbsp; 
+		auntie@beta.example.org<br>
+		sales@beta.example.org&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		auntie@beta.example.org, bill@beta.example.org<br>
+		marketing@beta.example.org&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bill@beta.example.org<br>
+		
+		info@beta.example.org&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+		bill@beta.example.org&nbsp; <br>
+		
+		accounting@beta.example.org&nbsp;&nbsp;&nbsp;&nbsp; 
+		chou@beta.example.org&nbsp; </p>
+		</td>
+    </tr>
+</table>
+<p class="style7">After creating or making any changes to the above 
+alias/beta.example.org file, recreate the hash database using postmap</p>
+<p class="Code"># /usr/local/sbin/postmap 
+/etc/postfix/virtual/alias/beta.example.org</p>
+		<p class="Code"># /usr/local/sbin/postfix reload</p>
+<h5>Virtual Alias - gamma.example.org</h5>
+<table class="Code" width="800">
+    <tr>
+      <td nowrap="nowrap" class="heading">
+		File: /etc/postfix/virtual/alias/gamma.example.org</td>
+    </tr>
+    <tr>
+      <td class="Code_td" nowrap="nowrap">
+		<p>&nbsp;</p>
+		</td>
+    </tr>
+</table>
+<table class="Code" width="800">
+    <tr>
+      <td class="Code_td" nowrap="nowrap">
+		<p>gamma.example.org&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+		IGNORED_PARAMETER</p>
+		<p>
+		postmaster@gamma.example.org&nbsp;&nbsp;&nbsp; 
+		alistair@gamma.example.org<br>
+		sales@gamma.example.org&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		alistair@gamma.example.org, ben@gamma.example.org<br>
+		marketing@beta.example.org&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ben@gamma.example.org<br>
+		
+		info@gamma.example.org&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+		ben@gamma.example.org&nbsp; <br>
+		
+		accounting@gamma.example.org&nbsp;&nbsp;&nbsp;&nbsp; 
+		cinder@gamma.example.org&nbsp; </p>
+		</td>
+    </tr>
+</table>
+<p class="style7">After creating or making any changes to the above 
+alias/gamma.example.org file, recreate the hash database using postmap</p>
+<p class="Code"># /usr/local/sbin/postmap 
+/etc/postfix/virtual/alias/gamma.example.org</p>
+<p>We must now tell postfix to re-read its configuration files, by using postfix 
+reload.</p>
+		<p class="Code"># /usr/local/sbin/postfix reload</p>
+		<p>&nbsp;</p>
+<h3><a name="5.2CreateTheSystemUserAccount"></a>2. Create the system user account for managing virtual mail</h3>
+<p>[ref: <a href="http://www.postfix.org/postconf.5.html#virtual_uid_maps">
+http://www.postfix.org/postconf.5.html#virtual_uid_maps</a>,
+<a href="http://www.postfix.org/postconf.5.html#virtual_gid_maps">
+http://www.postfix.org/postconf.5.html#virtual_gid_maps</a>] </p>
+<p>Mail delivery happens with the recipient&#39;s UID/GID privileges specified with
+<a href="http://www.postfix.org/postconf.5.html#virtual_uid_maps">
+virtual_uid_maps</a> and
+<a href="http://www.postfix.org/postconf.5.html#virtual_gid_maps">
+virtual_gid_maps</a>, therefore the virtual mailbox files must be owned by a 
+system user account and associated with a&nbsp; group on your system. 
+Fortunately Postfix is flexible to allow each mailbox to be owned by a unique 
+system user account or by a single system user account for all domains, and even 
+one system user account per domain. This is set by using the virtual_uid_maps 
+and virtual_gid_maps setting.</p>
+<p class="pScreenOutput">virtual_uid_maps = static:901<br>
+		virtual_gid_maps = static:901</p>
+<p>The &#39;static&#39; map type tells Postfix that you want the uid/gid to be for all 
+accounts.</p>
+<p>We can now create the system user account to manage virtual email mailboxes.</p>
+<p class="ScreenSession">Screen Session</p>
+<p class="Code"># useradd -d /var/spool/postfix/vmail -g=uid -u 901 -s /sbin/nologin -m -c &quot;Virtual Mailbox Owner&quot; _vmail<br>
+		# chmod -R 770 /var/spool/postfix/vmail</p>
+<p>A by-product of the user/group creation is that the &quot;base&quot; directory will 
+also be created with the correct permissions.</p>
+<p>If we wanted to use different users, groups for managing mailboxes, then we 
+could have used a lookup file instead.</p>
+<p class="pScreenOutput">virtual_uid_maps = hash:/etc/postfix/virtual_uids<br>
+virtual_gid_maps = hash:/etc/postfix/virtual_gids</p>
+<p>Ensure the standard (non-virtual) alias file is built by using Postfix&#39;s 
+newaliases. </p>
+<p class="Code_td"># <strong>/usr/local/sbin/newaliases</strong></p>
+<p>Restart Postfix</p>
+<p class="Code"><strong># </strong>/usr/local/sbin/postfix stop</p>
+<p class="Code"># /usr/local/sbin/postfix start</p>
+<h3><a name="5.3TestingConfiguration"></a>3. Testing Configuration</h3>
+<h4><a name="5.3.1postconf"></a>postconf</h4>
+<p>Use postconf -n to compare whether what we expect in virtual_* parameter 
+settings is what is running on the system.</p>
+<p class="ScreenSession">Screen Session</p>
+<p class="Code"><strong># postconf | grep ^virtual</strong></p>
+<p class="pScreenOutput">virtual_alias_domains = $virtual_alias_maps<br>
+		virtual_alias_expansion_limit = 1000<br>
+		virtual_alias_maps = $virtual_maps<br>
+		virtual_alias_recursion_limit = 1000<br>
+		virtual_destination_concurrency_limit = $default_destination_concurrency_limit<br>
+		virtual_destination_recipient_limit = $default_destination_recipient_limit<br>
+		virtual_gid_maps = static:901<br>
+		virtual_mailbox_base = /var/spool/postfix/vmail<br>
+		virtual_mailbox_domains = hash:/etc/postfix/virtual/domains<br>
+		virtual_mailbox_limit = 51200000<br>
+		virtual_mailbox_lock = fcntl<br>
+		virtual_mailbox_maps = hash:/etc/postfix/virtual/mailbox/alpha.tbu.to,
+		<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+		hash:/etc/postfix/virtual/mailbox/beta.tbu.to, <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+		hash:/etc/postfix/virtual/mailbox/gamma.tbu.to<br>
+		virtual_minimum_uid = 900<br>
+		virtual_transport = virtual<br>
+		virtual_uid_maps = static:901</p>
+		<p>&nbsp;</p>
+<h4><a name="5.3.1telnet"></a>telnet localhost smtp</h4>
+<p>Remember to use the /var/log/maillog file to validate postfix has started 
+without errors. You can also repeat the above &#39;telnet localhost smtp&#39; to review 
+nothing has drastically broken.</p>
+<p class="ScreenSession">Screen Session</p>
+<p class="Code">$ telnet localhost smtp</p>
+<p class="pScreenOutput">Trying ::1...<br>
+Connected to localhost.<br>
+Escape character is &#39;^]&#39;.<br>
+220 myhost.example.org ESMTP Postfix (2.3.2)<br>
+ehlo example.org<br>
+250-myhost.example.org<br>
+250-PIPELINING<br>
+250-SIZE 10240000<br>
+250-VRFY<br>
+250-ETRN<br>
+250-ENHANCEDSTATUSCODES<br>
+250-8BITMIME<br>
+250 DSN</p>
+<p class="Code">mail from: &lt;samt@example.org&gt;</p>
+<p class="pScreenOutput">250 2.1.0 Ok</p>
+<p class="Code">rcpt to: &lt;alfred@alpha.example.org&gt;</p>
+<p class="pScreenOutput">250 2.1.5 Ok</p>
+<p class="Code">rcpt to: &lt;auntie@beta.example.org&gt;</p>
+<p class="pScreenOutput">250 2.1.5 Ok</p>
+<p class="Code">rcpt to: &lt;alistair@gamma.example.org&gt;</p>
+<p class="pScreenOutput">250 2.1.5 Ok</p>
+<p class="Code">data</p>
+<p class="pScreenOutput">354 End data with &lt;CR&gt;&lt;LF&gt;.&lt;CR&gt;&lt;LF&gt;</p>
+<p class="Code">Subject: Welcome Virtual Users<br>
+<br>
+Hopefully you are all virtually OK.<br>
+<br>
+Welcome to email<br>
+<br>
+.</p>
+<p class="pScreenOutput">250 2.0.0 Ok: queued as BA1FC5A950</p>
+<p class="Code">quit</p>
+<p class="pScreenOutput">221 2.0.0 Bye<br>
+Connection closed by foreign host.</p>
+<h4><a name="5.3.2MailLog"></a>Mail Log</h4>
+<p>The corresponding /var/log/maillog entry should look something like the 
+following</p>
+<p class="pFileReference">File: /var/log/maillog</p>
+<p class="pScreenOutput">connect from unknown[::1]<br>
+client=unknown[::1]<br>
+message-id=&lt;20070208214647.BA1FC5A950@myhost.example.org&gt;<br>
+from=&lt;samt@example.org&gt;, size=393, nrcpt=3 (queue active)<br>
+to=&lt;alfred@alpha.example.org&gt;, relay=virtual, delay=69, 
+delays=67/0.05/0/1.8, dsn=2.0.0, status=sent (delivered to maildir)<br>
+to=&lt;auntie@beta.example.org&gt;, relay=virtual, delay=69, 
+delays=67/0.05/0/1.9, dsn=2.0.0, status=sent (delivered to maildir)<br>
+to=&lt;alistair@gamma.example.org&gt;, relay=virtual, delay=69, 
+delays=67/0.14/0/1.9, dsn=2.0.0, status=sent (delivered to maildir)<br>
+removed<br>
+disconnect from unknown[::1]</p>
+<p>&nbsp;</p>
+<h4><a name="5.3.3MailStore"></a>Mail Store</h4>
+<p>We should also be able to see evidence of the virtual account mails in the 
+file system such as has occurred on this installation.</p>
+<p class="ScreenSession">Screen Session</p>
+<p class="Code"># ls -l /var/spool/postfix/vmail/alpha.example.org/alfred/new/</p>
+<p class="pScreenOutput">total 4<br>
+-rw------- 1 _vmail _vmail 481 Feb 9 10:47 
+1170971257.V5I5a95aM294234.myhost.example.org</p>
+<p class="Code">cat /var/spool/postfix/vmail/alpha.example.org/alfred/new/1170971257.V5I5a95aM294234.myhost.example.org</p>
+<p class="pScreenOutput">Return-Path: &lt;samt@example.org&gt;<br>
+X-Original-To: alfred@alpha.example.org<br>
+Delivered-To: alfred@alpha.example.org<br>
+Received: from example.org (unknown [IPv6:::1])<br>
+by myhost.example.org (Postfix) with ESMTP id BA1FC5A950;<br>
+Fri, 9 Feb 2007 10:46:30 +1300 (TOT)<br>
+Subject: Welcome Virtual Users<br>
+Message-Id: &lt;20070208214647.BA1FC5A950@myhost.example.org&gt;<br>
+Date: Fri, 9 Feb 2007 10:46:30 +1300 (TOT)<br>
+From: samt@example.org<br>
+To: undisclosed-recipients:; </p>
+<p class="pScreenOutput">&nbsp;</p>
+<p class="pScreenOutput">Hopefully you are all virtually OK. </p>
+<p class="pScreenOutput">&nbsp;</p>
+<p class="pScreenOutput">Welcome to email </p>
+<p class="pScreenOutput">&nbsp;</p>
+<p>We can likewise confirm the same message was received for 
+aunti@beta.example.org and alistair@gamma.example.org.</p>
+<h2><a name="6ConfiguringVirtualEmail_MySQL"></a>Configuring a Virtual Email Service - MySQL</h2>
+<p>Mischa Peters at <a href="http://high5.net">high5.net</a> has created a great tool for managing virtual user 
+email accounts based on Postfix. We will look at installing and testing the 
+foundation database configuration here.</p>
+<p>To minimise tools being reviewed for debugging, we&#39;re going to attempt 
+installing MySQL support, using the postfixadmin data tables, but without 
+installing or using postfixadmin.</p>
+<h3><a name="6.1ConfiguringMySQL"></a>Configuring MySQL</h3>
+<p>The following notes differs from a standard postfixadmin install in how it uses 
+usernames, largely because it simplifies things for my understanding. The whole 
+process has helped me to better understand the interactions between these 
+different applications, finding methods for debugging installation problems. I 
+hope it also simplifies for our understanding.</p>
+<p>Please refer to <a href="mysql.htm">our MySQL notes </a>for how to install 
+MySQL for OpenBSD.</p>
+<p>Following Mischa&#39;s instructions at
+<a href="http://postfix.wiki.xs4all.nl/index.php?title=Main_Page">Postfix Wiki</a>,
+<a href="http://postfix.wiki.xs4all.nl/index.php?title=Virtual_Users_and_Domains_with_Courier-IMAP_and_MySQL">
+Virtual Users and Domains</a> we&#39;ll take a look at:</p>
+<ul>
+	<li>Creating the database</li>
+	<li>Creating the Alias table</li>
+	<li>Creating the Domain table</li>
+	<li>Creating the Mailbox table</li>
+	<li>Populating the tables</li>
+</ul>
+<p>Much of these database settings are straight out of the postfixadmin/DATABASE_MYSQL.TXT 
+file with slight/inane modifications where it helps me find things more legible.</p>
+<p>The key differentiators between these database instructions than the default 
+install are as follows:</p>
+<ul>
+	<li>database name is: <strong>mail</strong> instead of postfix</li>
+	<li>postfix user account is: <strong>postfixserver</strong> instead of postfix</li>
+	<li>populated sample data: <strong>username</strong> is different, <strong>password</strong> is different</li>
+</ul>
+<p>Minor quibbles but makes the install instructions slightly more legible?</p>
+<h4><a name="6.1.1CreatingTheDatabase"></a>Creating the database</h4>
+<p>We will first log into the mysql server with an account that has 
+root/administrator privileges and insert (copy/paste) sql commands below.</p>
+<p class="ScreenSession">Screen Session</p>
+<p class="Code">$ mysql -u root -p</p>
+<p class="pScreenOutput">Enter password:<br>
+Welcome to the MySQL monitor. Commands end with ; or \g.<br>
+Your MySQL connection id is 41 to server version: 5.0.24a-log<br>
+<br>
+Type &#39;help;&#39; or &#39;\h&#39; for help. Type &#39;\c&#39; to clear the buffer.<br>
+<br>
+mysql&gt;</p>
+<p>The rest of the &#39;greyed&#39; instructions can be copy/pasted into your MySQL 
+monitor above. Be sure to change your usernames and passwords as appropriate.</p>
+<p>The first thing we want is to tell mysql that we want to modify the records 
+relating to user accounts for the database server.</p>
+<p class="ScreenSession">mysql client session</p>
+<p class="SQL">USE mysql;</p>
+<p>Next, we want to create some new settings for a new user &#39;postfixserver&#39; that 
+we want to designate for use by the postfix server.</p>
+<p class="ScreenSession">mysql client session</p>
+<p class="SQL">INSERT INTO user (Host, User, Password) VALUES (&#39;localhost&#39;,&#39;postfixserver&#39;,password(&#39;<strong>postfixserver</strong>&#39;));<br>
+INSERT INTO db (Host, Db, User, Select_priv) VALUES (&#39;localhost&#39;,&#39;mail&#39;,&#39;postfixserver&#39;,&#39;Y&#39;);</p>
+<p>Next, we want to create a new user &#39;postfixadmin&#39; that we want to designate 
+for use by the postfixadmin application.</p>
+<p class="ScreenSession">mysql client session</p>
+<p class="SQL">INSERT INTO user (Host, User, Password) VALUES (&#39;localhost&#39;,&#39;postfixadmin&#39;,password(&#39;<strong>postfixadmin</strong>&#39;));<br>
+INSERT INTO db (Host, Db, User, Select_priv, Insert_priv, Update_priv, 
+Delete_priv) VALUES (&#39;localhost&#39;, &#39;mail&#39;, &#39;postfixadmin&#39;, &#39;Y&#39;, &#39;Y&#39;, &#39;Y&#39;, &#39;Y&#39;);</p>
+<p>To ensure that these new user settings have been loaded into use, we flush 
+the settings.</p>
+<p class="ScreenSession">mysql client session</p>
+<p class="SQL">FLUSH PRIVILEGES;</p>
+<p>Now, we want to set privileges for the database that we will be using.</p>
+<p class="ScreenSession">mysql client session</p>
+<p class="SQL">GRANT USAGE ON mail.* TO postfixserver@localhost;<br>
+GRANT SELECT, INSERT, DELETE, UPDATE ON mail.* TO
+postfixserver@localhost;</p>
+<p class="SQL">GRANT USAGE ON mail.* TO postfixadmin@localhost;<br>
+GRANT SELECT, INSERT, DELETE, UPDATE ON mail.* TO
+postfixadmin@localhost;</p>
+<p>Next, we create the database itself.</p>
+<p class="ScreenSession">mysql client session</p>
+<p class="SQL">CREATE DATABASE mail;</p>
+<p>The next stage is to create the relevant tables and some dummy/sample data.</p>
+<h4><a name="6.1.2CreatingTheAliasTable"></a>Creating the Alias table</h4>
+<p>The alias table will store/retrieve our virtual aliases (which I have not yet </p>
+<p class="ScreenSession">mysql client session</p>
+<p class="SQL">USE mail;</p>
+<p class="SQL">CREATE TABLE `alias` (<br>
+`address` varchar(255) NOT NULL default &#39;&#39;,<br>
+`goto` text NOT NULL,<br>
+`domain` varchar(255) NOT NULL default &#39;&#39;,<br>
+`created` datetime NOT NULL default &#39;0000-00-00 00:00:00&#39;,<br>
+`modified` datetime NOT NULL default &#39;0000-00-00 00:00:00&#39;,<br>
+`active` tinyint(1) NOT NULL default &#39;1&#39;,<br>
+PRIMARY KEY (address),<br>
+KEY address (`address`) <br>
+) TYPE=MyISAM COMMENT=&#39;Postfix Admin - Virtual Aliases&#39;;</p>
+<p>&nbsp;</p>
+<h4><a name="6.1.3CreatingTheDomainTable"></a>Creating the Domain table</h4>
+<p>The domain table will store/retrieve our virtual domains</p>
+<p class="ScreenSession">mysql client session</p>
+<p class="SQL">CREATE TABLE `domain` (<br>
+`domain` varchar(255) NOT NULL default &#39;&#39;,<br>
+`description` varchar(255) NOT NULL default &#39;&#39;,<br>
+`aliases` int(10) NOT NULL default &#39;0&#39;,<br>
+`mailboxes` int(10) NOT NULL default &#39;0&#39;,<br>
+`maxquota` int(10) NOT NULL default &#39;0&#39;,<br>
+`quota` int(10) NOT NULL default &#39;0&#39;,<br>
+`transport` varchar(255) default NULL,<br>
+`backupmx` tinyint(1) NOT NULL default &#39;0&#39;,<br>
+`created` datetime NOT NULL default &#39;0000-00-00 00:00:00&#39;,<br>
+`modified` datetime NOT NULL default &#39;0000-00-00 00:00:00&#39;,<br>
+`active` tinyint(1) NOT NULL default &#39;1&#39;,<br>
+PRIMARY KEY (`domain`),<br>
+KEY domain (`domain`)<br>
+) TYPE=MyISAM COMMENT=&#39;Postfix Admin - Virtual Domains&#39;;</p>
+<h4><a name="6.1.4CreatingTheMailboxTable"></a>Creating the Mailbox table</h4>
+<p>The mailbox table will store/retrieve the usernames, passwords, and file 
+directories</p>
+<p class="ScreenSession">mysql client session</p>
+<p class="SQL">USE mail;</p>
+<p class="SQL">CREATE TABLE `mailbox` (<br>
+`username` varchar(255) NOT NULL default &#39;&#39;,<br>
+`password` varchar(255) NOT NULL default &#39;&#39;,<br>
+`name` varchar(255) NOT NULL default &#39;&#39;,<br>
+`maildir` varchar(255) NOT NULL default &#39;&#39;,<br>
+`quota` int(10) NOT NULL default &#39;0&#39;,<br>
+`domain` varchar(255) NOT NULL default &#39;&#39;,<br>
+`created` datetime NOT NULL default &#39;0000-00-00 00:00:00&#39;,<br>
+`modified` datetime NOT NULL default &#39;0000-00-00 00:00:00&#39;,<br>
+`active` tinyint(1) NOT NULL default &#39;1&#39;,<br>
+PRIMARY KEY (`username`),<br>
+KEY username (`username`)<br>
+) TYPE=MyISAM COMMENT=&#39;Postfix Admin - Virtual Mailboxes&#39;;</p>
+<p>&nbsp;</p>
+<h4><a name="6.1.5OtherTablesForPostfixadmin"></a>Other Tables for postfixadmin</h4>
+<p>The database is now created, and we might as well configure the other tables 
+used by postfixadmin</p>
+<p class="ScreenSession">mysql client session</p>
+<p class="SQL">USE mail;</p>
+<p class="SQL">CREATE TABLE `admin` (<br>
+`username` varchar(255) NOT NULL default &#39;&#39;,<br>
+`password` varchar(255) NOT NULL default &#39;&#39;,<br>
+`created` datetime NOT NULL default &#39;0000-00-00 00:00:00&#39;,<br>
+`modified` datetime NOT NULL default &#39;0000-00-00 00:00:00&#39;,<br>
+`active` tinyint(1) NOT NULL default &#39;1&#39;,<br>
+PRIMARY KEY (`username`),<br>
+KEY username (`username`)<br>
+) TYPE=MyISAM COMMENT=&#39;Postfix Admin - Virtual Admins&#39;;</p>
+<p>&nbsp;</p>
+<p class="ScreenSession">mysql client session</p>
+<p class="SQL">USE mail;</p>
+<p class="SQL">CREATE TABLE `domain_admins` (<br>
+`username` varchar(255) NOT NULL default &#39;&#39;,<br>
+`domain` varchar(255) NOT NULL default &#39;&#39;,<br>
+`created` datetime NOT NULL default &#39;0000-00-00 00:00:00&#39;,<br>
+`active` tinyint(1) NOT NULL default &#39;1&#39;,<br>
+KEY username (`username`)<br>
+) TYPE=MyISAM COMMENT=&#39;Postfix Admin - Domain Admins&#39;;<br>
+<br>
+<br>
+<br>
+</p>
+<p class="SQL">USE mail;</p>
+<p class="SQL">CREATE TABLE `log` (<br>
+`timestamp` datetime NOT NULL default &#39;0000-00-00 00:00:00&#39;,<br>
+`username` varchar(255) NOT NULL default &#39;&#39;,<br>
+`domain` varchar(255) NOT NULL default &#39;&#39;,<br>
+`action` varchar(255) NOT NULL default &#39;&#39;,<br>
+`data` varchar(255) NOT NULL default &#39;&#39;,<br>
+KEY timestamp (`timestamp`)<br>
+) TYPE=MyISAM COMMENT=&#39;Postfix Admin - Log&#39;;<br>
+</p>
+<p>&nbsp;</p>
+<p class="ScreenSession">mysql client session</p>
+<p class="SQL">USE mail;</p>
+<p class="SQL">#<br>
+# Table structure for table vacation<br>
+#<br>
+CREATE TABLE `vacation` (<br>
+`email` varchar(255) NOT NULL default &#39;&#39;,<br>
+`subject` varchar(255) NOT NULL default &#39;&#39;,<br>
+`body` text NOT NULL default &#39;&#39;,<br>
+`cache` text NOT NULL default &#39;&#39;,<br>
+`domain` varchar(255) NOT NULL default &#39;&#39;,<br>
+`created` datetime NOT NULL default &#39;0000-00-00 00:00:00&#39;,<br>
+`active` tinyint(1) NOT NULL default &#39;1&#39;,<br>
+PRIMARY KEY (`email`),<br>
+KEY email (`email`)<br>
+) TYPE=MyISAM COMMENT=&#39;Postfix Admin - Virtual Vacation&#39;;</p>
+<h3><a name="6.2PopulatingTheTables"></a>Populating the tables</h3>
+<p>We will populate our database with some test data that you can easily remove 
+later using <a href="postfixadmin.htm">postfixadmin</a>. By using our sample 
+data below we avoid having to configure <a href="postfixadmin.htm">postfixadmin</a> 
+to have a working test server.</p>
+<ul>
+	<li>Populate an administrator account for postfixadmin, so you can follow 
+	through and make your own changes to the data as the testing continues.</li>
+	<li>Populate Virtual Domains data</li>
+	<li>Populate Virtual Mailbox data (virtual users)</li>
+	<li>Verify our Settings</li>
+</ul>
+<p>We will replicate our virtual user system used with the above hash files into 
+our MySQL database.</p>
+<h4><a name="6.2.1SuperAdministratorAccount"></a>Super Administrator Account.</h4>
+<p>This is largely relevant only if you will be installing
+<a href="postfixadmin.htm">postfixadmin</a>, and can be skipped.</p>
+<p>Now, here&#39;s one part where the standard documentation always got me lost. The 
+standard instructions provides the below image which will work for logging into 
+the system, but will cause other problems. Instead of the following instructions</p>
+<p class="pScreenOutput"># superadmin user &amp; password (login: admin@domain.tld, 
+password: admin)<br>
+INSERT INTO domain_admins (username, domain, active) VALUES (&#39;admin@domain.tld&#39;,&#39;ALL&#39;,&#39;1&#39;);<br>
+INSERT INTO admin (username, password, active) VALUES 
+(&#39;admin@domain.tld&#39;,&#39;$1$0fec9189$bgI6ncWrldPOsXnkUBIjl1&#39;,&#39;1&#39;);</p>
+<p>We will be using the following instructions which uses CRYPT instead of 
+postfixadmin&#39;s md5crypt for encrypting the password to:</p>
+<ul>
+	<li>Create the administrator account &#39;admin&#39; and using &#39;admin&#39; as the password.</li>
+	<li>make the administrator account a &quot;Super Administrator&quot; with powers over 
+	all virtual domains.</li>
+</ul>
+<p class="ScreenSession">mysql client session</p>
+<p class="SQL">USE mail;</p>
+<p class="SQL">INSERT INTO admin (username, password, active) VALUES 
+(&#39;<span class="style6">admin</span>&#39;,&#39;<span class="style6">6dwLx9NTxhTjU</span>&#39;,&#39;1&#39;);</p>
+<p class="SQL">INSERT INTO domain_admins (username, domain, active) VALUES (&#39;<span class="style6">admin</span>&#39;,&#39;ALL&#39;,&#39;1&#39;);</p>
+<p>When installing postfixadmin, from the above settings, we set:</p>
+<p class="pFileReference">File: /var/www/htdocs/postfixadmin/config.inc.php</p>
+<p class="SQL">$CONF[&#39;encrypt&#39;] = &#39;system&#39;;</p>
+<p>&nbsp;</p>
+<h4><a name="6.2.2VirtualDomains"></a>Virtual Domains</h4>
+<p>We will be creating virtual domains for our three sample domains:</p>
+<ul>
+	<li>alpha.example.org </li>
+	<li>beta.example.org</li>
+	<li>gamma.example.org</li>
+</ul>
+<p>Creating our virtual domains</p>
+<p class="ScreenSession">mysql client session</p>
+<p class="SQL">USE mail;</p>
+<p class="SQL">INSERT INTO domain 
+(domain,description,aliases,mailboxes,maxquota,quota,transport,backupmx,active) 
+VALUES (&#39;<span class="style6">alpha.example.org</span>&#39;, &#39;Alpha 
+Tester&#39;,&#39;10&#39;,&#39;10&#39;, &#39;0&#39;,&#39;0&#39;,&#39;virtual&#39;, &#39;0&#39;,&#39;1&#39;);</p>
+<p class="SQL">INSERT INTO domain 
+(domain,description,aliases,mailboxes,maxquota,quota,transport,backupmx,active) 
+VALUES (&#39;<span class="style6">beta.example.org</span>&#39;, &#39;Beta 
+Site&#39;,&#39;10&#39;,&#39;10&#39;, &#39;0&#39;,&#39;0&#39;,&#39;virtual&#39;, &#39;0&#39;,&#39;1&#39;);</p>
+<p class="SQL">INSERT INTO domain 
+(domain,description,aliases,mailboxes,maxquota,quota,transport,backupmx,active) 
+VALUES (&#39;<span class="style6">gamma.example.org</span>&#39;, &#39;Gamma 
+Born&#39;,&#39;10&#39;,&#39;10&#39;, &#39;0&#39;,&#39;0&#39;,&#39;virtual&#39;, &#39;0&#39;,&#39;1&#39;);</p>
+<p>We can verify that the data has been entered correctly with the following 
+simple test. From the command prompt, start mysql.</p>
+<p class="ScreenSession">Screen Session</p>
+<p class="Code"># mysql -u root -p</p>
+<p class="pScreenOutput">Welcome to the MySQL monitor. Commands end with ; or 
+\g.<br>
+Your MySQL connection id is 94 to server version: 5.0.24a-log </p>
+<p class="pScreenOutput">Type &#39;help;&#39; or &#39;\h&#39; for help. Type &#39;\c&#39; to clear the 
+buffer. </p>
+<p class="Code">mysql&gt; use mail;</p>
+<p class="pScreenOutput">Database changed</p>
+<p class="Code">mysql&gt; select domain, transport from domain;</p>
+<p class="pScreenOutput">+--------------+-----------+<br>
+| domain | transport |<br>
++--------------+-----------+<br>
+| alpha.example.org | virtual |<br>
+| beta.example.org | virtual |<br>
+| gamma.example.org | virtual |<br>
++--------------+-----------+<br>
+3 rows in set (0.00 sec)</p>
+<h4><a name="6.2.3VirtualMailbox"></a>Virtual Mailbox</h4>
+<p>As from our example above, we will be creating virtual mailboxes (virtual 
+user accounts) for our above three sample domains:</p>
+<ul>
+	<li>Virtual Users for alpha.example.org</li>
+	<li>Virtual Users for beta.example.org</li>
+	<li>Virtual Users for gamma.example.org</li>
+</ul>
+<h5>Virtual Users for alpha.example.org</h5>
+<p>Creating our virtual users for alpha.example.org : password is username</p>
+<p class="ScreenSession">mysql client session</p>
+<p class="SQL">USE mail;</p>
+<p class="SQL">INSERT INTO mailbox (username,password,name,maildir,quota,domain,active) 
+VALUES (&#39;<span class="style6">alfred@alpha.example.org</span>&#39;,&#39;<span class="style6">82fU0EHEzA6wo</span>&#39;, &#39;Alfred&#39;,&#39;alpha.example.org/alfred@alpha.example.org/&#39;, &#39;0&#39;,&#39;alpha.example.org&#39;,&#39;1&#39;);</p>
+<p class="SQL">INSERT INTO mailbox (username,password,name,maildir,quota,domain,active) 
+VALUES (&#39;<span class="style6">bob@alpha.example.org</span>&#39;,&#39;<span class="style6">1bdyGcAE/JC0I</span>&#39;, &#39;Bob&#39;,&#39;alpha.example.org/bob@alpha.example.org/&#39;, &#39;0&#39;,&#39;alpha.example.org&#39;,&#39;1&#39;);</p>
+<p class="SQL">INSERT INTO mailbox (username,password,name,maildir,quota,domain,active) 
+VALUES (&#39;<span class="style6">charlie@alpha.example.org</span>&#39;,&#39;<span class="style6">048qvFjqS3zBc</span>&#39;, &#39;Charlie&#39;,&#39;alpha.example.org/charlie@alpha.example.org/&#39;, &#39;0&#39;,&#39;alpha.example.org&#39;,&#39;1&#39;);</p>
+<h5>Virtual Users for beta.example.org</h5>
+<p>Creating our virtual users for beta.example.org : password is username</p>
+<p class="ScreenSession">mysql client session</p>
+<p class="SQL">USE mail;</p>
+<p class="SQL">INSERT INTO mailbox (username,password,name,maildir,quota,domain,active) 
+VALUES (&#39;<span class="style6">auntie@beta.example.org</span>&#39;, &#39;<span class="style6">3336RmmvRQ0NU</span>&#39;, &#39;Auntie&#39;,&#39;beta.example.org/auntie@beta.example.org/&#39;, &#39;0&#39;,&#39;beta.example.org&#39;,&#39;1&#39;);</p>
+<p class="SQL">INSERT INTO mailbox (username,password,name,maildir,quota,domain,active) 
+VALUES (&#39;bill@beta.example.org&#39;, &#39;<span class="style6">fbVsBHcPJVVjU</span>&#39;, &#39;Bill&#39;,&#39;beta.example.org/bill@beta.example.org/&#39;, 
+&#39;0&#39;,&#39;beta.example.org&#39;,&#39;1&#39;);</p>
+<p class="SQL">INSERT INTO mailbox (username,password,name,maildir,quota,domain,active) 
+VALUES (&#39;chou@beta.example.org&#39;, &#39;<span class="style6">359nFQg1J.8nc</span>&#39;, &#39;Chou&#39;,&#39;beta.example.org/chou@beta.example.org/&#39;, 
+&#39;0&#39;,&#39;beta.example.org&#39;,&#39;1&#39;);</p>
+<h5>Virtual Users for gamma.example.org</h5>
+<p>Creating our virtual users for gamma.example.org : password is username</p>
+<p class="ScreenSession">mysql client session</p>
+<p class="SQL">USE mail;</p>
+<p class="SQL">INSERT INTO mailbox (username,password,name,maildir,quota,domain,active) 
+VALUES (&#39;<span class="style6">alistair@gamma.example.org</span>&#39;, &#39;<span class="style6">12XeQqcTNk3YU</span>&#39;, &#39;Alistair&#39;,&#39;gamma.example.org/alistair@gamma.example.org/&#39;, 
+&#39;0&#39;,&#39;gamma.example.org&#39;,&#39;1&#39;);</p>
+<p class="SQL">INSERT INTO mailbox (username,password,name,maildir,quota,domain,active) 
+VALUES (&#39;<span class="style6">ben@gamma.example.org</span>&#39;, &#39;<span class="style6">1bKpSqtESjdck</span>&#39;, &#39;Ben&#39;,&#39;gamma.example.org/ben@gamma.example.org/&#39;, 
+&#39;0&#39;,&#39;gamma.example.org&#39;,&#39;1&#39;);</p>
+<p class="SQL">INSERT INTO mailbox (username,password,name,maildir,quota,domain,active) 
+VALUES (&#39;<span class="style6">cinder@gamma.example.org</span>&#39;, &#39;<span class="style6">19rP1zls.evZQ</span>&#39;, &#39;Cinder&#39;,&#39;gamma.example.org/cinder@gamma.example.org/&#39;, 
+&#39;0&#39;,&#39;gamma.example.org&#39;,&#39;1&#39;);</p>
+<h4><a name="6.2.4VerifyOurSettings"></a>Verify our settings</h4>
+<p>Remember to change the user domains in the above to your specific virtual 
+domain(s). You can use an sql query such as the below to help verify that you 
+are not using the *.example. domains from this document.</p>
+<p class="ScreenSession">mysql client session</p>
+<p class="SQL">use mail;</p>
+<p class="SQL">&nbsp;select username from mailbox;</p>
+<p class="SQL">&nbsp;select domain from domain;</p>
+<p class="style8">&nbsp;</p>
+<h3><a name="6.3CreateTheSystemUserAccount"></a>Create the system user account for managing virtual mail</h3>
+<p>[ref: <a href="http://www.postfix.org/postconf.5.html#virtual_uid_maps">
+http://www.postfix.org/postconf.5.html#virtual_uid_maps</a>,
+<a href="http://www.postfix.org/postconf.5.html#virtual_gid_maps">
+http://www.postfix.org/postconf.5.html#virtual_gid_maps</a>] </p>
+<p>If you&#39;ve skipped the hash virtual user instructions, then you will need to 
+create the System user Account for Postfix to use for delivering &#39;virtual&#39; mail.</p>
+<p>Mail delivery happens with the recipient&#39;s UID/GID privileges specified with
+<a href="http://www.postfix.org/postconf.5.html#virtual_uid_maps">
+virtual_uid_maps</a> and
+<a href="http://www.postfix.org/postconf.5.html#virtual_gid_maps">
+virtual_gid_maps</a>, therefore the virtual mailbox files must be owned by a 
+system user account and associated with a&nbsp; group on your system. 
+Fortunately Postfix is flexible to allow each mailbox to be owned by a unique 
+system user account or by a single system user account for all domains, and even 
+one system user account per domain. This is set by using the virtual_uid_maps 
+and virtual_gid_maps setting.</p>
+<p class="pScreenOutput">virtual_uid_maps = static:901<br>
+		virtual_gid_maps = static:901</p>
+<p>The &#39;static&#39; map type tells Postfix that you want the uid/gid to be for all 
+accounts.</p>
+<p>We can now create the system user account to manage virtual email mailboxes.</p>
+<p class="Code"># useradd -d /var/spool/postfix/vmail -g=uid -u 901 -s /sbin/nologin -m -c &quot;Virtual Mailbox Owner&quot; _vmail<br>
+		# chmod -R 770 /var/spool/postfix/vmail</p>
+<p>A by-product of the user/group creation is that the &quot;base&quot; directory will 
+also be created with the correct permissions.</p>
+<p>If we wanted to use different users, groups for managing mailboxes, then we 
+could have used a lookup file instead.</p>
+<p class="pScreenOutput">virtual_uid_maps = hash:/etc/postfix/virtual_uids<br>
+virtual_gid_maps = hash:/etc/postfix/virtual_gids</p>
+<p>Ensure the standard (non-virtual) alias file is built by using Postfix&#39;s 
+newaliases. </p>
+<p class="Code_td"># <strong>/usr/local/sbin/newaliases</strong></p>
+<p>Restart Postfix</p>
+<p class="Code"><strong># </strong>/usr/local/sbin/postfix stop</p>
+<p class="Code"># /usr/local/sbin/postfix start</p>
+<p>&nbsp;</p>
+<h3><a name="6.4ConfiguringPostfix"></a>Configuring Postfix</h3>
+<p>Postfix can read it&#39;s configuration data from hash files, text files, and 
+from databases. To tell Postfix that data will be obtained from a MySQL 
+database, we use the &quot;mysql:&quot; prefix to a text file that contains the relevant 
+information for postfix to extract that data.</p>
+<p>For our example, modify the above /etc/postfix/main.cf. We can work by just 
+removing the additions made above and replacing them with the following.</p>
+<p class="pFileReference">File Fragment: /etc/postfix/main.cf</p>
+<p class="Code">virtual_alias_maps = mysql:/etc/postfix/mysql/alias_maps.cf<br>
+virtual_gid_maps = static:901<br>
+virtual_mailbox_base = /var/spool/postfix/vmail<br>
+virtual_mailbox_domains = mysql:/etc/postfix/mysql/domains_maps.cf<br>
+virtual_mailbox_maps = mysql:/etc/postfix/mysql/mailbox_maps.cf<br>
+virtual_minimum_uid = 900<br>
+virtual_transport = virtual<br>
+virtual_uid_maps = static:901<br>
+parent_domain_matches_subdomains =</p>
+<p>The /etc/postfix/mysql/*.cf files contain the login information for postfix to access 
+and retrieve the MySQL database/table.</p>
+<p>Verify that what we&#39;ve set above is actually what postfix will recognise.</p>
+<p class="ScreenSession">Screen Session</p>
+<p class="Code">/usr/local/sbin/postfix reload</p>
+<p class="Code">/usr/local/sbin/postconf -n | grep ^virtual</p>
+<p class="pScreenOutput">virtual_alias_maps = mysql:/etc/postfix/mysql/alias_maps.cf<br>
+virtual_gid_maps = static:901<br>
+virtual_mailbox_base = /var/spool/postfix/vmail<br>
+virtual_mailbox_domains = mysql:/etc/postfix/mysql/domains_maps.cf<br>
+virtual_mailbox_maps = mysql:/etc/postfix/mysql/mailbox_maps.cf<br>
+virtual_minimum_uid = 900<br>
+virtual_transport = virtual<br>
+virtual_uid_maps = static:901</p>
+<p>Key things to watch out for is that we are using the file type: &quot;mysql&quot; and 
+that the file locations specified above will be correct to what we are creating 
+below.</p>
+<h3><a name="6.5CreatingThePostfixToMySQLSettingsFile"></a>Creating the postfix to mysql settings file</h3>
+<p>Before we create our text *.cf files, we&#39;ll need to make the directory.</p>
+<p class="Code"># mkdir -p /etc/postfix/mysql</p>
+<p>Create the current mysql instruction/configuration files for postfix.</p>
+<h4><a name="6.5.1VirtualDomains"></a>Virtual Domains</h4>
+<p class="pScreenOutput">virtual_mailbox_domains = mysql:/etc/postfix/mysql/domains_maps.cf</p>
+<p>domains_maps.cf will be used for virtual_mailbox_domains</p>
+<p class="pFileReference">File:/etc/postfix/mysql/domains_maps.cf</p>
+<p class="Code">user = postfixserver<br>
+password = postfixserver<br>
+hosts = 127.0.0.1<br>
+dbname = mail<br>
+table = domain<br>
+select_field = domain<br>
+where_field = domain<br>
+additional_conditions = and backupmx = &#39;0&#39; and active = &#39;1&#39;</p>
+<h4><a name="6.5.2VirtualMailbox"></a>Virtual Mailbox</h4>
+<p class="pScreenOutput">virtual_mailbox_maps = mysql:/etc/postfix/mysql/mailbox_maps.cf</p>
+<p>mailbox_maps.cf will be used for virtual_mailbox_maps</p>
+<p class="pFileReference">File:/etc/postfix/mysql/mailbox_maps.cf</p>
+<p class="Code">user = postfixserver<br>
+password = postfixserver<br>
+hosts = 127.0.0.1<br>
+dbname = mail<br>
+table = mailbox<br>
+select_field = maildir<br>
+where_field = username<br>
+additional_conditions = and active = &#39;1&#39;</p>
+<h4><a name="6.5.3VirtualAliases"></a>Virtual Aliases</h4>
+<p class="pScreenOutput">virtual_alias_maps = mysql:/etc/postfix/mysql/alias_maps.cf</p>
+<p>alias_maps.cf will be used for virtual_alias_maps</p>
+<p class="pFileReference">File: /etc/postfix/mysql/alias_maps.cf</p>
+<p class="Code">user = postfixserver<br>
+password = postfixserver<br>
+hosts = 127.0.0.1<br>
+dbname = mail<br>
+table = alias<br>
+select_field = goto<br>
+where_field = address</p>
+<h4><a name="6.5.4RestartPostfix"></a>Restart Postfix</h4>
+<p>Once you&#39;ve created all these mysql files, we can stop and restart 
+postfix and should be working together with postfixadmin for managing virtual 
+user accounts.</p>
+<p class="Code"># /usr/local/sbin/postfix stop</p>
+<p class="Code"># /usr/local/sbin/postfix start</p>
+<h3><a name="6.6Testing"></a>Testing</h3>
+<p>We can now provide some sample testing of mail routing through to our virtual 
+accounts, using MySQL as the database.</p>
+<h4><a name="6.6.1telnet"></a>telnet localhost smtp</h4>
+<p class="ScreenSession">Screen Session</p>
+<p class="Code">$ telnet localhost smtp</p>
+<p class="pScreenOutput">Trying ::1...<br>
+Connected to localhost.<br>
+Escape character is &#39;^]&#39;.<br>
+220 myhost.example.org ESMTP Postfix (2.3.2)</p>
+<p class="Code">ehlo example.org</p>
+<p class="pScreenOutput">250-myhost.example.org<br>
+250-PIPELINING<br>
+250-SIZE 10240000<br>
+250-VRFY<br>
+250-ETRN<br>
+250-ENHANCEDSTATUSCODES<br>
+250-8BITMIME<br>
+250 DSN</p>
+<p class="Code">mail from: &lt;samt@example.org&gt;</p>
+<p class="pScreenOutput">250 2.1.0 Ok</p>
+<p class="Code">rcpt to: &lt;charlie@alpha.example.org&gt;</p>
+<p class="pScreenOutput">250 2.1.5 Ok</p>
+<p class="Code">rcpt to: &lt;chou@beta.example.org&gt;</p>
+<p class="pScreenOutput">250 2.1.5 Ok</p>
+<p class="Code">rcpt to: &lt;cinder@gamma.example.org&gt;</p>
+<p class="pScreenOutput">250 2.1.5 Ok</p>
+<p class="Code">data</p>
+<p class="pScreenOutput">354 End data with &lt;CR&gt;&lt;LF&gt;.&lt;CR&gt;&lt;LF&gt;</p>
+<p class="Code">Subject: Welcome MySQL based virtual users<br>
+<br>
+Hopefully you&#39;ve received this email message without fault ?<br>
+<br>
+<br>
+.<br>
+250 2.0.0 Ok: queued as 357E65A950<br>
+quit<br>
+221 2.0.0 Bye<br>
+Connection closed by foreign host.</p>
+<h4><a name="6.6.2MailLog"></a>Mail Log</h4>
+<p>With the following results showing in our log file: /var/log/maillog</p>
+<p class="pFileReference">File: /var/log/maillog</p>
+<p class="pScreenOutput">connect from unknown[::1]<br>
+: client=unknown[::1]<br>
+: message-id=&lt;20070209010215.45BCC5A956@myhost.example.org&gt;<br>
+: from=&lt;samt@example.org&gt;, size=402, nrcpt=3 (queue active)<br>
+: disconnect from unknown[::1]<br>
+: to=&lt;charlie@alpha.example.org&gt;, relay=virtual, delay=54, delays=52/0.01/0/1.6, 
+dsn=2.0.0, status=sent (delivered to maildir)<br>
+: to=&lt;chou@beta.example.org&gt;, relay=virtual, delay=54, delays=52/0.03/0/1.7, dsn=2.0.0, 
+status=sent (delivered to maildir)<br>
+: to=&lt;cinder@gamma.example.org&gt;, relay=virtual, delay=54, delays=52/0.04/0/1.8, 
+dsn=2.0.0, status=sent (delivered to maildir)<br>
+: removed</p>
+<h4><a name="6.6.3MailStore"></a>Mail Store</h4>
+<p>We should now have email in the user directories 
+./alpha.example.org/charlie@alpha.example.org/new as well as 
+./beta.example.org/chou@beta.example.org/new and 
+./gamma.example.org/cinder@gamma.example.org/new with the same content as below:</p>
+<p class="pFileReference">File: /var/spool/postfix/vmail/alpha.example.org/charlie@alpha.example.org</p>
+<p class="pScreenOutput">59984.myhost.example.org &lt;<br>
+Return-Path: &lt;samt@example.org&gt;<br>
+X-Original-To: charlie@alpha.example.org<br>
+Delivered-To: charlie@alpha.example.org<br>
+Received: from example.org (unknown [IPv6:::1])<br>
+by myhost.example.org (Postfix) with ESMTP id 45BCC5A956;<br>
+Fri, 9 Feb 2007 14:02:08 +1300 (TOT)<br>
+Subject: Welcome MySQL based virtual users<br>
+Message-Id: &lt;20070209010215.45BCC5A956@myhost.example.org&gt;<br>
+Date: Fri, 9 Feb 2007 14:02:08 +1300 (TOT)<br>
+From: samt@example.org<br>
+To: undisclosed-recipients:; </p>
+<p class="pScreenOutput">&nbsp;</p>
+<p class="pScreenOutput">Hopefully you&#39;ve received this email message without 
+fault ?<br>
+<br>
+</p>
+<h4><a name="6.2.5MySQLLogFile"></a>MySQL Log file</h4>
+<p>If you&#39;re having problems then you can also take a look at the sql log files 
+at /var/mysql/myhost.log</p>
+<p class="pFileReference">File: /var/mysql/myhost.log</p>
+<p class="pScreenOutput">20 Connect postfixserver@localhost on mail<br>
+20 Query SELECT goto FROM alias WHERE address=&#39;example.org&#39;<br>
+21 Connect postfixserver@localhost on mail<br>
+21 Query SELECT domain FROM domain WHERE domain=&#39;example.org&#39;<br>
+070209 13:50:37 20 Query SELECT goto FROM alias WHERE 
+address=&#39;alpha.example.org&#39;<br>
+21 Query SELECT domain FROM domain WHERE domain=&#39;alpha.example.org&#39;<br>
+22 Connect postfixserver@localhost on mail<br>
+22 Query SELECT goto FROM alias WHERE address=&#39;charlie@alpha.example.org&#39;<br>
+22 Query SELECT goto FROM alias WHERE address=&#39;@alpha.example.org&#39;<br>
+23 Connect postfixserver@localhost on mail<br>
+23 Query SELECT maildir FROM mailbox WHERE username=&#39;charlie@alpha.example.org&#39; 
+and active = &#39;1&#39;<br>
+24 Connect postfixserver@localhost on mail<br>
+24 Query SELECT goto FROM alias WHERE address=&#39;charlie@alpha.example.org&#39;<br>
+24 Query SELECT goto FROM alias WHERE address=&#39;@alpha.example.org&#39;<br>
+070209 13:50:44 20 Query SELECT goto FROM alias WHERE address=&#39;beta.example.org&#39;<br>
+21 Query SELECT domain FROM domain WHERE domain=&#39;beta.example.org&#39;<br>
+22 Query SELECT goto FROM alias WHERE address=&#39;chou@beta.example.org&#39;<br>
+22 Query SELECT goto FROM alias WHERE address=&#39;@beta.example.org&#39;<br>
+23 Query SELECT maildir FROM mailbox WHERE username=&#39;chou@beta.example.org&#39; and 
+active = &#39;1&#39;<br>
+24 Query SELECT goto FROM alias WHERE address=&#39;chou@beta.example.org&#39;<br>
+24 Query SELECT goto FROM alias WHERE address=&#39;@beta.example.org&#39;<br>
+070209 13:50:55 20 Query SELECT goto FROM alias WHERE 
+address=&#39;gamma.example.org&#39;<br>
+21 Query SELECT domain FROM domain WHERE domain=&#39;gamma.example.org&#39;<br>
+22 Query SELECT goto FROM alias WHERE address=&#39;cinder@gamma.example.org&#39;<br>
+22 Query SELECT goto FROM alias WHERE address=&#39;@gamma.example.org&#39;<br>
+23 Query SELECT maildir FROM mailbox WHERE username=&#39;cinder@gamma.example.org&#39; 
+and active = &#39;1&#39;<br>
+24 Query SELECT goto FROM alias WHERE address=&#39;cinder@gamma.example.org&#39;<br>
+24 Query SELECT goto FROM alias WHERE address=&#39;@gamma.example.org&#39;<br>
+070209 13:51:24 20 Query SELECT goto FROM alias WHERE 
+address=&#39;alpha.example.org&#39;<br>
+21 Query SELECT domain FROM domain WHERE domain=&#39;alpha.example.org&#39;<br>
+20 Query SELECT goto FROM alias WHERE address=&#39;beta.example.org&#39;<br>
+21 Query SELECT domain FROM domain WHERE domain=&#39;beta.example.org&#39;<br>
+20 Query SELECT goto FROM alias WHERE address=&#39;gamma.example.org&#39;<br>
+21 Query SELECT domain FROM domain WHERE domain=&#39;gamma.example.org&#39;<br>
+25 Connect postfixserver@localhost on mail<br>
+25 Query SELECT maildir FROM mailbox WHERE username=&#39;charlie@alpha.example.org&#39; 
+and active = &#39;1&#39;<br>
+26 Connect postfixserver@localhost on mail<br>
+26 Query SELECT maildir FROM mailbox WHERE username=&#39;chou@beta.example.org&#39; and 
+active = &#39;1&#39;<br>
+27 Connect postfixserver@localhost on mail<br>
+27 Query SELECT maildir FROM mailbox WHERE username=&#39;cinder@gamma.example.org&#39; 
+and active = &#39;1&#39;</p>
+<p>So, if some of the above are not working properly then you at least can get 
+some clues from the above two log files of where you can begin debugging your 
+installation.</p>
+<p>Remember that postconf returns what Postfix actually understands from your 
+changes to the ./postfix/main.cf file so it is always a good point to start here 
+to ensure that what you thought you typed in, is actually what postfix is 
+reading.</p>
+<p>&nbsp;</p>
+<p>The next logical step in configuring your email server with Postfix, is to 
+set up an imap/pop3 server. For this exercise, we&#39;ve reviewed instructions
+<a href="dovecot.htm">to use dovecot</a>.</p>
+<p>&nbsp;</p>
+<h2>Configuring a Virtual Email Service - MySQL high load server</h2>
+<p>Below are just collections from other people&#39;s notes, since I haven&#39;t got a 
+&#39;high load&#39; server for testing as yet (otherwise known as machines and ram are 
+dealing well currently.)</p>
+<p>You can improve performance in high load environments by sharing 
+database/mysql connections among Postfix smtpd connections.</p>
+<pre>virtual_alias_maps = proxy:mysql:/etc/postfix/mysql/alias_maps.cf
+virtual_mailbox_domains = proxy:mysql:/etc/postfix/mysql/domains_maps.cf
+virtual_mailbox_maps = proxy:mysql:/etc/postfix/mysql/mailbox_maps.cf</pre>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<h2><a name="author"></a>Reference Resources</h2>
+<p>There is a plethora of documentation out there using
+<a href="http://www.postfix.org">Postfix</a> with Virtual Accounts, likewise 
+there is also quite a few with <a href="http://www.openbsd.org">OpenBSD</a> as 
+the server operating system.</p>
+<p>Postfix Documentation <a href="http://www.postfix.org/documentation.html">
+http://www.postfix.org/documentation.html</a>,
+<a href="http://www.postfix.org/docs.html">http://www.postfix.org/docs.html</a>
+<br>
+Postfix - Hosting Multiple Domains with Virtual Accounts - <a href="http://www.akadia.com/services/postfix_separate_mailboxes.html">
+http://www.akadia.com/services/postfix_separate_mailboxes.html</a> <br>
+OpenBSD Postfix Admin Guide -
+<a href="http://postfix.wiki.xs4all.nl/index.php?title=OpenBSD_PostfixAdmin_Guide">
+http://postfix.wiki.xs4all.nl/index.php?title=OpenBSD_PostfixAdmin_Guide</a> <br>
+Virtual Users and Domains with Courier IMAP and MySQL -
+<a href="http://postfix.wiki.xs4all.nl/index.php?title=Virtual_Users_and_Domains_with_Courier-IMAP_and_MySQL">
+http://postfix.wiki.xs4all.nl/index.php?title=Virtual_Users_and_Domains_with_Courier-IMAP_and_MySQL</a><br>
+SASL README <a href="http://www.postfix.org/SASL_README.html">
+http://www.postfix.org/SASL_README.html</a> <br>
+Server with virtual multi-domain support How-To setup a server to use Apache2, 
+Postfix, Pure-FTPd, Dovecot, Roundcube and all of them controlled easy over web 
+by CCC <a href="http://postfix.pentachron.net/">http://postfix.pentachron.net/</a>&nbsp;<br>
+The Book of Postfix - Chapter 25 Troubleshooting Tips.
+<a href="http://www.postfix-book.com/debugging.html">
+http://www.postfix-book.com/debugging.html</a><br>
+ISP-style Email Service with Debian-Sarge and Postfix 2.1
+<a href="http://workaround.org/articles/ispmail-sarge/">
+http://workaround.org/articles/ispmail-sarge/</a>&nbsp;<br>
+Virtual Users and Domains with Postfix, Courier and MySQL (+SMTP_AUTH, Quota, 
+SpamAssassin, ClamAV)
+<a href="http://www.howtoforge.com/virtual_postfix_mysql_quota_courier">
+http://www.howtoforge.com/virtual_postfix_mysql_quota_courier</a> </p>
+<p>&nbsp;</p>
+<h2>Author and Copyright</h2>
+<p>Copyright (c) 2006 Samiuela LV Taufa. All Rights Reserved.</p>
+<p>I reserve the right to be totally incorrect even at the best advice
+of betters. In other words, I'm probably wrong in enough places for you
+to call me an idiot, but don't 'cause you'll hurt my sensibilities,
+just tell me where I went wrong and I'll try again.</p>
+<p>You are permitted and encouraged to use this guide for fun or for
+profit as you see fit. If you republish this work in what-ever form, it
+would be nice (though not enforceable) to be credited.</p>
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+  <tbody>
+    <tr>
+      <td class="block" bgcolor="#cccccc" valign="middle" width="100%"><strong>
+      <p class="block">&nbsp;Serving Up Virtual User Account Mail -
+OpenBSD</p>
+      </strong></td>
+    </tr>
+  </tbody>
+</table>
+<p><font color="#808080" face="sans-serif" size="-2"><strong>Copyright&nbsp;
+&copy; 2000/1/2
+<a href="http://www.nomoa.com">NoMoa.COM</a> All rights reserved.</strong></font></p>
+</body>
+</html>

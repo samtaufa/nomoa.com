@@ -1,0 +1,190 @@
+
+<html>
+<head>
+<title>=8&gt; nomoa.com/bsd OpenBSD - php4 installation</title><link rel="STYLESHEET" type="text/css" href="openbsd.css">
+<script language="JavaScript">
+<!--
+
+function newImage(arg) {
+	if (document.images) {
+		rslt = new Image();
+		rslt.src = arg;
+		return rslt;
+	}
+}
+
+function changeImages() {
+	if (document.images && (preloadFlag == true)) {
+		for (var i=0; i<changeImages.arguments.length; i+=2) {
+			document[changeImages.arguments[i]].src = changeImages.arguments[i+1];
+		}
+	}
+}
+
+var preloadFlag = false;
+function preloadImages() {
+	if (document.images) {
+		openbsd_over = newImage("mmedia/openbsd-over.gif");
+		openbsd_down = newImage("mmedia/openbsd-down.gif");
+		preloadFlag = true;
+	}
+}
+
+// -->
+</script>
+<!-- End Preload Script -->
+</head>
+
+<body bgcolor="#FFFACD" onLoad="preloadImages();">
+<p class="logo">
+<a class="anchBlue" href="http://www.nomoa.com/bsd" 
+   onMouseOver="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;"
+   onMouseOut="changeImages('openbsd', 'mmedia/openbsd.gif'); return true;"
+   onMouseDown="changeImages('openbsd', 'mmedia/openbsd-down.gif'); return true;"
+   onMouseUp="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;">
+   <img name="openbsd"  align="absMiddle" 
+        alt="OpenBSD ... The Only way to Go ..." border="0" height="50"
+        src="mmedia/openbsd.gif" width="368"></a>
+</p>
+
+<h1>php4 - serving dynamic web pages</h1>
+<hr color="fuchsia">
+<p>Table of Contents: </p>
+<ul>
+  <li><a href="#introduction">Introduction</a></li>
+  <li><a href="#installing">Installing php4 </a></li>
+  <li><a href="#configuring">Configuring apache</a></li>
+  <li><a href="#testing">Testing the installation</a></li>
+  <li><a href="#apache_fails">Apache fails to start</a></li>
+  <li><a href="#author">Author and Copyright</a></li>
+</ul>
+<hr color="fuchsia">
+<h2><a name="introduction"></a>Introduction</h2>
+
+<p>php4's release has been much anticipated and OpenBSD has packaged different 
+  pre-compilations for direct installation. A direct binary package will most 
+  likely cater for the majority of peoples' needs. </p>
+<p>This guide will help you install php4 with OpenBSD.</p>
+<p>As of OpenBSD 3.2 and PHP4 rev4.2.3 the best way to install PHP4 is to use 
+  the packages.</p>
+<h2><a name="php3"></a><a name="installing"></a>Installing php4</h2>
+ 
+<p class="pFileReference">[ref: <a href="http://www.php.net/manual/en/install.openbsd.php">http://www.php.net/manual/en/install.openbsd.php</a>]</p>
+<p>Read the above, clear and step-by-step, installation instructions.<br>
+</p>
+<p>Please remember to read the instructions specified after each package installation. 
+  You will be required at times to execute a program which will organise the binaries 
+  on your system, or to make changes to /var/www/conf/httpd.conf.</p>
+<h2><a name="configuring"></a><a name="configuring"></a>Configuring Apache</h2>
+
+<p>If you have followed the php4 installation correctly, then there should be 
+  no need to make additional changes to the apache configuration file.</p>
+<h2><a name="testing"></a>Testing php.</h2>
+ 
+<p>The above <i>echo "&lt;?php phpinfo() ?&gt;" &gt; /var/www/htdocs/test.php 
+  </i> will let you quickly check whether php is working by calling up the file 
+  <b>test.php</b>:</p>
+<table border="0" width="800" class="pScreenSmall">
+  <tr> 
+    <td nowrap class="Code"># <b>lynx localhost/test.php </b></td>
+  </tr>
+  <tr> 
+    <td nowrap class="pScreenOutput"> 
+      <div align="center">[ lynx displays the following ...]<br>
+        &nbsp;<br>
+        PHP Version 4.0.4pl1<br>
+        <br>
+        System OpenBSD hostname 2.8 GENERIC#399 i386<br>
+        Build Date Today's Date<br>
+        _______________________________________________________________________________________________________________<br>
+      </div>
+      <p class="pScreenOutput">[ ... more stuff cut out ... ]<br>
+        &nbsp;</p>
+    </td>
+  </tr>
+</table>
+<p>Of course if you have a browser that supports tables (AOL Navigator, or Microsoft 
+  Internet Explorer) then it would a look a lot nicer.</p>
+<p align="left">Further test scripts are available, but once the above is working 
+  you know you have a 'working' php configuration. The additional scripts can 
+  help you with debugging errors or if there are specific components you need 
+  to review. Two directories (test, tests) hold a number of different tests for 
+  checking the functionality of your php configuration. </p>
+<h2><a name="apache_fails"></a>Apache fails to start</h2>
+<p>After you restart your machine you may get an error during the restart, and 
+  when you attempt to manually start Apache such as the following:</p>
+<table width="80%" border="0" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="CodeSmall"> 
+      <p class="CodeSmall"># apachectl start </p>
+    </td>
+  </tr>
+  <tr> 
+    <td nowrap class="pScreenSmall"> 
+      <p class="pScreenSmall">/usr/libexec/ld.so: httpd: libmysqlclient.so.6.0: 
+        No such file or directory </p>
+      <p class="pScreenSmall">/usr/sbin/apachectl start: httpd could not be started</p>
+    </td>
+  </tr>
+</table>
+<p>The problem is that the libmysqlclient.so.6.0 file is not in the standard path 
+  for the run-time linker ld.so. To ensure that the file is always included when 
+  the system is started you can either link the file to the standard location, 
+  or add the file location to the default search path.</p>
+<h5>Approach 1:</h5>
+<p>We can create a symlink of the library file into a standard library path such 
+  as /usr/local/lib/</p>
+<table width="80%" border="0" class="Code">
+  <tr> 
+    <td nowrap class="CodeSmall"> 
+      <p class="CodeSmall"># ln -s /usr/local/lib/mysql/libmysqlclient.so.6.0 
+        /usr/local/lib/libmysqlclient.so.6.0</p>
+    </td>
+  </tr>
+</table>
+<h5>Approach 2:</h5>
+<p>We can include the new directory into the list of directories searched by ld.so 
+  and this can be done in the configuration <a href="rc.conf.htm" class="anchBlue">rc.conf.local</a></p>
+<p class="pFileReference">edit /etc/rc.conf.local and add the following line in 
+  <a href="rc.conf.htm#Section3">Section 3</a>:</p>
+<table width="80%" border="0" class="CodeSmall">
+  <tr> 
+    <td nowrap class="CodeSmall"> 
+      <p class="CodeSmall">shlib_dirs=&quot;$shlib_dirs /usr/local/lib/mysql&quot; 
+        # extra directories for ldconfig</p>
+    </td>
+  </tr>
+</table>
+<p class="pFileReference">This will override the existing setting in /etc/rc.conf 
+  which is usually:</p>
+<table width="80%" border="0" class="pScreenSmall">
+  <tr> 
+    <td nowrap class="pScreenSmall"> 
+      <p class="pScreenSmall">shlib_dirs= # extra directories for ldconfig</p>
+    </td>
+  </tr>
+</table>
+<p>We are using $shlib_dirs in the above example to expand whatever settings exist 
+  for shlib_dirs and then include our new directory. Note that you must use quotation 
+  marks and use a space between directory paths.</p>
+<p>There are some security concerns about adding directories into the standard 
+  path for ldconfig so you should study the man pages.</p>
+<h2><a name="author"></a>Author and Copyright</h2>
+ 
+<p>Copyright (c) 2000/1/2 Samiuela LV Taufa. All Rights Reserved.</p>
+<p>I reserve the right to be totally incorrect even at the best advice of betters. In other words, I'm probably wrong in enough places for you to call me an idiot, but don't 'cause you'll hurt my sensibilities, just tell me where I went wrong and I'll try again.</p>
+<p>You are permitted and encouraged to use this guide for fun or for profit as 
+  you see fit. If you republish this work in what-ever form, it would be nice 
+  (though not enforceable) to be credited.</p>
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+  <tr> 
+    <td class="block" valign="MIDDLE" width="100%" bgcolor="#cccccc"><strong> 
+      <p class="block">php4 - scripting the web.</p>
+      </strong></td>
+  </tr>
+</table>
+<p><font color="#808080" face="sans-serif" size="-2"><strong>Copyright&nbsp; &copy; 
+  2000/1/2 <a href="http://www.nomoa.com">NoMoa Publishers</a> All rights 
+  reserved.  Caveat Emptor</strong></font></p>
+</body>
+</html>

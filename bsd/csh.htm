@@ -1,0 +1,435 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0//EN">
+<html>
+  <head>
+    <title>=8&gt; nomoa.com/bsd OpenBSD - sh - A Basic Shell</title>
+    <link rel="STYLESHEET" type="text/css" href="openbsd.css">
+<script language="JavaScript">
+<!--
+
+function newImage(arg) {
+	if (document.images) {
+		rslt = new Image();
+		rslt.src = arg;
+		return rslt;
+	}
+}
+
+function changeImages() {
+	if (document.images && (preloadFlag == true)) {
+		for (var i=0; i<changeImages.arguments.length; i+=2) {
+			document[changeImages.arguments[i]].src = changeImages.arguments[i+1];
+		}
+	}
+}
+
+var preloadFlag = false;
+function preloadImages() {
+	if (document.images) {
+		openbsd_over = newImage("mmedia/openbsd-over.gif");
+		openbsd_down = newImage("mmedia/openbsd-down.gif");
+		preloadFlag = true;
+	}
+}
+
+// -->
+</script>
+<!-- End Preload Script -->
+</head>
+
+<body bgcolor="#FFFACD" onLoad="preloadImages();">
+<p class="logo">
+<a class="anchBlue" href="http://www.nomoa.com/bsd" 
+   onMouseOver="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;"
+   onMouseOut="changeImages('openbsd', 'mmedia/openbsd.gif'); return true;"
+   onMouseDown="changeImages('openbsd', 'mmedia/openbsd-down.gif'); return true;"
+   onMouseUp="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;">
+   <img name="openbsd"  align="absMiddle" 
+        alt="OpenBSD ... The Only way to Go ..." border="0" height="50"
+        src="mmedia/openbsd.gif" width="368"></a>
+</p>
+
+<h1> sh - A Basic Shell</h1>
+<hr color="fuchsia">
+<ul>
+  <li><a href="#intro">Introduction</a></li>
+  <li><a href="#basic">Basic Shell Environment</a></li>
+  <li><a href="#login">Login Specific Entries</a></li>
+  <li><a href="#commandlines" class="anchBlue">Often used command lines </a> 
+    <ul>
+      <li><a href="#redir" class="anchBlue">Redirecting stderr to the same place 
+        as stdout</a></li>
+      <li><a href="#find" class="anchBlue">Finding Files</a></li>
+      <ul>
+        <li><a href="#findProcess" class="anchBlue">Processing 'found' files</a></li>
+        <ul>
+          <li><a href="#findOne" class="anchBlue">run a command on one file at 
+            a time</a></li>
+          <li><a href="#findMultiple">run a command on multiple files</a>.</li>
+        </ul>
+        <li><a href="#findPrivileges" class="anchBlue">Recursively Changing User/Directory 
+          Access Privileges</a></li>
+        <li>Deleting Specific Files</li>
+      </ul>
+      <li><a href="#alias" class="anchBlue">Alias' and Their GOTCHAs</a></li>
+      <li><a href="#tar" class="anchBlue">Compressed files</a></li>
+      <ul>
+        <li><a href="#tarzf" class="anchBlue">Compressing</a></li>
+        <li><a href="#tarxf" class="anchBlue">Uncompressing</a></li>
+      </ul>
+    </ul>
+  </li>
+  <li>Shell Prompts</li>
+  <li><a href="#author">Author and Copyright</a></li>
+</ul>
+<hr color="fuchsia">
+<h2><a name="intro"></a>Introduction</h2>
+<p>The shell you get when you log in is a login shell and reads both .login and 
+  the shell resource configuration file (.cshrc) The shells distributed with the 
+  base install (i.e. shells audited by the OpenBSD team implying a basis of security) 
+  are: /bin/{,c,k}sh</p>
+<p>ksh is the default shell for OpenBSD's root user and there seems to be heaps 
+  of arguments for and against retaining it as the default root shell. The reasoning 
+  often deteriorates to user preferences. I'm documenting this shell, or the tidbits 
+  I'm starting to use, because I'm finally going to learn the shell. 'sh' is the 
+  default shell for single-user.</p>
+<p>Unfortunately I'm a DOS/Windows throwback dinosaur so I word-process a lot 
+  better than I shell, and can't even program unless there's some GUI debugging 
+  environment to handhold me through those breakpoints.</p>
+<p>Which ever shell you choose to use, it is most advisable to ensure your shell 
+  is statically linked [ldd(8)] if you intend to use it when booting in single-user 
+  mode. Essentially, dynamically linked shells are in danger of failing if the 
+  dependency libraries are unfortunately removed or you do not have access to 
+  the libraries for some reason.</p>
+<h2><a name="basic"></a>Basic Shell Environment</h2>
+ 
+<p class="pFileReference">[ref: csh(8), sh(8)]<br>
+  [ref: <a href="http://ezine.daemonnews.org/200112/csh_tcsh_part1.html" class="anchBlue2">Making 
+  friends with c-Shell and t-Shell</a>] </p>
+<p>When csh starts it looks at a number of default configurations and you can 
+  make your modifications to your custom resource file: ~/.cshrc</p>
+<p class="pFileReference">File: ~/.cshrc</p>
+<table cellspacing="2" border="2" class="dns">
+  <tr> 
+    <td>
+      <pre>if ($?prompt) then
+    set prompt = &quot;% &quot;
+    set history = 10000
+    set notify
+    set filec
+endif
+
+alias h history
+alias ll ls -l
+alias dir ls
+
+set path = ( /bin /usr/bin /sbin /usr/sbin /usr/local/bin /usr/local/sbin /usr/X11R6/bin )</pre>
+    </td>
+  </tr>
+</table>
+<p>The above is a simplified version of '.cshrc'.</p>
+<p>The 1st part (the if condition) tests whether the shell is an interactive shell. 
+  If it is an interactive shell then it gives settings for things relevant to 
+  an interactive shell. After the test, we set a few alias' to simplify our commandline 
+  typing, and specify our path.</p>
+<p>A few nice features that you get used to in Bash is file completion. We make 
+  that setting using 'filec'. Likewise, you can specify how long a history of 
+  your previous commands csh will store.</p>
+<p>filec - Enable file name completion</p>
+<p> history - the size of the history list</p>
+<p>ignoreeof - if set the shell ignores end-of-file from input devices which are 
+  terminals. This prevents shells from accidently being killed by control-Ds</p>
+<h2><a name="login"></a>Login Specific Entries</h2>
+<p>Some of the commands you wish to initialise are only relevant to the initial 
+  login process, and not every reincarnation of the shell. We can specify these 
+  specific commands in the ~/.login file</p>
+<p>~/.login</p>
+<table cellspacing="2" border="2" class="dns">
+  <tr> 
+    <td> 
+      <pre>set tterm='?'$TERM
+set noglob
+
+tset -I -Q
+
+
+setenv TERM vt220
+stty erase '^?'
+
+unset noglob
+unset tterm</pre>
+    </td>
+  </tr>
+</table>
+<p>If you have trouble backspacing or 'del' to delete mistakes, it is probably 
+  because the system and you don't agree on what the erase character should be. 
+  If you see ^H when you try to erase characters, then your terminal is sending 
+  CTRL-H when you hit the delete key. To ensure the terminal behaves as you expect, 
+  you can specify in login</p>
+<p>stty erase ^h</p>
+<p>If you see ^? when you try to erase, this means your terminal is being sent 
+  DEL. You can use the following to tell the terminal to interpret DEL as erase</p>
+<p>stty erase '^?'</p>
+<p>Note: In the above command we have 'quoted' the command because of '?'s specially 
+  meaning in shell commands. Likewise, you could 'escape' the command by using 
+  stty erase ^\?</p>
+<p>stty erase '^?' </p>
+<p>noclobber - ensure that files are not accidentally destroyed</p>
+<p>noglob - filename expansion is inhibited. Useful in shell scripts that are 
+  not dealing with filenames, or after a list of filenames has been obtained and 
+  further expansions are not desirable.</p>
+<h2><a name="commandlines"></a>Often used commandlines</h2>
+<p class="pFileReference">[ref: Using csh &amp; tcsh, Paul DuBois (<a href="http://www.ora.com" class="anchBlue">O'Reilly 
+  &amp; Assoc</a>, Beijing, 1995)]</p>
+<p>The following are a number of useful command-line sequences I use or have come 
+  across on a regular basis.</p>
+<h3><a name="redir"></a>Redirecting stderr to the same place as stdout</h3>
+<p class="pFileReference">[ref: <a href="http://ezine.daemonnews.org/200112/csh_tcsh_part1.html" class="anchBlue2">Making 
+  friends with c-Shell and t-Shell</a>] </p>
+<p>One redirection that is often observed in startup scripts is redirecting the 
+  stderr to the same place that stdout is directed. One major value of this is 
+  to prevent error messages from coming up on the screen.</p>
+<p class="Code">$ /path/binary &gt; /dev/null 2&gt;&amp;1</p>
+<p>Sends output of standard error (2) to the same place as standard out &gt;&amp;1,<br>
+  which is, in this case, /dev/null. So in this scenario all error messages sent 
+  to stderr (2) are sent to the same place as stdout (1) which is all thrown at 
+  /dev/null. </p>
+<p>The device /dev/null is the ultra trash bin that automatically shreds everything 
+  that goes to it, like a void black-hole.</p>
+<p>This is useful in rc scripts where you do not want trash sent to the console, 
+  or where you can redirect output to a log file other than /dev/null. A very 
+  useful scenario for this type of redirection is sending the output and error 
+  messages from programs that generate large screens of information (like 'make').</p>
+<p>e.g.</p>
+<p class="Code">make &gt; makelog 2&gt;&amp;1</p>
+<p class="pFileReference">From the man page sh(8)</p>
+<table width="80%" border="0" class="pScreenOutput">
+  <tr> 
+    <td class="pScreenOutput"> <b>&lt;&amp; fd</b> Standard input is duplicated 
+      from file descriptor fd. fd can be a single digit, indicating the number 
+      of an existing file descriptor; the letter `p', indicating the file descriptor 
+      associated with the output of the current co-process; or the character `-', 
+      indicating standard input is to be closed. 
+      <p> <b>&gt;&amp; fd</b> Same as &lt;&amp;, except the operation is done 
+        on standard output.</p>
+    </td>
+  </tr>
+</table>
+<p class="pFileReference">From the man page csh(8)</p>
+<table width="80%" border="0" class="pScreenOutput">
+  <tr> 
+    <td class="pScreenOutput"> <b>&gt; name<br>
+      &gt;! name<br>
+      &gt;&amp; name<br>
+      &gt;&amp;! name</b><br>
+      The file name is used as the standard output. If the file does not exist 
+      then it is created; if the file exists, it is truncated; its previous contents 
+      are lost. <br>
+      <br>
+      If the variable noclobber is set, then the file must not exist or be a character 
+      special file (e.g., a terminal or /dev/null) or an error results. This helps 
+      prevent accidental destruction of files. Here, the `!' forms can be used 
+      to suppress this check. <br>
+      <br>
+      The forms involving `&amp;' route the standard error output into the specified 
+      file as well as the standard output. name is expanded in the same way as 
+      `&lt;' input filenames are.</td>
+  </tr>
+</table>
+<h3><a name="find"></a>Finding Files</h3>
+<p>As far as I can discover, there are two general tools for finding files on 
+  your system. One is the &quot;/usr/bin/locate&quot; program and the other is 
+  the gnu &quot;/usr/bin/find&quot;. For security purposes, the database used 
+  by &quot;locate&quot; is generated (by /etc/weekly) with limited access privileges, 
+  so it does not have a complete list of all files on your system.</p>
+<p>To use &quot;locate&quot; merely requires giving the name of the file you are 
+  looking for.</p>
+<p class="Code">$ locate filename</p>
+<p>The simplest use of &quot;find&quot; is listed here.</p>
+<p class="Code">$ find . -name &quot;filename&quot; -print</p>
+<p><i>find </i>is told to search from the current directory &quot;.&quot; look 
+  for files with the name &quot;filename&quot; and display (-print) a list of 
+  the results.</p>
+<h4><a name="findProcess"></a>Processing 'found' files</h4>
+<p class="pFileReference">[ref: find info]</p>
+<p>One advantage of the 'find' utility is its flexibility to launch processing 
+  activities on files it has found. A number of useful examples exist for this.</p>
+<h5><a name="findOne"></a>run a command on one file at a time.<br>
+</h5>
+<p>For example, to compare each C header file in the current directory with the 
+  file `/tmp/master':</p>
+<p class="Code"> find . -name '*.h' -exec diff -u '{}' /tmp/master ';'</p>
+<p>-exec command ; 'find' takes all arguments after `-exec' to be part of the 
+  command until an argument consisting of `;' is reached. It replaces the string 
+  `{}' by the current file name being processed everywhere it occurs in the command. 
+  Both of these constructions need to be escaped (with a `\') or quoted to protect 
+  them from expansion by the shell. The command is executed in the directory in 
+  which 'find' was run.</p>
+<p> </p>
+<h5><a name="findMultiple"></a>run a command on multiple files. </h5>
+<p> You can use shell command substitution (backquotes) to process a list of arguments, 
+  like this:</p>
+<p class="Code"> grep -l sprintf `find $HOME -name '*.c' -print`</p>
+<p> However, that method produces an error if the length of the `.c' file names 
+  exceeds the operating system's command-line length limit. </p>
+<p>To run a command on more than one file at once, use the `xargs'<br>
+  command. `xargs' avoids that problem by running the command as many times as 
+  necessary without exceeding the limit:</p>
+<p class="Code"> find $HOME -name '*.c' -print | xargs grep -l sprintf</p>
+<p> However, if the command needs to have its standard input be a terminal (`less', 
+  for example), you have to use the shell command substitution method.</p>
+<p>`xargs' is invoked like this:</p>
+<p class="Code"> xargs [OPTION...] [COMMAND [INITIAL-ARGUMENTS]]</p>
+<p> `xargs' reads arguments from the standard input, delimited by blanks (which 
+  can be protected with double or single quotes or a backslash) or newlines. It 
+  executes the COMMAND (default is `/bin/echo') one or more times with any INITIAL-ARGUMENTS 
+  followed by arguments read from standard input. Blank lines on the standard 
+  input are ignored.</p>
+<p> Instead of blank-delimited names, it is safer to use `find -print0' or `find 
+  -fprint0' and process the output by giving the `-0' or `--null' option to GNU 
+  `xargs', GNU `tar', GNU `cpio', or `perl'.</p>
+<h5><a name="findPrivileges"></a>Recursively changing User/Directory Access Privileges</h5>
+<p>One of the common issues that comes up in some of my web installations is for 
+  files and directories be given different permission rights. Being lazy, I either 
+  did not do it, or used a shortcut approach that just made the whole thing insecure.</p>
+<p>Find and change all php, php3 files to mode 554</p>
+<p class="Code">$ find . -name &quot;*.ph*&quot; | xargs chmod 554</p>
+<p>Find and change all directories to mode 711</p>
+<p class="Code">$ find . -type d | xargs chmod 711</p>
+<h5><br>
+  Deleting specific files</h5>
+<p>Another common problem for administrators connected with Windows clients, is 
+  the plethora of Windows files that get downloaded. Or, there may just be a set 
+  of files that you wish to delete that are easily identifiable by their extensions.</p>
+<table width="80%" border="0" class="Code">
+  <tr> 
+    <td nowrap class="Code">$ find / -type f \( -iname '*.mp3' -or -iname '*.exe' 
+      -or -iname '*.wav' \) -exec rm '{}' ';'</td>
+  </tr>
+</table>
+<p>A more comprehensive example is the one-line following:</p>
+<h3>Users on our machine</h3>
+<p>Sometimes it's just interesting to browse through your /etc/passwd file to 
+see what user accounts are set up on your machine.</p>
+<p>To quickly sort through what are system and ports created accounts, you can 
+use sort(1)</p>
+<p class="Code">$ sort -bn -k 3 -t : /etc/passwd</p>
+<p>In our above command-line we've asked sort to parse /etc/passwd with the 
+following</p>
+<p>-bn : ignore leading blanks, and sort as numeric</p>
+<p>-k 3 : key field 3 is where we want to sort</p>
+<p>-t : the field separator is the &quot;:&quot; colon</p>
+<p>This essentially sorts the /etc/passwd file by userid, in which case a 
+standard installation will sort the OS Installed userids first, then ports, then 
+standard users, and then finally the nobody account.</p>
+<h3><a name="alias"></a>Alias' and Their GOTCHAs</h3>
+<p>The use of alias' can be great, they shorten the typing but they can also be 
+  forgotten so you type in a command you are used to using, and get an output 
+  not exactly as you expected.</p>
+<p>You can turn off, or temporarily override the use of alias in the following 
+  manner:</p>
+<table width="80%" border="0" class="Code">
+  <tr> 
+    <td class="Code">$ alias ls ls -al</td>
+  </tr>
+  <tr> 
+    <td class="Code">$ \ls</td>
+  </tr>
+</table>
+<p>The 'escape' before the command-line forces the command to be executed directly, 
+  without use of the environment. Likewise you can also permenantly remove the 
+  alias attribute by doing:</p>
+<table width="80%" border="0" class="Code">
+  <tr> 
+    <td class="Code">$ alias ls</td>
+  </tr>
+</table>
+<h3><a name="tar"></a>Compressed files</h3>
+<p class="pFileReference">[ref: bzip2(1), gzip(1), tar(1)]</p>
+<p>One of the more common things that I'm coming across is the need to compress, 
+  decompress tar'd files. One item to note is that if you have some tar'd files 
+  from Linux, it may not be POSIX compatible in which case you may need to install 
+  the GNU tar program.</p>
+<p>There are a myriad of tools used in creating compressed files, but here I will 
+  deal with the common commandlines used.</p>
+<h4><a name="tarzf"></a>Compressing</h4>
+<p>The standard 'tar' program supports streaming the data together (archiving 
+  in the 'tar' format) and then compressing the data using 'z' gzip, or 'Z' compress.</p>
+<p class="pFileReference">For example:</p>
+<table width="80%" border="0" class="Code">
+  <tr> 
+    <td class="Code">$ tar -czf archive.tgz files</td>
+  </tr>
+</table>
+<p>The above command will 'c' create the 'f' file 'archive.tgz' which is a 'tar' 
+  file that is compressed using gzip. The contents of archive.tgz are brought 
+  from 'files' which is either a list of different files or directories.</p>
+<p>A compression method generally considered to generate smaller files (block 
+  zip2) can be used in a two step process. First we create the tar archive and 
+  then we can use the compression program bzip2.</p>
+<table width="80%" border="0" class="Code">
+  <tr> 
+    <td class="Code">$ tar -cf archive.tar</td>
+  </tr>
+  <tr> 
+    <td class="Code">$ bzip2 -c archive.tar &gt; archive.tbz2</td>
+  </tr>
+</table>
+<h4><a name="tarxf"></a>Uncompressing</h4>
+<p>By far the most common activity I've had is to uncompress software distributions. 
+  'tar' is generally good enough to complete most of these requirements.</p>
+<p><b>gz, tgz:</b> In most cases you will download tar/compressed files compressed 
+  using the 'z' gzip format. A direct untar, decompression method is:</p>
+<table width="80%" border="0" class="Code">
+  <tr> 
+    <td class="Code">$ tar -xzf archive.tgz</td>
+  </tr>
+</table>
+<p>Those used to the two step process, may be more used to the following command-line.</p>
+<table width="80%" border="0" class="Code">
+  <tr> 
+    <td class="Code">$ gunzip -c archive.tgz | tar -xf -</td>
+  </tr>
+</table>
+<p><b>bz2, tbz2:</b> When you come across a bzip2 compressed file, then we can 
+  use the above methodology, adapted to bunzip2.</p>
+<table width="80%" border="0" class="Code">
+  <tr> 
+    <td class="Code">$ bunzip2 -c archive.tbz2 | tar -xf -</td>
+  </tr>
+</table>
+<table width="80%" border="0" class="Code">
+  <tr> 
+    <td class="Code">$ bunzip2 -c archive.tar.bz2 | tar -xf -</td>
+  </tr>
+</table>
+<h2>Shell Prompts</h2>
+<p>A few shell prompts of interest that I've seen on the 'Net include:</p>
+<table width="80%" border="0" class="Code">
+  <tr> 
+    <td class="pScreenOutput">PS1='\[\033[1;30m\]\u@\h:\w \$\[\033[0m\] '</td>
+  </tr>
+  <tr>
+    <td class="pScreenOutput">PS1='\[\033[1;30m\]\u@\h:./\W \$\[\033[0m\] '</td>
+  </tr>
+</table>
+<p>&nbsp;</p>
+<h2><a name="author"></a>Author and Copyright</h2> 
+<p>Copyright (c) 2000/1/2 Samiuela LV Taufa. All Rights Reserved.</p>
+
+<p>I reserve the right to be totally incorrect even at the best advice of betters. In other words, I'm probably wrong in enough places for you to call me an idiot, but don't 'cause you'll hurt my sensibilities, just tell me where I went wrong and I'll try again.</p>
+
+<p>You are permitted and encouraged to use this guide for fun or for profit as you see fit. If you republish this work in what-ever form, it would be nice (though not enforceable) to be credited.</p>
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+  <tr>
+    <td class="block" valign="MIDDLE" width="100%" bgcolor="#cccccc"><strong>
+      <p class="block">sh - The Basic, 1st Shell</p>
+      </strong></td>
+  </tr>
+</table>
+<p><font color="#808080" face="sans-serif" size="-2"><strong>Copyright&nbsp; &copy; 
+  2000/1/2
+<a href="http://www.nomoa.com">NoMoa.COM</a> All rights reserved.</strong></font></p>
+  </body>
+</html>
+

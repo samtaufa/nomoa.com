@@ -1,0 +1,278 @@
+
+<html>
+<head>
+<title>=8> nomoa.com/bsd OpenBSD - php3 installation</title><link rel="STYLESHEET" type="text/css" href="openbsd.css">
+<script language="JavaScript">
+<!--
+
+function newImage(arg) {
+	if (document.images) {
+		rslt = new Image();
+		rslt.src = arg;
+		return rslt;
+	}
+}
+
+function changeImages() {
+	if (document.images && (preloadFlag == true)) {
+		for (var i=0; i<changeImages.arguments.length; i+=2) {
+			document[changeImages.arguments[i]].src = changeImages.arguments[i+1];
+		}
+	}
+}
+
+var preloadFlag = false;
+function preloadImages() {
+	if (document.images) {
+		openbsd_over = newImage("mmedia/openbsd-over.gif");
+		openbsd_down = newImage("mmedia/openbsd-down.gif");
+		preloadFlag = true;
+	}
+}
+
+// -->
+</script>
+<!-- End Preload Script -->
+</head>
+
+<body bgcolor="#FFFACD" onLoad="preloadImages();">
+<p class="logo">
+<a class="anchBlue" href="http://www.nomoa.com/bsd" 
+   onMouseOver="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;"
+   onMouseOut="changeImages('openbsd', 'mmedia/openbsd.gif'); return true;"
+   onMouseDown="changeImages('openbsd', 'mmedia/openbsd-down.gif'); return true;"
+   onMouseUp="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;">
+   <img name="openbsd"  align="absMiddle" 
+        alt="OpenBSD ... The Only way to Go ..." border="0" height="50"
+        src="mmedia/openbsd.gif" width="368"></a>
+</p>
+
+<h1>php3 - serving dynamic web pages</h1>
+<hr color="fuchsia">
+<p>Table of Contents: </p>
+<ul>
+  <li><a href="#introduction">Introduction</a></li>
+  <li><a href="#php3">Installing php3 </a></li>
+  <li><a href="#compiling">compiling from source</a></li>
+  <li><a href="#configuring">configuring apache</a></li>
+  <li><a href="#testing">testing the installation</a></li>
+  <li><a href="#author">Author and Copyright</a></li>
+</ul>
+<hr color="fuchsia">
+<h2><a name="introduction"></a>Introduction</h2>
+
+<p>php3 is programming language that has become successful as a server side scripting 
+  language for web servers. What has shown to be a good, and tight integration 
+  between php and database servers has allowed php to be the foundation for many 
+  useful tools for website administrators publishing dynamic (database driven) 
+  websites. The same tasks performed using php is arguably achievable with Perl 
+  (which is already widely used with databases and server side scripting) or with 
+  ASP, Microsoft's Active Server Pages.</p>
+<p>This guide will help you install php3 with OpenBSD, php4 has been released 
+  but I have not as yet been able to install it and configure it, when I do I'll 
+  document it along with what is already here.</p>
+<h2><a name="php3"></a>php3 installation </h2>
+ 
+<p class="pFileReference">source-file: php-3.0.16.tgz&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+  <i>(available from the distfiles directory)<br>
+  </i>package: mysql-3.22.23.tgz, (required by --my-msql option)<br>
+  package: gettext-0.10.35.tgz, (required by --with-gettext)<br>
+  package: gdbm-1.8.0.tgz<i><br>
+  </i>config file: /var/www/conf/php3.ini</p>
+<p>All the above specified source or package files are available from OpenBSD 
+  ftp mirrors.</p>
+<p>For normal activities you may be satisfied with just installing the php binary 
+  package available from the OpenBSD ftp sites. The binary package is compiled 
+  using <b>–without-mysql </b>and a number of other things I probably need to 
+  get horde and imp up and running. </p>
+<p>To include the mysql support requires installing the distribution files and 
+  configuring/re-compiling with mysql support. (The following instructions assume 
+  you have already installed mysql, and a few support packages such as gettext 
+  and gdbm. You can simply download the packages and <a href="installation.htm#pkg_add">install 
+  them using pkg_add.</a>)</p>
+<p>untar the source distribution<br>
+<p class="Code"># <b>cd /usr/src</b><br>
+  # <b>tar -zxf /<font color="#0000FF">[path-to-tar-source]</font>/php-3.0.16.tar.gz</b><br>
+  # <b>cd php-3.0.16</b></p>
+<p>The configuration selection I use below includes support for IMAP and mysql. 
+  Instructions for installing these are available in <a href="mailServer.htm#imap">Mail 
+  Services</a>, and <a href="mysql.htm">MySQL</a>.</p>
+
+<h2><a name="compiling"> </a>Compiling php3 from source</h2>
+
+<p>You can also use an alternate 'setup' script that comes with php3 or use the 
+  ports collection with make FLAVOR=mysql. The --with-gettext option below assumes 
+  that the package has already been installed, if not you can either add the package 
+  or remove the option.</p>
+<table border="0" width="800" class="Code">
+  <tr> 
+    <td nowrap class="Code"># ./configure --with-apxs=/usr/sbin/apxs --with-xml 
+      \<br>
+      --with-config-file-path=/var/www/conf --with-mysql --prefix=/usr/local \<br>
+      --sysconfdir=/etc --with-imap=/usr/local --with-ftp --with-gettext \<br>
+      --enable-force-cgi-redirect=yes --enable-track-vars=yes \<br>
+      --enable-magic-quotes=yes --enable-debug=no --with-system-regex=yes<br>
+      &nbsp;<br>
+      # make<br>
+      # make install<br>
+      # cp php3.ini-dist /var/www/conf/php3.ini<br>
+      # mkdir /var/www/php<br>
+      # echo "&lt;?php phpinfo() ?&gt;" &gt; /var/www/htdocs/test.php</td>
+  </tr>
+</table>
+<p>&nbsp;</p>
+<p>After copying the binary files to their intended directories, the enable the 
+  php3_module in the configuration file, and add the data-types (but leave them 
+  commented out.) You must edit the configuration file /var/www/conf/httpd.conf 
+  to enable the MIME data-types and to include additional MIME data-types.</p>
+<p>If you are comfortable with the ports system, then once you've configured the 
+  ports directory then you can install mysql support by using the &quot;make FLAVOR=mysql&quot; 
+  command. Check the documentation for further assistance.</p>
+
+<h2><a name="configuring"></a>Configuring Apache</h2>
+
+<p class="pFileReference">The installation will make the below modifications to 
+  the httpd.conf file:</p>
+<table border="0" width="800" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="pScreenOutput"># Dynamic Shared Object (DSO) Support<br>
+      LoadModule php3_module&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; /usr/lib/apache/modules/libphp3.so<br>
+      &nbsp;<br>
+      # AddType allows you to tweak mime.types without actually editing it, or 
+      to<br>
+      # make certain files to be certain types.<br>
+      #AddType application/x-httpd-php3 .phtml<br>
+      #AddType application/x-httpd-php3-source .phps</td>
+  </tr>
+</table>
+<p class="pFileReference">&nbsp;</p>
+<p class="pFileReference">You should enable the changes and make additions as 
+  shown below:</p>
+<table border="0" width="800" class="Code">
+  <tr> 
+    <td nowrap class="Code"># Dynamic Shared Object (DSO) Support<br>
+      LoadModule php3_module&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; /usr/lib/apache/modules/libphp3.so<br>
+      &nbsp;<br>
+      # AddType allows you to tweak mime.types without actually editing it, or 
+      to<br>
+      # make certain files to be certain types.<br>
+      AddType application/x-httpd-php3 .phtml<br>
+      AddType application/x-httpd-php3-source .phps <br>
+      AddType application/x-httpd-php3 .php<br>
+      AddType application/x-httpd-php3 .php3<br>
+      <br>
+      # Add to the Directory Index the php extensions<br>
+      DirectoryIndex index.html index.htm default.html default.html index.php3 
+      index.php index.phtml </td>
+  </tr>
+</table>
+<p>The install does not configure some of the standard file extensions used for 
+  php3 files (at least from what I understand by checking the url's presented 
+  by some sites.) </p>
+<p>Make the following recommended change to the default configuration /var/www/conf/php3.ini. 
+  The default file has a commented out section on where to store temporary upload 
+  files. </p>
+<p class="pScreenOutput">;upload_tmp_dir = ; temporary directory for HTTP uploaded 
+  files </p>
+<p>Set a valid temporary directory location such as /tmp</p>
+<p class="Code">upload_tmp_dir = /tmp ; temporary directory for HTTP uploaded 
+  files</p>
+<p> Test whether the binaries are built and installed correctly by restarting 
+the httpd server (force it to re-read the configuration file by using.)</p>
+<p class="Code"># <b>apachectl restart</b></p>
+<p>If Apache was not previously running, then you could use the " <i>apachectl 
+  start </i>" command to start the server.</p>
+ 
+<h2><a name="testing"></a>Testing php 3.</h2>
+ 
+<p>The above <i>echo "&lt;?php phpinfo() ?&gt;" &gt; /var/www/htdocs/test.php 
+  </i> will let you quickly check whether php is working by calling up the file 
+  <b>test.php</b>:</p>
+<table border="0" width="800" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="Code"># <b>lynx localhost/test.php </b></td>
+  </tr>
+  <tr> 
+    <td nowrap class="pScreenOutput"> [ lynx displays the following ...]<br>
+      &nbsp;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PHP&nbsp;Version&nbsp;3.0.16<br>
+      <br>
+      by Rasmus Lerdorf, Andi Gutmans, Zeev Suraski, Stig Bakken, Shane Caraveo, 
+      Jim Winstead, and countless others.<br>
+      <br>
+      _______________________________________________________________________________________________________________<br>
+      <br>
+      <span style="TEXT-ALIGN: center">System: OpenBSD micron 2.7 GENERIC#25 i386<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Build 
+      Date: Jun 29 2000<br>
+      <br>
+      </span>_______________________________________________________________________________________________________________<br>
+      <br>
+      Extensions<br>
+      <br>
+      Extensions Additional Information<br>
+      PHP core CFLAGS=<br>
+      HSREGEX=<br>
+      <br>
+      <p class="pScreenOutput">[ ... more stuff cut out ... ]<br>
+        &nbsp;</p>
+    </td>
+  </tr>
+  <tr>
+    <td nowrap class="pScreenOutput">&nbsp;</td>
+  </tr>
+</table>
+<p>Of course if you have a browser that supports tables (AOL Navigator, or Microsoft 
+  Internet Explorer) then it would a look a lot nicer.</p>
+<p align="left">Further test scripts are available, but once the above is working 
+  you know you have a 'working' php configuration. The additional scripts can 
+  help you with debugging errors or if there are specific components you need 
+  to review. Two directories (test, tests) hold a number of different tests for 
+  checking the functionality of your php configuration. </p>
+<p align="left">Below is one process for testing my php installation by copying 
+  the sample files into the standard web tree. (note: commands are typed from 
+  inside the /usr/src/php-3.0.16 directory)</p>
+<p class="Code" align="left"># <b>mkdir /var/www/htdocs/xyzxy</b><br>
+  # <b>cp -R examples /var/www/htdocs/xyzxy</b><br>
+  # <b>cp -R tests /var/www/htdocs/xyzxy</b><br>
+  &nbsp;</p>
+<p>xyzxy is just a placeholder for some obscure name that you can use so your 
+  test files are not easily accessible to others on the network.</p>
+<p>In a web browser point to the server and the above locations:</p>
+<p class="Code">http://my-web-server/xyzxy/test<br>
+  http://my-web-server/xyzxy/tests</p>
+<p>Each of the above locations will list a number of php documents that can be 
+  used to check if php is working.</p>
+<p class="Code">http://my-web-server/xyzxy/tests/bench.phtml</p>
+<p>bench.phtml is a good test for whether the AddType directive (httpd.conf) is 
+  working correctly and to see whether loop constructs are working.</p>
+<table border="0" width="800" class="Code">
+  <tr> 
+    <td nowrap class="Code">http://my-web-server/xyzxy/examples/date.php3<br>
+      http://my-web-server/xyzxy/examples/dir.php3</td>
+  </tr>
+</table>
+<p>date.php3 and dir.php3 are good tests for the AddType directive and whether 
+  the directory listing and date functions are working.</p>
+<p>Make sure to clean up the test files when you are finished just incase there 
+  are some security holes in the scripts we don't know about.</p>
+<p class="Code"># <b>rm -rf /var/www/htdocs/xyzxy</b></p>
+<h2><a name="author"></a>Author and Copyright</h2>
+ 
+<p>Copyright (c) 2000/1/2 Samiuela LV Taufa. All Rights Reserved.</p>
+<p>I reserve the right to be totally incorrect even at the best advice of betters. In other words, I'm probably wrong in enough places for you to call me an idiot, but don't 'cause you'll hurt my sensibilities, just tell me where I went wrong and I'll try again.</p>
+<p>You are permitted and encouraged to use this guide for fun or for profit as 
+  you see fit. If you republish this work in what-ever form, it would be nice 
+  (though not enforceable) to be credited.</p>
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+  <tr> 
+    <td class="block" valign="MIDDLE" width="100%" bgcolor="#cccccc"><strong> 
+      <p class="block">php3 - scripting the web.</p>
+      </strong></td>
+  </tr>
+</table>
+<p><font color="#808080" face="sans-serif" size="-2"><strong>Copyright&nbsp; &copy; 
+  2000/1/2 <a href="http://www.nomoa.com">NoMoa Publishers</a> All rights 
+  reserved.  Caveat Emptor</strong></font></p>
+</body>
+</html>

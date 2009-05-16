@@ -1,0 +1,829 @@
+
+<html>
+<head>
+<title>=8&gt; nomoa.com/bsd OpenBSD - Proxy and Caching the Internet</title><link rel="STYLESHEET" type="text/css" href="openbsd.css">
+<script language="JavaScript">
+<!--
+
+function newImage(arg) {
+	if (document.images) {
+		rslt = new Image();
+		rslt.src = arg;
+		return rslt;
+	}
+}
+
+function changeImages() {
+	if (document.images && (preloadFlag == true)) {
+		for (var i=0; i<changeImages.arguments.length; i+=2) {
+			document[changeImages.arguments[i]].src = changeImages.arguments[i+1];
+		}
+	}
+}
+
+var preloadFlag = false;
+function preloadImages() {
+	if (document.images) {
+		openbsd_over = newImage("mmedia/openbsd-over.gif");
+		openbsd_down = newImage("mmedia/openbsd-down.gif");
+		preloadFlag = true;
+	}
+}
+
+// -->
+</script>
+<!-- End Preload Script -->
+</head>
+
+<body bgcolor="#FFFACD" onLoad="preloadImages();">
+<p class="logo">
+<a class="anchBlue" href="http://www.nomoa.com/bsd" 
+   onMouseOver="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;"
+   onMouseOut="changeImages('openbsd', 'mmedia/openbsd.gif'); return true;"
+   onMouseDown="changeImages('openbsd', 'mmedia/openbsd-down.gif'); return true;"
+   onMouseUp="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;">
+   <img name="openbsd"  align="absMiddle" 
+        alt="OpenBSD ... The Only way to Go ..." border="0" height="50"
+        src="mmedia/openbsd.gif" width="368"></a>
+</p>
+
+<h1> Proxy/Cache Service for the Internet</h1>
+<hr color="fuchsia">
+<p>Table of Contents: </p>
+<ul>
+  <li><a href="#introduction">Introduction</a> 
+  <li><a href="#cacheSquidOptimise" class="anchBlue">Squid - Optimizing Web Access</a> 
+    <ul>
+      <li><a href="#cacheSquidStart" class="anchBlue">Starting Squid</a></li>
+      <li><a href="#cacheSquidOpenBSD" class="anchBlue">Localised settings in 
+        OpenBSD package</a></li>
+      <li class="anchBlue"><a href="#cacheSquidConfig">Example Configuration</a></li>
+      <ul>
+        <li><a href="#squidEXport">Specifying the Port to Listen On</a></li>
+        <li><a href="#squidEXauth">Authenticating Users</a></li>
+        <li><a href="#squidEXsubnet">Specifying the LAN machines</a></li>
+        <li><a href="#squidEXTIME">Specifying valid times for operation</a></li>
+        <li><a href="#squidEXurl">Organisational Policy Specifying Restrictions 
+          using Regular Expressions</a></li>
+        <li><a href="#squidEXcustomerrs">Educational Messages, related to Organisation 
+          Policy Restrictions</a></li>
+        <li><a href="#squidEXhttp_access">Configure Cache Access</a></li>
+        <li><a href="#squidEXdeny">Organisation Policy - Restricting Access</a></li>
+        <li><a href="#squidEXcache">Specifying access to cache from LAN machines</a></li>
+        <li><a href="#squidEXdirect">Ignoring the Cache when requesting from LAN 
+          machines</a></li>
+      </ul>
+      <li><a href="#squidMisc">Other Miscellaneous Issues</a></li>
+      <ul>
+        <li><a href="#squidMiscDNS">Squids DNS Startup Test</a></li>
+        <li><a href="#squidMiscDebug">Debuggin Your Configuration</a></li>
+        <li><a href="#squidMiscUser">Squid User &amp; Group</a></li>
+      </ul>
+    </ul>
+  <li><a href="#squidAuth">Authentication - the MSNT module</a>
+  <li><a href="#transproxy">Transparent Proxy</a> - Not having to manually update 
+    all clients 
+  <li>Suse Proxy-Suite - FTPs 
+  <li>Cache Utilisation Analysis Tools 
+  <li><a href="#author">Author and Copyright</a></li>
+</ul>
+<hr color="fuchsia">
+<h2><a name="introduction"></a>Introduction</h2>
+<p style="tab-stops: 8.0cm">There are at least three great values in using a caching 
+  proxy, the immediately obvious two are bandwidth optimisation (in the form of 
+  minimising unnecessary traffic, caching) and control of what resources can be 
+  requested from outside (the proxy.) The third, oft unexplored, value of a caching 
+  proxy server such as squid is the records, or logs that it maintains to allow 
+  the administrator to further 'fine-tune' the performance of the system and to 
+  isolate communications from within the environment to the external world.</p>
+<p style="tab-stops: 8.0cm">This bit of writing is taking a little while since 
+  I don't have a live 'net connection to be testing servers on a regular basis. 
+</p>
+<p style="tab-stops: 8.0cm"></p>
+<h2><a name="cacheSquidOptimise"></a>Squid - Optimising Web Access</h2>
+
+<p class="pFileReference">[package: squid-2.3.tgz]<br>
+</p>
+<p class="pFileReference">[ref: Squid, A User's Guide, by Oskar Pearson]<br>
+</p>
+<p class="pFileReference">[ref: squid faq]</p>
+<p>Squid 2.3 package is available with the 2.8 CD and later versions may be available 
+  on the NET. To install the package, use the pkg_add program as in the example 
+  below </p>
+<p class="Code"># pkg_add /<font color="#0000CC">[path-to-package]</font>/squid-2.3.tgz</p>
+<p>Once the package is installed you will be prompted for a number of further 
+  activities to refine your installation. The following are part of that installation 
+  refinement.</p>
+<p>(1) Configure the cache swap directory by using squid -z. This process will 
+  take a bit of time.</p>
+<p class="Code"># /usr/local/bin/squid -z</p>
+<p class="pScreenOutput">[ ... program displays ... ]</p>
+<p class="pScreenOutput">YYYY/MM/DD HH:MM:SS| Creating Swap Directories</p>
+<p class="pScreenOutput">&nbsp;</p>
+<h3><a name="cacheSquidStart"></a>Starting Squid</h3>
+<p>You can manually start squid by typing in /usr/local/bin/squid which will start 
+  the squid parent process waiting around for connections. To configure OpenBSD 
+  to automatically start squid with every system start-up then you can edit the 
+  rc.conf file to modfiy the configuration and rc.local to take action when the 
+  configurations are set.</p>
+<p class="pFileReference">Edit the file: /etc/rc.conf file to include the following 
+  lines:</p>
+<p class="pScreenOutput">&nbsp;</p>
+<p class="pScreenOutput">squid=YES </p>
+<p class="pScreenOutput">&nbsp;</p>
+<p class="pFileReference"> Edit the file: /etc/rc.local. </p>
+<p><b>After</b> the 'starting local daemons' <b>and</b> <b>before</b> the following 
+  echo '.', Insert the following instructions to the /etc/rc.local file: </p>
+<table border="0" width="800" class="Code">
+  <tr>
+    <td nowrap class="Code"> 
+      <p class="pScreenOutput"><b>echo -n 'starting local daemons:'</b> &nbsp;&nbsp;<br>
+        # [ ... stuff left out ... ] </p>
+      <p class="Code"> &nbsp;&nbsp; if [ -f /etc/squid/squid.conf ]; then<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if [ X"${squid}" = X"YES" -a -x /usr/local/bin/squid 
+        ]; then<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; echo -n ' 
+        squid';&nbsp;&nbsp;&nbsp;&nbsp;/usr/local/bin/squid<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; fi<br>
+        &nbsp;&nbsp; fi &nbsp;&nbsp;&nbsp;</p>
+      <p class="pScreenOutput"># [ ... stuff left out ... ] &nbsp;<b>&nbsp; <br>
+        echo '.' </b></p>
+    </td>
+  </tr>
+</table>
+<p>Now each restart of the machine will automatically check to see whether we 
+  have enabled squid in the configuration file (rc.conf) and then start the squid 
+  daemon. If we wish to disable squid we can simply change squid=YES to squid=NO 
+</p>
+<h3><a name="cacheSquidOpenBSD"></a>Localised settings in OpenBSD package</h3>
+<table>
+  <tr> 
+    <td valign="top" class="pFileReference">- configuration files </td>
+    <td valign="top" class="pFileReference">/etc/squid </td>
+  </tr>
+  <tr> 
+    <td valign="top" class="pFileReference">- sample configuration files</td>
+    <td valign="top" class="pFileReference">/usr/local/lib/squid/conf </td>
+  </tr>
+  <tr> 
+    <td valign="top" class="pFileReference">- error message files</td>
+    <td valign="top" class="pFileReference">/usr/local/share/squid/errors </td>
+  </tr>
+  <tr> 
+    <td valign="top" class="pFileReference">- sample error message</td>
+    <td valign="top" class="pFileReference">/usr/local/lib/squid/errors </td>
+  </tr>
+  <tr> 
+    <td valign="top" class="pFileReference">- icons</td>
+    <td valign="top" class="pFileReference">/usr/local/share/squid/icons </td>
+  </tr>
+  <tr> 
+    <td valign="top" class="pFileReference">- sample icons</td>
+    <td valign="top" class="pFileReference">/usr/local/lib/squid/icons </td>
+  </tr>
+  <tr> 
+    <td valign="top" class="pFileReference">- cache</td>
+    <td valign="top" class="pFileReference">/var/squid/cache </td>
+  </tr>
+  <tr> 
+    <td valign="top" class="pFileReference">- logs </td>
+    <td valign="top" class="pFileReference">/var/squid/logs </td>
+  </tr>
+  <tr> 
+    <td valign="top" class="pFileReference">- uid:gid squid runs as is </td>
+    <td valign="top" class="pFileReference">www:www </td>
+  </tr>
+</table>
+<h3 style="tab-stops: 8.0cm"><a name="cacheSquidConfig"></a>Example Configuration</h3>
+<p style="tab-stops: 8.0cm"><b>Scenario:</b></p>
+<p style="tab-stops: 8.0cm">At a private school I work with they have just recieved 
+  a DSL connection to the local ISP and before releasing the Internet connection 
+  the administrators have requirements (policies) within the school they wish 
+  to be implemented as part of the Internet Connection.</p>
+<p style="tab-stops: 8.0cm">The computer department have come to a realisation 
+  that a Block by Default approach is not conducive to good use of the Internet, 
+  but there is a need (by the organisation) for policing and monitoring its policies.</p>
+<p style="tab-stops: 8.0cm">The chosen solution is two-fold. (1.) Physical supervision 
+  of Internet Access computers is mandatory and must be combined with user education 
+  and training. (2) Software blocking will be both informative and as comprehensive 
+  as possible.</p>
+<p style="tab-stops: 8.0cm"><b>Details:</b></p>
+<p style="tab-stops: 8.0cm"><b>School Policies: </b>The school has some standards 
+  of certain types of material it does not want students to access through the 
+  Internet (specifically pornography.) As a consequence of that requirement, the 
+  school also does not want students using 'chat' environments or public web hosted 
+  email services (eg. hotmail)</p>
+<p style="tab-stops: 8.0cm">Chosen Solution: Access Control Lists files block_webmail.txt 
+  block_porn.txt block_porndomain.txt unblock_porn.txt. Use of authentication 
+  so log files will register user access.</p>
+<p style="tab-stops: 8.0cm"><b>Network Policies: </b>The DSL connection is 64K 
+  but the ISP has a very poor connection to the backbone (remember we're calling 
+  from Tonga) so their is a significant concern about bandwidth utilisation.</p>
+<p style="tab-stops: 8.0cm">As a consequence of the bandwidth problem, and the 
+  need to keeping the students focussed on academically oriented pursuits, the 
+  network administrators want to ban a number of entertainment sites. Primarily 
+  to minimise bandwidth use and secondarily to keep students off time wasters.</p>
+<p style="tab-stops: 8.0cm">Advertisers are also a problematic bandwidth consumer, 
+  so these will also be blocked where possible.</p>
+<p style="tab-stops: 8.0cm">Chosen Solution: Access Control Lists files block_advertisers.txt 
+  block_entertainment.txt block_files.txt </p>
+<p style="tab-stops: 8.0cm"><b>Network Configuration:</b> </p>
+<p style="tab-stops: 8.0cm">The school operates 3 subnets with differing authorisation 
+  levels. Through some magic, we would like to provide special access privileges 
+  for system administrators:</p>
+<table width="90%" border="1">
+  <tr> 
+    <td nowrap align="left" valign="top"> 
+      <div align="center"><b>Segment</b></div>
+    </td>
+    <td> 
+      <div align="center"><b>Purpose</b></div>
+    </td>
+  </tr>
+  <tr> 
+    <td nowrap align="left" valign="top">2 class-rooms</td>
+    <td> 
+      <p>controlled, timed access with potential limits to 'net access during 
+        class times.<br>
+        subnet_lab1, subnet_lab2</p>
+    </td>
+  </tr>
+  <tr> 
+    <td nowrap align="left" valign="top">1 pub access</td>
+    <td>Public Access for school community. This will include machines available 
+      to school administrators and general staff for accessing the network and 
+      'NET. subnet_pub</td>
+  </tr>
+  <tr> 
+    <td nowrap align="left" valign="top">1 admin</td>
+    <td>administrator with freer access to the 'NET, probably need to be password 
+      authenticated.</td>
+  </tr>
+</table>
+<p style="tab-stops: 8.0cm">Note: I still haven't got special privileges as a 
+  separate thing for system administrators, I think i can probably do it with 
+  authentication, but I havent figured it out yet.</p>
+<h4 style="tab-stops: 8.0cm"><a name="squidEXport"></a>Specifying the Port to 
+  Listen On </h4>
+<p style="tab-stops: 8.0cm" class="pFileReference">Edit the file: /etc/squid/squid.conf</p>
+<p style="tab-stops: 8.0cm">Now the scenario is out of the way, lets get down 
+  to configuring our squid cache/proxy.</p>
+<p style="tab-stops: 8.0cm">The control of external access to the local lan should 
+  be managed by the Firewall.</p>
+<p style="tab-stops: 8.0cm">To be safer (or am I just pedantic) I set the below 
+  restriction on where the squid server is listening.</p>
+<table width="80%" border="1" class="Code">
+  <tr> 
+    <td nowrap> 
+      <p style="tab-stops: 8.0cm" class="Code"># http_port 3128<br>
+        http_port internal_nic1:3128<br>
+        http_port internal_nic2:3128</p>
+      </td>
+  </tr>
+</table>
+<p style="tab-stops: 8.0cm">Normally squid starts up and listens to 3128 on all 
+  network devices. The above just ensures that it is listening on port 3128 only 
+  for the internal network. Our firewall can further block port 3128 requests 
+  from coming through from the outside (but our ACLs should be handling any further 
+  problems.) </p>
+<h4 style="tab-stops: 8.0cm"><a name="squidEXauth"></a>Authenticating Users</h4>
+<p style="tab-stops: 8.0cm">Optional: </p>
+<table width="80%" border="1" class="Code">
+  <tr> 
+    <td nowrap> 
+      <p style="tab-stops: 8.0cm" class="Code"># TAG: auth_param<br>
+        # This is used to pass parameters to the various authentication<br>
+        # schemes.<br>
+        # format: auth_param scheme parameter [setting]<br>
+        # <br>
+        # auth_param basic program /usr/local/bin/ncsa_auth /usr/local/etc/passwd	
+        <br>
+        # would tell the basic authentication scheme it's program parameter.<br>
+        authenticate_program /usr/local/bin/msntauth<br>
+        authenticate_children 15 <br>
+        authenticate_ttl 3600<br>
+        authenticate_ip_ttl 60</p>
+    </td>
+  </tr>
+</table>
+<p style="tab-stops: 8.0cm">Because of the organisation policy we setup authentication 
+  so (a) Only those designated for Internet Access can access the external web, 
+  (b) Our log files can determine by user their access pattenrs on the Internet. 
+  Note that this approach may be considered draconian by others and is dependent 
+  on the type of site you are running on whether you want to use authentication.</p>
+<p style="tab-stops: 8.0cm">All the clients are authenticated on an MS Windows 
+  NT Domain before they can use the network, so I have used the msnt_auth module. 
+  I got the program from the 2.4stable1 source code so you might skip the authentication 
+  section until you have squid configured.</p>
+<table width="80%" border="1" class="Code">
+  <tr> 
+    <td nowrap> 
+      <p style="tab-stops: 8.0cm" class="Code"># Authentication</p>
+      <p style="tab-stops: 8.0cm" class="Code">acl authenticated proxy_auth REQUIRED</p>
+      </td>
+  </tr>
+</table>
+<p style="tab-stops: 8.0cm">To use authentication in our rule-set, we have to 
+  create an ACL for it, as shown above. (note this is only useful if you actually 
+  use an authentication module.)</p>
+<h4 style="tab-stops: 8.0cm"><a name="squidEXsubnet"></a>Specifying the LAN machines 
+</h4>
+<p style="tab-stops: 8.0cm">Next I set up my Access Control Lists (ACLs) defining 
+  the range of machines I have on the Internal Network.</p>
+<table width="80%" border="1" class="Code">
+  <tr>
+    <td nowrap> 
+      <p style="tab-stops: 8.0cm" class="Code"># Networks allowed to use this 
+        Cache</p>
+      <p style="tab-stops: 8.0cm" class="Code">acl subnet_lab1 &nbsp;&nbsp;&nbsp;&nbsp;src 
+        ip-address_lab1/netmask<br>
+        acl subnet_lab2 &nbsp;&nbsp;&nbsp;&nbsp;src ip-address_lab2/netmask<br>
+      </p>
+      <p style="tab-stops: 8.0cm" class="Code">acl subnet_pub&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;src 
+        ip-address_pub/netmask<br>
+      </p>
+      <p style="tab-stops: 8.0cm" class="Code">acl all&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;src 
+        0.0.0.0/0.0.0.0</p>
+      <p style="tab-stops: 8.0cm" class="Code">&nbsp;</p>
+      <p style="tab-stops: 8.0cm" class="Code">acl dst_all&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dst 
+        0.0.0.0/0.0.0.0 </p>
+</td>
+  </tr>
+</table>
+<p style="tab-stops: 8.0cm">I choose to list the subnets separately (all non-routeable 
+  IPs) as we have some policies for Internet access that can be managed using 
+  the subnet information.</p>
+<h4 style="tab-stops: 8.0cm"><a name="squidEXTIME"></a>Specifying Valid Times</h4>
+<p style="tab-stops: 8.0cm">Related to the subnet information will be certain 
+  time periods for which I want to disable specific subnets. So I have to set 
+  up the ACL for that</p>
+<table width="80%" border="1" class="Code">
+  <tr> 
+    <td nowrap> 
+      <p style="tab-stops: 8.0cm" class="Code"># After Hours Settings<br>
+        acl TIMEafterhoursMORN time MTWHF 00:00-08:00<br>
+        acl TIMEafterhoursAFT &nbsp;time MTWHF 16:30-24:00<br>
+        acl TIMEsatMORN &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;time A 00:00-07:00<br>
+        acl TIMEsatAFT &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;time A 
+        17:00-24:00<br>
+        acl TIMEsundALLDAY &nbsp;&nbsp;&nbsp;&nbsp;time S 00:00-24:00</p>
+      </td>
+  </tr>
+</table>
+<p style="tab-stops: 8.0cm">Squid TIME acls cannot wrap from one day to the next, 
+  so we have to get from 4:30 in the afternoon until 8:00 the next morning, we 
+  have to actually specify midnight to 8 in the morning, and 4:30 to midnight.</p>
+<h4 style="tab-stops: 8.0cm"><a name="squidEXurl"></a>Organisational Policy Specifying 
+  Restrictions using Regular Expressions</h4>
+<p style="tab-stops: 8.0cm">A number of organisational policies require that we 
+  restrict use of the Internet and for that we have collected a list of urls and 
+  domains from the Internet. We are storing these urls in text files related to 
+  the categorisation we have chosen (eg. entertainment, porn, etc.)</p>
+<table width="80%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="Code"> 
+      <p style="tab-stops: 8.0cm" class="Code"># Regular Expression Review of 
+        URLs, and Destination Domains</p>
+      <p style="tab-stops: 8.0cm" class="Code">&nbsp;</p>
+      <p style="tab-stops: 8.0cm" class="Code"># The first list are sites known 
+        to be wrongly blocked by the later list<br>
+        acl unblock_porn url_regex -i &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;/etc/squid/unblock_porn.txt&quot;<br>
+        acl unblock_domain dstdom_regex -i &quot;/etc/squid/unblock_domain.txt&quot;<br>
+        acl unblock_stuff url_regex -i &nbsp;&nbsp;&nbsp;&nbsp;&quot;/etc/squid/unblock_stuff.txt&quot;</p>
+      <p style="tab-stops: 8.0cm" class="Code">&nbsp;</p>
+      <p style="tab-stops: 8.0cm" class="Code"># The following are the sites restricted 
+        by organisational policy</p>
+      <p class="Code">acl block_advertisers url_regex -i &quot;/etc/squid/block_advertisers.txt&quot;<br>
+        acl block_entertainment url_regex -i &quot;/etc/squid/block_entertainment.txt&quot;<br>
+        acl block_anonymizers url_regex -i &quot;/etc/squid/block_anonymizers.txt&quot;<br>
+        acl block_webmail url_regex -i &nbsp;&nbsp;&nbsp;&nbsp;&quot;/etc/squid/block_webmail.txt&quot;<br>
+        acl block_porn url_regex -i &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;/etc/squid/block_porn.txt&quot;<br>
+        acl block_badlang url_regex -i &nbsp;&nbsp;&nbsp;&nbsp;&quot;/etc/squid/block_badlang.txt&quot;<br>
+        acl block_pirates url_regex -i &nbsp;&nbsp;&nbsp;&nbsp;&quot;/etc/squid/block_pirates.txt&quot;<br>
+        acl block_baddomain dstdom_regex -i &quot;/etc/squid/block_baddomain.txt&quot;<br>
+        acl block_files url_regex -i &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;/etc/squid/block_files.txt&quot;<br>
+      </p>
+    </td>
+  </tr>
+</table>
+<p style="tab-stops: 8.0cm">We create ACLs for each category, and we store the 
+  text files in the /etc/squid directory.</p>
+<p style="tab-stops: 8.0cm">We are use both the url_regex directive (which searches 
+  on the full url) and the dstdom_regex (which searches only the domain part of 
+  the url.) We also use the -i (case insenstive) to ensure that if we use &quot;doberman&quot; 
+  all case specifications &quot;dObermAn&quot; and &quot;DOBErman&quot; are matched.</p>
+<p style="tab-stops: 8.0cm">The use of dstdom_regex gives more flexibility so 
+  we can block certain words &quot;only when it appears in the 'domain'.&quot; 
+  Think about it for a while and it should make sense to you.</p>
+<h4 style="tab-stops: 8.0cm"><a name="squidEXcustomerrs"></a>Educational Messages, 
+  related to Organisation Policy Restrictions</h4>
+<p style="tab-stops: 8.0cm" class="pFileReference">Location: /usr/local/share/squid/errors</p>
+<table width="80%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="Code"> 
+      <p style="tab-stops: 8.0cm" class="Code"># TAG: deny_info<br>
+        # Usage: deny_info err_page_name acl<br>
+        #<br>
+        #Default:<br>
+        # none<br>
+        deny_info CUSTOM_ERRS_ADVERTISERS block_advertisers<br>
+        deny_info CUSTOM_ERRS_ANONYMIZERS block_anonymizers<br>
+        deny_info CUSTOM_ERRS_BADDOMAIN&nbsp;&nbsp; block_baddomain<br>
+        deny_info CUSTOM_ERRS_BADLANG &nbsp;&nbsp;&nbsp;&nbsp;block_badlang<br>
+        deny_info CUSTOM_ERRS_ENTERTAINMENT block_entertainment<br>
+        deny_info CUSTOM_ERRS_FILES &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;block_files<br>
+        deny_info CUSTOM_ERRS_PIRATES &nbsp;&nbsp;&nbsp;&nbsp;block_pirates<br>
+        deny_info CUSTOM_ERRS_PORN &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;block_porn<br>
+        deny_info CUSTOM_ERRS_WEBMAIL &nbsp;&nbsp;&nbsp;&nbsp;block_webmail<br>
+      </p>
+      </td>
+  </tr>
+</table>
+<p style="tab-stops: 8.0cm">We have created customised error messages for the 
+  different areas our organisational policy restricts access. The error messages 
+  are text files using the naming convention used by the squid error messages. 
+  We store the files in /usr/local/share/squid/errors (standard configuration 
+  in the squid-2.3 OpenBSD port.)</p>
+<p style="tab-stops: 8.0cm">Note: the beautify our error messages (ie. add graphics 
+  &amp; style sheet) we have created an alias directory in our Apache website 
+  to store these extra files. Squid will throw the custom messages at the user 
+  browser, but all other access has to come from the local website.</p>
+<h4 style="tab-stops: 8.0cm"><a name="squidEXhttp_access"></a>Configure Cache 
+  Access</h4>
+<p style="tab-stops: 8.0cm">The final major thing, is to set up our rules for 
+  accessing the cache.</p>
+<table width="80%" border="1" class="Code">
+  <tr> 
+    <td nowrap> 
+      <p style="tab-stops: 8.0cm" class="Code"># TAG: http_access<br>
+        # Allowing or Denying access based on defined access lists<br>
+        #<br>
+        # Access to the HTTP port:<br>
+        # http_access allow|deny [!]aclname ...</p>
+      </td>
+  </tr>
+</table>
+<p style="tab-stops: 8.0cm">The standard format, as shown above, is <b>http_access 
+  </b>followed by either allow or denu and then a list of your aclnames (with 
+  an optional ! at the begin to negate the aclname.) Note that aclnames are &quot;ANDed&quot; 
+  together. </p>
+<p style="tab-stops: 8.0cm">There are a number of standard security configurations 
+  already in squid.conf, I've left them standing and added the things specific 
+  to our scenario.</p>
+<h4 style="tab-stops: 8.0cm"><a name="squidEXdeny"></a>Organisation Policy - Restricting 
+  Access</h4>
+<table width="80%" border="1" class="Code">
+  <tr> 
+    <td nowrap> 
+      <p style="tab-stops: 8.0cm" class="Code">#<br>
+        # INSERT YOUR OWN RULE(S) HERE TO ALLOW ACCESS FROM YOUR CLIENTS<br>
+        #</p>
+      <p class="Code"># http ACCESS PRIVILEGES</p>
+      <p class="Code"># --&gt; URLs to Unblock<br>
+        http_access allow unblock_porn &nbsp;&nbsp;authenticated<br>
+        http_access allow unblock_domain authenticated<br>
+        http_access allow unblock_stuff &nbsp;authenticated</p>
+      <p class="Code">&nbsp;</p>
+      <p class="Code"># --&gt; Domains &amp; URLS to block<br>
+        http_access deny block_advertisers<br>
+        http_access deny block_baddomain<br>
+        http_access deny block_entertainment<br>
+        http_access deny block_anonymizers<br>
+        http_access deny block_porn<br>
+        http_access deny block_webmail<br>
+        http_access deny block_badlang<br>
+        http_access deny block_pirates</p>
+      <p class="Code">http_access deny block_files TIMEafterhoursMORN<br>
+        http_access deny block_files TIMEafterhoursAFT</p>
+      </td>
+  </tr>
+</table>
+<p style="tab-stops: 8.0cm">Our first action is to block those sites which are 
+  restricted by our organisational policies. If you note our unblock, it should 
+  be better organised, you can figure that one out, in the meantime I'll try to 
+  figure it out myself.</p>
+<p style="tab-stops: 8.0cm">If you are not using authentication, then you can 
+  remove the &quot;authenticated&quot; acl from the example.</p>
+<p style="tab-stops: 8.0cm">Specifying access to cache from LAN machines</p>
+<h4 style="tab-stops: 8.0cm"><a name="squidEXcache"></a>The next thing is to allow 
+  our local subnets access to the cache.</h4>
+<table width="80%" border="1" class="Code">
+  <tr> 
+    <td nowrap>
+      <p class="Code"># --&gt; Subnet Access to the NET<br>
+        <br>
+        http_access allow localhost<br>
+        http_access allow subnet_lab1 authenticated<br>
+        http_access allow subnet_lab2 authenticated</p>
+      </td>
+  </tr>
+</table>
+<p style="tab-stops: 8.0cm">In this example, we allow the subnets to use the cache, 
+  so long as they are authenticated (again, if you are not using authentication 
+  then just remove the &quot;authenticated&quot; acl.)</p>
+<p style="tab-stops: 8.0cm"> Because we are not ready for prime-time, we denied 
+  Internet access to the public access machines. 1st they are two buildings away 
+  and we cannot supervise them at the moment, and 2nd we haven't gone through 
+  our education program for staff use.</p>
+<table width="80%" border="1" class="Code">
+  <tr> 
+    <td nowrap> 
+      <p class="Code"># --&gt; Subnet Access to the NET<br>
+        <br>
+        <b>http_access deny &nbsp;subnet_pub </b></p>
+      <p class="Code"># During initial phase, keep subnet_pub off the air<br>
+        # <br>
+        # After testing, the below script should be used<br>
+        # --&gt; Format, deny 1st and then allow later<br>
+        http_access deny subnet_pub TIMEafterhoursMORN<br>
+        http_access deny subnet_pub TIMEafterhoursAFT<br>
+        http_access deny subnet_pub TIMEsatMORN<br>
+        http_access deny subnet_pub TIMEsatAFT<br>
+        http_access deny subnet_pub TIMEsundALLDAY<br>
+        <b># http_access allow subnet_pub authenticated</b></p>
+    </td>
+  </tr>
+</table>
+<p style="tab-stops: 8.0cm">Because of the same above problems of supervising 
+  the public access terminals, we have included time based limiting. Once we are 
+  certain our system is better configured for public access then we can enable 
+  access from the public terminals within specified hours.</p>
+<h4 style="tab-stops: 8.0cm"><a name="squidEXdirect"></a>Ignoring the Cache when 
+  requesting from LAN machines</h4>
+<p style="tab-stops: 8.0cm">Next, we tell squid to not cache requests for the 
+  internal Local Area Network sites.</p>
+<table width="80%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="Code"> 
+      <p class="Code"># always go direct to LAN sites<br>
+        # always cache, and always cache (never_direct) all other sites.<br>
+        # always_direct allow schoolnet<br>
+        #always_direct allow subnet_admin</p>
+      <p class="Code">always_direct allow localhost <br>
+        always_direct allow subnet_lab1 <br>
+        always_direct allow subnet_lab2 <br>
+        #never_direct allow all</p>
+      <p></p>
+      </td>
+  </tr>
+</table>
+<p style="tab-stops: 8.0cm">Our local website doesn't need to be cached. Some 
+  of my friends think they get better performance (even for internal clients) 
+  by caching the local web server. Parts of our sites are static pages (straight 
+  html, images, and pdfs) but our new section is based on PHP so we will just 
+  avoid any further complications with our cache by not caching it.</p>
+<table width="80%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="Code"> 
+      <p></p>
+      <p class="Code"># And finally deny all other access to this proxy<br>
+        http_access deny all</p>
+      </td>
+  </tr>
+</table>
+<h3 style="tab-stops: 8.0cm"><a name="squidMisc"></a>Other Miscellaneous Issues 
+  ?</h3>
+<h4 style="tab-stops: 8.0cm"><a name="squidMiscDNS"></a>Squids DNS Startup Test</h4>
+<p style="tab-stops: 8.0cm">We get very poor service from our ISP, and one serious 
+  problem when we were configuring our server was not being able to resolve the 
+  DNS names for squid. Failing to find the dns entries for netscape.com, internic.net, 
+  nlanr.net, microsoft.com the squid server will just hang-around and then eventually 
+  quit. </p>
+<table width="80%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="Code"> 
+      <p style="tab-stops: 8.0cm" class="Code"># TAG: dns_testnames<br>
+        # The DNS tests exit as soon as the first site is successfully looked 
+        up<br>
+        #<br>
+        # This test can be disabled with the -D command line option.<br>
+        #<br>
+        #Default:<br>
+        # dns_testnames netscape.com internic.net nlanr.net microsoft.com</p>
+      <p style="tab-stops: 8.0cm" class="Code">dns_testnames mydomain.com</p>
+    </td>
+  </tr>
+</table>
+<p style="tab-stops: 8.0cm">To solve the startup problem (because our ISP will 
+  regularly have problems with their DNS server) we set the dns test to look for 
+  our host details, which is configured in our internal DNS Server.</p>
+<h4 style="tab-stops: 8.0cm"><a name="squidMiscDebug"></a>Debugging your Configuration</h4>
+<table width="80%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="Code"> 
+      <p style="tab-stops: 8.0cm" class="Code"># TAG: debug_options<br>
+        # Logging options are set as section,level where each source file<br>
+        # is assigned a unique section. Lower levels result in less<br>
+        # output, Full debugging (level 9) can result in a very large<br>
+        # log file, so be careful. The magic word &quot;ALL&quot; sets debugging<br>
+        # levels for all sections. We recommend normally running with<br>
+        # &quot;ALL,1&quot;.<br>
+        #<br>
+        #Default:<br>
+        # debug_options ALL,1<br>
+        debug_options ALL,1 32,2</p>
+      </td>
+  </tr>
+</table>
+<p style="tab-stops: 8.0cm">I was having a number of problems with squid while 
+  playing around with the configuration file (especially when trying to get authentication 
+  working) and because of the problems we were having with our ISP connection 
+  failures. Squid can log more information in the /var/squid/logs/cache.log file. 
+  By increasing the amount of information that is placed in there I had a much 
+  better understanding of when squid was failing.</p>
+<h4 style="tab-stops: 8.0cm"><a name="squidMiscUser"></a>Squid User and Group</h4>
+<p style="tab-stops: 8.0cm">Another problem I was having in updating and downgrading 
+  squid (I was originally attempting to use LDAP authentication in squid to synchronise 
+  accounts between Samba, Squid, &amp; Windows 2000) is the fact that the source 
+  distribution will use nobody but the OpenBSD ports use www:www</p>
+<table width="80%" border="1" class="Code">
+  <tr> 
+    <td nowrap class="Code"> 
+      <p style="tab-stops: 8.0cm" class="Code"># TAG: cache_effective_user<br>
+        # TAG: cache_effective_group<br>
+        #<br>
+        # NOTE: OpenBSD ports packages use uid:gid www:www<br>
+        # = To make sure uid:guid squid:squid works<br>
+        # = You need to make sure the user/group exists<br>
+        # = AND to chown -R www:www the /var/squid directories (if need be)<br>
+        # <br>
+        #Default:<br>
+        # cache_effective_user nobody<br>
+        cache_effective_user www<br>
+        cache_effective_group www</p>
+    </td>
+  </tr>
+</table>
+<p style="tab-stops: 8.0cm">While shifting between port and source I was continually 
+  having problems with the source not being able to use the directories created 
+  by the OpenBSD port. It took a while (dump admin I am) to figure out that uid:gid 
+  were different between the different compilations. Sometimes I would remember 
+  the ./configure directive, sometimes I'd forget.</p>
+<h2 style="tab-stops: 8.0cm"><a name="squidAuth"></a>Authentication - the MSNT 
+  module</h2>
+<p style="tab-stops: 8.0cm">[source: msntauth-v2.0 <a href="http://stellarx.tripod.com">http://stellarx.tripod.com</a>]</p>
+<p style="tab-stops: 8.0cm">The authentication module works pretty well, with 
+  little user involvement. Instructions are well documented in the accompanying 
+  README.html file.</p>
+<p style="tab-stops: 8.0cm">The only customisations that was required was changing 
+  the default directory settings.</p>
+<p style="tab-stops: 8.0cm" class="pFileReference">Edit File: confload.c (reference 
+  is out of date in the readme file)</p>
+<table border="0" width="800" class="pScreenOutput">
+  <tr> 
+    <td nowrap> 
+      <p class="pScreenOutput">#define CONFIGFILE &quot;/usr/local/squid/etc/msntauth.conf&quot; 
+        /* Path to configuration file */<br>
+        #define DENYUSERSDEFAULT &quot;/usr/local/squid/etc/denyusers&quot;<br>
+        #define ALLOWUSERSDEFAULT &quot;/usr/local/squid/etc/allowusers&quot;</p>
+    </td>
+  </tr>
+</table>
+<p style="tab-stops: 8.0cm">Change the settings to what is the general directory 
+  structure for OpenBSD</p>
+<table border="0" width="800" class="Code">
+  <tr> 
+    <td nowrap> 
+      <p class="Code">#define CONFIGFILE &quot;/etc/squid/msntauth.conf&quot; 
+        /* Path to configuration file */<br>
+        #define DENYUSERSDEFAULT &quot;/etc/squid/denyusers&quot;<br>
+        #define ALLOWUSERSDEFAULT &quot;/etc/squid/allowusers&quot;</p>
+    </td>
+  </tr>
+</table>
+<p style="tab-stops: 8.0cm">Edit the Makefile to specify the directories where 
+  you wish the bin files to be located. (no autoconfig yet.)</p>
+<h2 style="tab-stops: 8.0cm"><a name="transproxy"></a>Transparent Proxy</h2>
+<p style="tab-stops: 8.0cm" class="pFileReference">Package: transproxy-0.4.tgz</p>
+<p style="tab-stops: 8.0cm">This program is used with Darren Reed's IPFILTER package 
+  and used to intercept things like http requests and divert them to a www proxy 
+  server (eg: squid), without requiring user intervention or configuration. </p>
+<p style="tab-stops: 8.0cm">Install the package and make the following configuration 
+  changes. </p>
+<p class="pFileReference">Edit: /etc/services file to include the following lines:</p>
+<table border="0" width="800" class="pScreenOutput">
+  <tr> 
+    <td nowrap> 
+      <p class="pScreenOutput">tproxy&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tcp/8081&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# 
+        Transparent Proxy</p>
+      </td>
+  </tr>
+</table>
+<p class="pFileReference"> Edit: /etc/rc.conf file to include the following lines:</p>
+<p class="pScreenOutput">&nbsp;</p>
+<p class="pScreenOutput">tproxy=YES </p>
+<p class="pScreenOutput">&nbsp;</p>
+<p class="pFileReference"> </p>
+<p class="pFileReference">Edit: /etc/rc.local. </p>
+<p><b>After</b> the 'starting local daemons' <b>and</b> <b>before</b> the following 
+  echo '.', Insert the following instructions to the /etc/rc.local file:</p>
+<table border="0" width="800" class="Code">
+  <tr> 
+    <td nowrap> 
+      <p class="pScreenOutput">&nbsp;&nbsp; </p>
+      <p class="pScreenOutput"><b>&nbsp;&nbsp;echo -n 'starting local daemons:'</b></p>
+      <p class="pScreenOutput"> &nbsp;&nbsp;# [ ... stuff left out ... ]</p>
+      <p class="Code"> <br>
+        if [ X"${tproxy}" = X"YES" -a -x /usr/local/sbin/tproxy ]; then<br>
+        &nbsp;&nbsp;&nbsp;echo -n ' tproxy'</p>
+      <p class="Code">&nbsp;&nbsp;&nbsp;/usr/local/sbin/tproxy -s 8081 -r www 
+        <font color="#0000CC">[proxy-server-ip-address]</font> <font color="#0000CC">[port]</font> 
+        <br>
+        fi<br>
+      </p>
+      <p class="Code">&nbsp; </p>
+      <p class="Code">&nbsp;</p>
+      <p class="pScreenOutput"> &nbsp;&nbsp;&nbsp;# [ ... stuff left out ... ]</p>
+      <p class="pScreenOutput"> &nbsp;<b>&nbsp; echo '.' </b></p>
+      <p class="pScreenOutput"></p>
+    </td>
+  </tr>
+</table>
+<p> This tells the transparent proxy server to start as a server (-s) accept requests 
+  on port 8081, use the UserID www (-r) and to pass data on to the host <font color="#0000CC">[proxy-server-ip-address]</font> 
+  at port <font color="#0000CC">[port]</font>. On my machine (since i have the 
+  cache on the same server and I'm using squid at 3128) I can use:</p>
+<p class="pScreenOutput">/usr/local/sbin/tproxy -s 8081 -r www 127.0.0.1 3128</p>
+<p style="tab-stops: 8.0cm">The following ipnat rules should redirect www connection 
+  attempts (from the internal network to the external network) through to the 
+  cache.</p>
+<p style="tab-stops: 8.0cm" class="pFileReference">Edit: /etc/ipnat.rules to include 
+  the line</p>
+<p style="tab-stops: 8.0cm" class="Code">&nbsp;</p>
+<p style="tab-stops: 8.0cm" class="Code">rdr EXT_LINK 0.0.0.0/0 port www &nbsp;-&gt; 
+  127.0.0.1 port tproxy</p>
+<p style="tab-stops: 8.0cm" class="Code">rdr EXT_LINK 0.0.0.0/0 port 8080 -&gt; 
+  127.0.0.1 port tproxy</p>
+<p style="tab-stops: 8.0cm" class="Code">&nbsp; </p>
+<p style="tab-stops: 8.0cm">Unlike some other transparent proxy solutions, this 
+  does not require the proxy run on the machine itself. Running the caching server 
+  on a separate machine allows for greater scalability, and a feature of tproxyd 
+  is that it accepts connections on the redirected port, connects to the real 
+  proxy server and transports data between the two sockets.</p>
+<h2 style="tab-stops: 8.0cm">Suse Proxy-Suite - FTPs</h2>
+<p style="tab-stops: 8.0cm">&nbsp;</p>
+<p style="tab-stops: 8.0cm">&nbsp;</p>
+<h2 style="tab-stops: 8.0cm">Cache Utilisation Analysis Tools</h2>
+<p style="tab-stops: 8.0cm" class="pFileReference">webalizer - (package)<br>
+  calamaris - http://calamaris.cord.de/<br>
+  squidclients - http://www.cineca.it/~nico/squidclients.thml</p>
+<p style="tab-stops: 8.0cm">Webalizer has some real nice graphical screens.</p>
+<p style="tab-stops: 8.0cm">What does the log file record.</p>
+<p style="tab-stops: 8.0cm">Calamaris can generate a quick and neatly formatted 
+  report from the access files.</p>
+<pre>
+Calamaris interesting options:-
+
+-a all (equivalent to: -d 20 -P 60 -r 1 -s -t 20
+
+-d n show n top-level and n second level destinations
+-P n show throughput data for every n minutes
+-r n show n requesters
+-s   show verbose status reports
+-t n show n content-type, n extensions, and requested protocols
+
+Output Format
+-m mailformat
+-w web HTML format</pre>
+<p style="tab-stops: 8.0cm">Sample usage:</p>
+<table border="0" width="800" class="Code">
+  <tr>
+    <td nowrap> #!/bin/sh<br>
+      # Shell Script Used to generate log analysis reports from squid logs# using 
+      calamaris<br>
+      #<br>
+      cd /var/squid/logs<br>
+      gunzip access*.gz<br>
+      cat access.log access.log.0 access.log.1 access.log.2 \<br>
+      &nbsp;&nbsp;access.log.3 access.log.4 access.log.5 access.log.6 \<br>
+      &nbsp;&nbsp;| calamaris -a -w &gt; squidreport.html<br>
+      <br>
+      gzip access.log.*<br>
+      <br>
+      # cat squidreport.html | mail -s &quot;calamaris weekly report&quot; somebody</td>
+  </tr>
+</table>
+<p>Assumptions in the script are:<br>
+  * calamaris has been manually installed into /usr/local/bin<br>
+  * squid access log files are located at /var/squid/logs<br>
+  * log files are rotated for 7 days (0 ~ 6)<br>
+</p>
+<h2><a name="author"></a>Author and Copyright</h2>
+ 
+<p>Copyright (c) 2000/1/2 Samiuela LV Taufa. All Rights Reserved.</p>
+<p>I reserve the right to be totally incorrect even at the best advice of betters. In other words, I'm probably wrong in enough places for you to call me an idiot, but don't 'cause you'll hurt my sensibilities, just tell me where I went wrong and I'll try again.</p>
+<p>You are permitted and encouraged to use this guide for fun or for profit as 
+  you see fit. If you republish this work in what-ever form, it would be nice 
+  (though not enforceable) to be credited.</p>
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+  <tr> 
+    <td class="block" valign="MIDDLE" width="100%" bgcolor="#cccccc"><strong> 
+      <p class="block">Proxy and Caching the Internet</p>
+      </strong></td>
+  </tr>
+</table>
+<p><font color="#808080" face="sans-serif" size="-2"><strong>Copyright&nbsp; &copy; 
+  2000/1/2 <a href="http://www.nomoa.com">NoMoa Publishers</a> All rights 
+  reserved.  Caveat Emptor</strong></font></p>
+</body>
+</html>

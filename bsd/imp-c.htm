@@ -1,0 +1,117 @@
+
+<html>
+<head>
+<title>=8> nomoa.com/bsd OpenBSD - IMP customizing the display</title>
+<link rel="STYLESHEET" type="text/css" href="openbsd.css">
+<SCRIPT LANGUAGE="JavaScript">
+<!--
+
+function newImage(arg) {
+	if (document.images) {
+		rslt = new Image();
+		rslt.src = arg;
+		return rslt;
+	}
+}
+
+function changeImages() {
+	if (document.images && (preloadFlag == true)) {
+		for (var i=0; i<changeImages.arguments.length; i+=2) {
+			document[changeImages.arguments[i]].src = changeImages.arguments[i+1];
+		}
+	}
+}
+
+var preloadFlag = false;
+function preloadImages() {
+	if (document.images) {
+		openbsd_over = newImage("mmedia/openbsd-over.gif");
+		openbsd_down = newImage("mmedia/openbsd-down.gif");
+		preloadFlag = true;
+	}
+}
+
+// -->
+</SCRIPT>
+<!-- End Preload Script -->
+</HEAD>
+
+<body bgcolor="#FFFACD" ONLOAD="preloadImages();">
+<p class="logo">
+<a class="anchBlue" href="http://www.nomoa.com/bsd" 
+   onMouseOver="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;"
+   onMouseOut="changeImages('openbsd', 'mmedia/openbsd.gif'); return true;"
+   onMouseDown="changeImages('openbsd', 'mmedia/openbsd-down.gif'); return true;"
+   onMouseUp="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;">
+   <img name="openbsd"  align="absMiddle" 
+        alt="OpenBSD ... The Only way to Go ..." border="0" height="50"
+        src="mmedia/openbsd.gif" width="368"></a>
+</p>
+<h1>IMP - Customizing the display</h1>
+<hr color="fuchsia">
+<p>Table of Contents: </p>
+<ul>
+  <li><a href="#introduction">Introduction</a></li>
+  <li><a href="#cover">The Cover Page</a></li>
+  <li><a href="#title">The Page Title</a></li>
+  <li><a href="#author">Author and Copyright</a></li>
+</ul>
+<hr color="fuchsia">
+<h2><a name="introduction"></a>Introduction</h2>
+<p>The following pages are just a collection of sections within IMP that can be 
+  readily modified, customised. The customisability of IMP is important to the 
+  project team (<a href="http://www.horde.org">http://www.horde.org</a>) so to 
+  get the latest information log into their site and download the current release.</p>
+<h2><a name="cover"> The Cover Page</a></h2>
+ 
+<h3>[ref: ../imp/config/MOTD.html]</h3>
+<p>Login Prompt. This is a plain text file that is 'echo'd' onto the HTML login 
+  page. The text displays below the login prompt, and there is a lot of space 
+  for writing.</p>
+<p>HTML tags can be used in this file to beautify your message.</p>
+<p>I find this a good location to place the E-mail policy statement for the organisation.</p>
+<h3>[ref: ../imp/config/menu.txt]</h3>
+<p>Left Margin Links. This is a configuration text file that allows you specify 
+  additional items to be placed in the left-margin column.</p>
+<p>This column normally has only the IMP logo and the &quot;login&quot; button. 
+  The link will cause a new browser window to be started.</p>
+<p>Graphics files are expected to be in the ../imp/graphics directory.</p>
+<h3>[ref: ../imp/config/trailer.txt]</h3>
+<p>Trailer Messages. The contents of this file are echoed to the mail sent by 
+  IMP clients. </p>
+<p>PHP variables are expanded before messages are sent.</p>
+<h3>[ref: ../imp/locale/en/login.lang]</h3>
+<p>contains standard English text for the login screen. Let's you change the 'welcome 
+  to IMP' to another welcome message.</p>
+<p>To make this a global change (independent of language) then make the change 
+  to ../imp/locale/login.lang. My suggestion is to copy the language file you 
+  would normally use into this folder, change the sections you want to keep and 
+  remove the other sections.</p>
+<h3>[ref: ../imp/locale/en/status.lang]</h3>
+<p>Top Toolbar. Contains the text for the top toolbar 'Welcome to IMP. Please 
+  log in.' Changing this effects the text in the message:</p>
+<p>To make this a global change (independent of language) then make the change 
+  to ../imp/locale/status.lang. My suggestion is to copy the language file you 
+  would normally use into this folder, change the sections you want to keep and 
+  remove the other sections.</p>
+<h2><a name="title">Page Title</a></h2>
+<p>The page title is defined in ../imp/index.php3. The &lt;title&gt; is defined 
+  twice, once for browsers with support for frames, and another for unknown browsers.</p>
+<h2><a name="author"></a>Author and Copyright</h2> 
+<p>Copyright (c) 2000/1/2 Samiuela LV Taufa. All Rights Reserved.</p>
+<p>I reserve the right to be totally incorrect even at the best advice of betters. In other words, I'm probably wrong in enough places for you to call me an idiot, but don't 'cause you'll hurt my sensibilities, just tell me where I went wrong and I'll try again.</p>
+<p>You are permitted and encouraged to use this guide for fun or for profit as 
+  you see fit. If you republish this work in what-ever form, it would be nice 
+  (though not enforceable) to be credited.</p>
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+  <tr> 
+    <td class="block" valign="MIDDLE" width="100%" bgcolor="#cccccc"><strong> 
+      <p class="block">IMP Customisations - Changing the face of it all.</p>
+      </strong></td>
+  </tr>
+</table>
+<p><font color="#808080" face="sans-serif" size="-2"><strong>Copyright&nbsp; &copy; 
+  2000/1/2 <a href="http://www.nomoa.com">NoMoa Publishers</a> All rights 
+  reserved.  Caveat Emptor</strong></font></p>
+</body>
+</html>

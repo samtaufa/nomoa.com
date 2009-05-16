@@ -1,0 +1,685 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+  <title>=8&gt; nomoa.com/bsd OpenBSD - 'dovecot' serving up imap, pop, sasl</title>
+  <link rel="STYLESHEET" type="text/css" href="openbsd.css">
+  <script language="JavaScript">
+<!--
+
+function newImage(arg) {
+	if (document.images) {
+		rslt = new Image();
+		rslt.src = arg;
+		return rslt;
+	}
+}
+
+function changeImages() {
+	if (document.images && (preloadFlag == true)) {
+		for (var i=0; i<changeImages.arguments.length; i+=2) {
+			document[changeImages.arguments[i]].src = changeImages.arguments[i+1];
+		}
+	}
+}
+
+var preloadFlag = false;
+function preloadImages() {
+	if (document.images) {
+		openbsd_over = newImage("mmedia/openbsd-over.gif");
+		openbsd_down = newImage("mmedia/openbsd-down.gif");
+		preloadFlag = true;
+	}
+}
+
+// -->
+  </script><!-- End Preload Script -->
+	<style type="text/css">
+.style1 {
+	letter-spacing: -1pt;
+}
+.style2 {
+	font-family: Verdana, Geneva, Arial, Helvetica, sans-serif;
+}
+.style3 {
+	color: #0066FF;
+}
+.style4 {
+	font-style: normal;
+}
+.style5 {
+	border-left-style: solid;
+	border-left-width: 1px;
+	border-top-style: solid;
+	border-top-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-width: 1px;
+}
+.style6 {
+	border-width: 0px;
+}
+.style7 {
+	border-right-style: solid;
+	border-right-width: 1px;
+	border-top-style: solid;
+	border-top-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-width: 1px;
+}
+.style8 {
+	border-right-style: solid;
+	border-right-width: 1px;
+	border-top-style: solid;
+	border-top-width: 1px;
+}
+.style9 {
+	border-left-style: solid;
+	border-left-width: 1px;
+	border-top-style: solid;
+	border-top-width: 1px;
+}
+.style10 {
+	border-left-style: solid;
+	border-left-width: 1px;
+}
+.style11 {
+	border-right-style: solid;
+	border-right-width: 1px;
+}
+.style12 {
+	border-left-style: solid;
+	border-left-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-width: 1px;
+}
+.style13 {
+	border-right-style: solid;
+	border-right-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-width: 1px;
+}
+.style14 {
+	font-family: "Courier New", Courier, monospace;
+}
+</style>
+</head>
+<body onload="preloadImages();" bgcolor="#fffacd">
+<p class="logo">
+<a class="anchBlue" href="http://www.nomoa.com/bsd"
+ onmouseover="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;"
+ onmouseout="changeImages('openbsd', 'mmedia/openbsd.gif'); return true;"
+ onmousedown="changeImages('openbsd', 'mmedia/openbsd-down.gif'); return true;"
+ onmouseup="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;">
+<img name="openbsd" alt="OpenBSD ... The Only way to Go ..."
+ src="mmedia/openbsd.gif" align="middle" border="0" height="50"
+ width="368"></a></p>
+<h1> dovecot - serving i<span class="style1">map, pop, sasl</span> </h1>
+<hr color="fuchsia">
+<p> Table of Contents: </p>
+<ul>
+  <li><a href="#introduction">Introduction</a></li>
+	<li><a href="#install">Installation and Configuration</a></li>
+	<ul>
+	<li>Specify the SSL Configuration</li>
+	<li>Generate Certificates</li>
+	<li>Testing Installation</li>
+	<li>Configure automatic start during boot</li>
+	</ul>
+	<li>Configuring for MySQL Authentication</li>
+	<ul><li>Modify /etc/dovecot.conf</li>
+	<li>Create a MySQL account for the dovecot server</li>
+	<li>Testing our Configuration</li></ul>
+	<li>Reading Virtual Mail through pop3/imap requests</li>
+	<ul><li>Testing the POP3 Server</li>
+		<li>Testing the IMAP Server</li></ul>
+	<li><a href="#author">Author and Copyright</a></li>
+</ul>
+<hr color="fuchsia">
+<h2><a name="introduction"></a>Introduction</h2>
+<p class="pFileReference">[OpenBSD 4.0 Stable] </p>
+<p> Some people are signing the praises of <a href="http://www.dovecot.org">
+dovecot</a> as an imap, pop3, sasl server for its speed and security features.</p>
+<p> I can&#39;t really add anything to the discussion of whether this is better or 
+not, but I hope this guide will help you in using it with <a href="postfix.htm">
+our postfix guide</a>.</p>
+<p> These instructions were tested with OpenBSD 4.0 Stable and dovecot rc15, a 
+packaged port released after the OpenBSD 4.0 release.</p>
+<h2>Installing and Configuring</h2>
+<p>Although we will be testing dovecot installation from basic install we are 
+installing are more complete package to ensure further enhancements later in the 
+documentation.</p>
+<p class="Code"># cd /usr/ports/mail/dovecot</p>
+<p class="Code">#&nbsp;env FLAVOR=&quot;ldap mysql&quot; make package</p>
+<p class="pScreenOutput">&nbsp;===&gt; Building package for 
+dovecot-1.0.rc15-ldap-mysql<br>
+Switching to /usr/ports/mail/dovecot/pkg/PFRAG.shared<br>
+Link to /usr/ports/packages/i386/ftp/dovecot-1.0.rc15-ldap-mysql.tgz<br>
+Link to /usr/ports/packages/i386/cdrom/dovecot-1.0.rc15-ldap-mysql.tgz</p>
+&nbsp;<p class="Code">pkg_add dovecot-1.0.rc15-ldap-mysql</p>
+<p class="pScreenOutput">dovecot-1.0.rc15-ldap-mysql: complete<br>
+--- dovecot-1.0.rc15-ldap-mysql -------------------<br>
+Files to facilitate the generation of a self-signed<br>
+certificate and key for Dovecot have been installed:<br>
+/etc/ssl/dovecot-openssl.cnf (Edit this accordingly!)<br>
+/usr/local/sbin/dovecot-mkcert.sh<br>
+<br>
+If this has been or will be accomplished by other means,<br>
+use the following paths for the files:<br>
+/etc/ssl/dovecotcert.pem<br>
+/etc/ssl/private/dovecot.pem<br>
+<br>
+If you wish to have Dovecot started automatically at boot time,<br>
+simply add the follow lines to /etc/rc.local:<br>
+<br>
+if [ -x /usr/local/sbin/dovecot ]; then<br>
+echo -n &#39; dovecot&#39;; /usr/local/sbin/dovecot<br>
+fi</p>
+<p>Following through on the installation instructions from the dovecot package:</p>
+<ul>
+	<li>Specify SSL Configuration</li>
+	<li>Generate Certificates</li>
+	<li>Configure automatic start during boot</li>
+</ul>
+<h3>Specify the SSL Configuration</h3>
+<p>The dovecot ports/package provides a simplified approach for generating the 
+SSL certificates. The configuration file is at /etc/ssl/dovecot-openssl.cnf, 
+while the configuration tool is /usr/local/sbin/dovecot-mkcert.sh.</p>
+<p>The file should be mostly self-explanatory, if you need any further help look 
+at the
+<a href="http://www.openbsd.org/cgi-bin/man.cgi?query=openssl&amp;apropos=0&amp;sektion=0&amp;manpath=OpenBSD+Current&amp;arch=i386&amp;format=html">
+man page for openssl(1)</a>. </p>
+<p class="pFileReference">File Fragment: /etc/ssl/dovecot-openssl.cnf</p>
+<p class="pScreenOutput">[ req_dn ]<br>
+# country (2 letter code)<br>
+#C=FI</p>
+<p class="Code">&nbsp;</p>
+<p class="pScreenOutput"># State or Province Name (full name)<br>
+#ST=</p>
+<p class="Code">&nbsp;</p>
+<p class="pScreenOutput"># Locality Name (eg. city)<br>
+#L=Helsinki</p>
+<p class="Code">&nbsp;</p>
+<p class="pScreenOutput"># Organization (eg. company)<br>
+#O=Dovecot</p>
+<p class="Code">&nbsp;</p>
+<p class="pScreenOutput"># Organizational Unit Name (eg. section)<br>
+#OU=Imap Server</p>
+<p class="Code">&nbsp;<br>
+# Common Name (*.example.com is also possible)<br>
+#CN=imap.example.com</p>
+<p class="pScreenOutput">&nbsp;</p>
+<p class="pScreenOutput"># E-mail contact<br>
+#emailAddress=postmaster@example.com</p>
+<p class="Code">&nbsp;</p>
+<p>There are some unspecified options from above that may be interesting to you 
+at a later stage.</p>
+<p>If you&#39;ve never used certificates before, or are just using these 
+instructions on a test server, then just work with the sample configuration 
+above. If you are ready to deploy your system, then please read the man pages 
+and make some further reviews of your certificate files. The full openssl 
+configuration file example in OpenBSD is stored as /etc/ssl/openssl.cnf</p>
+<h3>Generate Certificates</h3>
+<p>The ports supplied /usr/local/sbin/dovecot-mkcert is a nice shell script to 
+generate your SSL certificates using the source information provided in the 
+above configuration file. Just run the script to generate your certificates</p>
+<p class="Code"># /usr/local/sbin/dovecot-mkcert.sh</p>
+<p class="">The first part of the script generates the private key using /etc/ssl/dovecot-openssl.cnf</p>
+<p class="pScreenOutput">Generating a 1024 bit RSA private key<br>
+...++++++<br>
+.................++++++<br>
+writing new private key to &#39;/etc/ssl/private/dovecot.pem&#39;<br>
+-----</p>
+<p class="">The second part of the script just outputs the signature from the 
+generated key to assure us that it executed corrected (i.e. if you didn&#39;t get 
+the second part, then things failed badly.)</p>
+<p class="pScreenOutput">subject= (information text from above configuration file)<br>
+MD5 Fingerprint=(long fingerprint)</p>
+<p>As shown in the ports documentation, you can manually generate your own 
+configuration/certificate files so long as you place the resulting files into a 
+&#39;known&#39; location:</p>
+<p class="pScreenOutput">/etc/ssl/dovecotcert.pem<br>
+/etc/ssl/private/dovecot.pem&nbsp;&nbsp; </p>
+<p>The location, and naming of the *.pem files are specified in your /etc/dovecot.conf 
+file for the key/value pairs of ssl_cert_file and ssl_key_file.</p>
+<h3>Modify /etc/dovecot.conf</h3>
+<p>We will test pop3 and imap so let us ensure this is configured for dovecot in 
+the /etc/dovecot.conf file. Edit the dovecot.conf file to ensure protocols is 
+enabled and we are allowing at least imap and pop3.</p>
+<p class="pFileReference">File Fragment: /etc/dovecot.conf</p>
+<p class="pScreenOutput"># Protocols we want to be serving: imap imaps pop3 
+pop3s<br>
+# If you only want to use dovecot-auth, you can set this to &quot;none&quot;.</p>
+<p class="Code">protocols = imap imaps pop3 pop3s</p>
+<h3>Testing Installation</h3>
+<p>Before continuing, let&#39;s just check to make sure we&#39;ve got at least these 
+parts working and not causing a conflict.</p>
+<p>The default installation of OpenBSD dovecot packages supports authentication 
+through the password file [ref:
+<a href="http://wiki.dovecot.org/AuthDatabase/Passwd">
+http://wiki.dovecot.org/AuthDatabase/Passwd</a>.] so we will need at least one 
+valid system user account for testing the dovecot install. </p>
+<p>We will first start the dovecot program and take a quick look to see whether 
+it is responding to services the default configuration allows (pop3, and imap)</p>
+<p class="Code"># /usr/local/sbin/dovecot</p>
+<p>Check for error messages by looking at /var/log/maillog (using tail -f /var/log/maillog) 
+and you should get a message such as the following</p>
+<p class="pFileReference">File Fragment: /var/log/maillog</p>
+<p class="pScreenOutput">dovecot: Dovecot v1.0.rc15 starting up</p>
+<p>Now, we can check basic POP3 and IMAP services to see if they respond to 
+access to their ports.</p>
+<p>POP3 we&#39;ll just connect with my system-user account (samt) and check to see 
+if it responds.</p>
+<p class="ScreenSession">Screen Session</p>
+<p class="Code">$ telnet localhost pop3</p>
+<p class="pScreenOutput">Trying ::1...<br>
+telnet: connect to address ::1: Connection refused<br>
+Trying 127.0.0.1...<br>
+Connected to localhost.<br>
+Escape character is &#39;^]&#39;.<br>
++OK Dovecot ready.</p>
+<p class="Code">USER<strong> samt</strong></p>
+<p class="pScreenOutput">+OK</p>
+<p class="Code">PASS <strong>&nbsp;mypassword</strong></p>
+<p class="pScreenOutput">+OK Logged in.</p>
+<p class="Code">LIST</p>
+<p class="pScreenOutput">+OK 0 messages:<br>
+.</p>
+<p class="Code">QUIT</p>
+<p class="pScreenOutput">+OK Logging out.<br>
+Connection closed by foreign host.</p>
+<p>/var/log/maillog: Reviewing the successful log file should reveal something 
+like the below just after the user/pass have been passed to dovecot</p>
+<p class="pScreenOutput">dovecot: pop3-login: Login: user=&lt;samt&gt;, method=PLAIN, 
+rip=127.0.0.1, lip=127.0.0.1, secured</p>
+<p>/var/log/maillog: and on disconnection you should receive a disconnect log 
+item.</p>
+<p class="pScreenOutput">dovecot: POP3(samt): Disconnected: Logged out top=0/0, 
+retr=0/0, del=0/0, size=0</p>
+<p>A list of common POP3 commands is shown below, courtesy of
+<a href="http://sol4.net/telnetpop3.shtml">SOL4.net</a></p>
+<table style="width: 70%" class="style6" align="center">
+	<tr>
+		<td style="width: 182px" class="style5"><strong>Command </strong></td>
+		<td style="width: 668px" class="style7"><strong>Functional Description</strong></td>
+	</tr>
+	<tr>
+		<td style="width: 182px" class="style9"><strong>LIST </strong></td>
+		<td style="width: 668px" class="style8">Lists the messages in the mailbox together with their sizes. also 
+		can be used with the message number to return specific message sizes.</td>
+	</tr>
+	<tr>
+		<td style="width: 182px" class="style10"><strong>RETR messageID</strong></td>
+		<td style="width: 668px" class="style11">Retrieve the message specified by messageID, displays it to the 
+		screen.</td>
+	</tr>
+	<tr>
+		<td style="width: 182px" class="style10"><strong>DELE messageID</strong></td>
+		<td style="width: 668px" class="style11">Delete the message specified by messageID.</td>
+	</tr>
+	<tr>
+		<td style="width: 182px" class="style10"><strong>RSET </strong></td>
+		<td style="width: 668px" class="style11">Undo any changes made.</td>
+	</tr>
+	<tr>
+		<td style="width: 182px" class="style10"><strong>STAT </strong></td>
+		<td style="width: 668px" class="style11">List the number of messages and the total mailbox size.</td>
+	</tr>
+	<tr>
+		<td style="width: 182px" class="style12"><strong>QUIT </strong></td>
+		<td style="width: 668px" class="style13">Close the connection.</td>
+	</tr>
+</table>
+<p>The same basic look test with IMAP</p>
+<p class="ScreenSession">Screen Session</p>
+<p class="Code"># telnet localhost imap</p>
+<p class="pScreenOutput">Trying ::1...<br>
+telnet: connect to address ::1: Connection refused<br>
+Trying 127.0.0.1...<br>
+Connected to localhost.<br>
+Escape character is &#39;^]&#39;.<br>
+* OK Dovecot ready.</p>
+<p class="Code">a1 login samt mypassword</p>
+<p class="pScreenOutput">a1 OK Logged in.</p>
+<p class="Code">a2 select inbox</p>
+<p class="pScreenOutput">* FLAGS (\Answered \Flagged \Deleted \Seen \Draft)<br>
+* OK [PERMANENTFLAGS (\Answered \Flagged \Deleted \Seen \Draft \*)] Flags 
+permitted.<br>
+* 0 EXISTS<br>
+* 0 RECENT<br>
+* OK [UIDVALIDITY 1165837992] UIDs valid<br>
+* OK [UIDNEXT 2] Predicted next UID</p>
+<p class="pScreenOutput">a2 OK [READ-WRITE] Select completed.</p>
+<p class="Code">a3 logout</p>
+<p class="pScreenOutput">* BYE Logging out<br>
+a3 OK Logout completed.<br>
+Connection closed by foreign host.</p>
+<p>Again, we review /var/log/maillog for dovecot&#39;s messages and after 
+successfully entering the correct user/password combination we should get a log 
+entry similar to the below.</p>
+<p class="pFileReference">File Fragment: /var/log/maillog</p>
+<p class="pScreenOutput">dovecot: imap-login: Login: user=&lt;samt&gt;, 
+method=PLAIN, rip=127.0.0.1, lip=127.0.0.1, secured</p>
+<p>Likewise, on QUITting, we should get the disconnect log entry.</p>
+<p class="pFileReference">File Fragment: /var/log/maillog</p>
+<p class="pScreenOutput">dovecot: IMAP(samt): Disconnected: 
+Logged out</p>
+<p>It seems our server is working correctly.</p>
+<h3>Configure automatic start during boot</h3>
+<p>Configuring for auto-start of dovecot during reboot is a little more 
+complicated with this option than it may need to be. Essentially, this 
+configuration will depart by setting and looking for an enabling option in the 
+/etc/rc.conf.local file.</p>
+<p>Add the following option in the rc.conf.local file.</p>
+<p class="pFileReference">File Fragment: /etc/rc.conf.local</p>
+<p class="Code">dovecot=YES</p>
+<p>Add the following to your /etc/rc.local file.</p>
+<p class="pFileReference">File Fragment: /etc/rc.local</p>
+<p class="Code">if [ X&quot;${dovecot}&quot; != X&quot;NO&quot; -a -x /usr/local/sbin/dovecot ]; 
+then<br>
+&nbsp;&nbsp; echo -n &#39; dovecot&#39;; /usr/local/sbin/dovecot<br>
+fi</p>
+<p>Our addition to /etc/rc.local looks to see whether we&#39;ve enabled dovecot in 
+rc.conf.local and then starts dovecot.</p>
+<p>At this point, you should be able to service IMAP and POP3 without any 
+difficulty using this dovecot configuration. Before using this configuration you 
+should at least check the <a href="http://wiki.dovecot.org/">dovecot 
+documentation</a> and in particular the &quot;<a href="http://wiki.dovecot.org/Clients">Client 
+issues and configuration</a>&quot;</p>
+<p>A few minor configuration file tweaks that should be mostly relevant for 
+OpenBSD servers. The configuration file is well documented and should explain 
+why these changes may be useful.</p>
+<p class="pFileReference">File Fragment: /etc/dovecot.conf</p>
+<p class="Code">first_valid_uid = 1000</p>
+<p class="Code">last_valid_uid = 32766</p>
+<p>first_valid_uid would normally be 1000 when using dovecot for system user 
+accounts only. If you will be using dovecot to exclusively handle virtual user 
+accounts, then first and last uid should be set to the UID you specify for 
+postfix. In our scenario we would&nbsp; use &#39;901&#39; which is our example 
+configuration setting for using postfix with virtual user accounts.</p>
+<h2><a name="pop"></a><a href="#pop">C<span class="style1">onfiguring for MySQL 
+Authentication</span></a></h2>
+<p>[ref:
+<a href="http://postfix.wiki.xs4all.nl/index.php?title=Virtual_Users_and_Domains_with_Courier-IMAP_and_MySQL#dovecot-mysql.conf">
+http://postfix.wiki.xs4all.nl/index.php?title=Virtual_Users_and_Domains_with_Courier-IMAP_and_MySQL#dovecot-mysql.conf</a> 
+]</p>
+<p>Now, we are getting into a little more complicated, if things do not work out 
+well, a good suggestion to enable more 
+verbose logging, such as:</p>
+<p class="pScreenOutput"><span class="style2">auth_verbose = yes</span></p>
+<p class="pScreenOutput"><span class="style2">auth_debug = yes</span></p>
+<p class="pScreenOutput"><span class="style2">auth_debug_passwords = yes</span></p>
+<p>Two log files that become critical in verifying your configuration are /var/log/maillog 
+and /var/mysql/myhost.log.</p>
+<p>The above dovecot.conf settings will show more verbose information from 
+dovecot into the standard mail log (/var/log/maillog) while watching 
+transactions to the mysql server through /var/mysql/myhost.log can also provide 
+more information on server behaviour.</p>
+<p>Use two screens dedicated to maillog and /var/mysql/myhost.log</p>
+<p class="Code"># tail -f /var/log/maillog</p>
+<p>&nbsp;</p>
+<h3>Modify /etc/dovecot.conf</h3>
+<p>The /etc/dovecot.conf has a lot of the available settings commented out 
+(using # at the beginning of the line) so it would seem best to look through the 
+configuration file and make changes in place.</p>
+<p>The following changes are to tell dovecot to use :</p>
+<ul>
+	<li>a maildir location such as we&#39;ve selected for <a href="postfix.htm">our postfix installation</a></li>
+	<li>sql as the authenticating mechanism</li>
+	<li>our sql configuration will be in a text file /etc/dovecot-mysql.conf</li>
+</ul>
+<p class="pFileReference">File Fragment: /etc/dovecot.conf</p>
+<p class="Code"></p>
+<p class="Code">mail_location = maildir:/var/spool/postfix/vmail/%d/%u</p>
+<p class="Code">&nbsp;</p>
+<p class="Code" style="width: 1257px">passdb sql {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; args = /etc/dovecot-mysql.conf<br>
+&nbsp; }<br>
+&nbsp; <br>
+userdb sql {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; args = /etc/dovecot-mysql.conf<br>
+&nbsp; }</p>
+<p>An important note about the mail_location variable is that you should select 
+one that is compatible with the settings that you will use in both
+<a href="postfix.htm">our postfix configuration</a> and our
+<a href="postfixadmin.htm">PostfixAdmin configuration</a>.</p>
+<h4>SQL Configuration File: /etc/dovecot-mysql.conf</h4>
+<p>Our SQL configuration file will contain key/value pairs for how dovecot will 
+access the sql provider.</p>
+<p class="pFileReference">File : /etc/dovecot-mysql.conf</p>
+<p class="Code" style="width: 1256px"># Database driver: mysql, pgsql<br>
+driver = mysql<br>
+<br>
+# Currently supported schemes include PLAIN, PLAIN-MD5, DIGEST-MD5, and CRYPT.<br>
+default_pass_scheme = CRYPT<br>
+<br>
+# Database options<br>
+connect = host=<span class="style3">localhost</span> dbname=<span class="style3">mail</span> user=<span class="style3">dovecot</span> password=<span class="style3">dovecotpassword</span><br>
+<br>
+password_query = SELECT password FROM mailbox WHERE username = &#39;%u&#39; AND active = 
+&#39;1&#39;<br>
+user_query = SELECT maildir, 901 AS uid, 901 AS gid FROM mailbox WHERE 
+username = &#39;%u&#39; AND active = &#39;1&#39;<br>
+<br>
+# eof</p>
+<p>Notes:</p>
+<ul>
+	<li>The uid, gid of 901 shown above is referring to <a href="postfix.htm">our postfix 
+	configuration</a>.</li>
+	<li>As at 1.0rc15 there seems to be some difficulty with dovecot connecting 
+	to mysql which is explained by
+	<a href="http://postfix.wiki.xs4all.nl/index.php?title=Virtual_Users_and_Domains_with_Courier-IMAP_and_MySQL#database">
+	Mischa at this link, as resolvable,</a> the instructions below resolve 
+	connectivity issues</li>
+	<li>default_pass_scheme = CRYPT&nbsp; matches what we will use by postfixadmin 
+	$CONF[&#39;encrypt&#39;] = &#39;system&#39;;</li>
+</ul>
+<p>For mysql servers running post 4.1 releases (i.e. this includes 5.x releases)
+<a href="http://dev.mysql.com/doc/refman/5.0/en/old-client.html">there is a 
+difference</a> in the libraries which essentially means that mysql&#39;s
+<a href="http://mysqld.active-venture.com/Password_hashing.html">password 
+function creates a different (longer) result in post 4.1 releases than pre 4.1 
+releases.</a></p>
+<p>Dovecot&#39;s 1.0rc15 (and earlier) releases seem to be using libraries of the 
+MySQL pre-4.1 era, so if you are using a later version of MySQL, then we have to 
+add the following &#39;hacks&#39; to your portfolio.</p>
+<p>We will first create a user account for our dovecot daemon to access our 
+MySQL server, and because we are using a post 4.1 release, we will also ensure a 
+shorter/older passphrase by using the old_password command.</p>
+<p>Enter the mysql client and enter the following commands</p>
+<p class="ScreenSession">Screen Session</p>
+<p class="Code"># mysql -u root -p</p>
+<p class="pScreenOutput">Welcome to the MySQL monitor. Commands end with ; or 
+\g.<br>
+Your MySQL connection id is 12 to server version: 5.0.24a-log<br>
+<br>
+Type &#39;help;&#39; or &#39;\h&#39; for help. Type &#39;\c&#39; to clear the buffer.<br>
+<br>
+mysql&gt;</p>
+<p class="Code">mysql&gt; grant select on <span class="style3">mail</span>.* to &#39;<span class="style3">dovecot</span>&#39;@&#39;<span class="style3">localhost</span>&#39; 
+identified by &#39;<span class="style3">dovecotpassword</span>&#39;;</p>
+<p class="pScreenOutput">Query OK, 0 rows affected (0.00 sec)<br>
+</p>
+<p class="Code">mysql&gt; set password for &#39;<span class="style3">dovecot</span>&#39;@&#39;localhost&#39; = old_password(&#39;<span class="style3">dovecotpassword</span>&#39;);</p>
+<p class="pScreenOutput">Query OK, 0 rows affected (0.00 sec)</p>
+<p class="Code">mysql&gt; flush privileges;</p>
+<p class="pScreenOutput">Query OK, 0 rows affected (0.02 sec)<br>
+</p>
+<p>Using the above changes the longer hashed &#39;dovecotpassword&#39; to an &#39;older 
+format&#39; shorter hash of &#39;dovecotpassword&#39;.</p>
+<p>Note:</p>
+<p>The database &#39;<span class="style3">mail</span>&#39; references the same database 
+used by <a href="postfix.htm">our postfix installation</a>, and also the same 
+database for <a href="postfixadmin.htm">our postfixadmin installation</a>.</p>
+<h3>Testing our configuration</h3>
+<p>It&#39;s time to test and see whether we&#39;ve configured our system correctly. We 
+will kill the current dovecot and start a new connection.</p>
+<p class="Code"># pkill -HUP dovecot</p>
+<p>Our maillog file should give us an idea if our mysql configuration is mostly 
+good.</p>
+<p class="pFileReference">File Fragment: /var/log/maillog</p>
+<p class="pScreenOutput">dovecot: SIGHUP received - reloading configuration<br>
+dovecot: auth-worker(default): mysql: Connected to localhost (<span class="style3">mail</span>)</p>
+  <p><span class="style3">&#39;mail</span>&#39; above refers to our MySQL database, so 
+	if you have an error with this &#39;auth-worker&#39; you might check whether the 
+	password is correct, or whether the database is correctly entered above.</p>
+<p>Another reference point would be the MySQL log file /var/mysql/myhost.log, 
+which should have something like the below:</p>
+<p class="pFileReference">File Fragment: /var/mysql/myhost.log</p>
+<p class="pScreenOutput">Connect dovecot@localhost on <span class="style3">mail</span></p>
+<p>&nbsp;</p>
+<h2><a name="pop2"></a><a href="#pop">Reading Virtual Mail through pop3/imap requests </a></h2>
+  <h3>Testing the Pop3 Server</h3>
+<p class="pFileReference">[ref: <a href="http://www.tnpi.biz/internet/mail/forge.shtml" class="anchBlue">The Network People, Inc. Mail Server Testing</a> ] </p>
+<p>If you&#39;ve successfully installed dovecot with mysql above, and have gone 
+through the Configuring a Virtual Email Service - MySQL in <a href="postfix.htm">our postfix 
+installation guide</a>, (or you have installed your own MySQL virtual user accounts) 
+then we can perform some testing, validating whether our configuration actually 
+works.</p>
+<p class="ScreenSession">Screen Session</p>
+<p class="Code">$ telnet localhost pop3</p>
+<p class="pScreenOutput">Trying ::1...<br>
+telnet: connect to address ::1: Connection refused<br>
+Trying 127.0.0.1...<br>
+Connected to localhost.<br>
+Escape character is &#39;^]&#39;.<br>
++OK Dovecot ready.</p>
+<p class="Code">user <span class="style3">charlie</span>@alpha.example.org</p>
+<p class="pScreenOutput">+OK</p>
+<p class="Code">pass <span class="style3">charlie</span></p>
+<p class="pScreenOutput">+OK Logged in.</p>
+<p class="Code">list</p>
+<p class="pScreenOutput">+OK 3 messages:<br>
+1 503<br>
+2 445<br>
+3 503<br>
+.</p>
+<p class="Code">retr 3</p>
+<p class="pScreenOutput">+OK 503 octets<br>
+Return-Path: &lt;samt@example.org&gt;<br>
+X-Original-To: charlie@alpha.example.org<br>
+Delivered-To: charlie@alpha.example.org<br>
+Received: from example.org (unknown [IPv6:::1])<br>
+by myhost.example.org (Postfix) with ESMTP id 9A6165A950;<br>
+Fri, 9 Feb 2007 13:50:26 +1300 (TOT)<br>
+Subject: Welcome MySQL based virtual users<br>
+Message-Id: &lt;20070209005037.9A6165A950@myhost.example.org&gt;<br>
+Date: Fri, 9 Feb 2007 13:50:26 +1300 (TOT)<br>
+From: samt@example.org<br>
+To: undisclosed-recipients:;<br>
+<br>
+Hopefully you&#39;ve received this email message without fault ?<br>
+<br>
+<br>
+.</p>
+<p class="Code">QUIT</p>
+<p class="pScreenOutput">+OK Logging out.<br>
+Connection closed by foreign host.</p>
+<p>The maillog file should show success similar to the below</p>
+<p class="pFileReference">File Fragment: /var/log/maillog</p>
+<p class="pScreenOutput">pop3-login: Login: user=&lt;charlie@alpha.example.org&gt;, 
+method=PLAIN, rip=127.0.0.1, lip=127.0.0.1, secured<br>
+POP3(charlie@alpha.example.org): Disconnected: Logged out top=0/0, retr=1/519, 
+del=0/3, size=1451</p>
+<p>Again, a review of the mysql transaction log can be helpful in diagnosing 
+errors.</p>
+<p class="pFileReference">File Fragment: /var/mysql/myhost.log</p>
+<p class="pScreenOutput">Connect dovecot@localhost on mail<br>
+Query SELECT password FROM mailbox WHERE username = &#39;charlie@alpha.example.org&#39; 
+AND active = &#39;1&#39;<br>
+Query SELECT maildir, 901 AS uid, 901 AS gid FROM mailbox WHERE username = 
+&#39;charlie@alpha.example.org&#39; AND active = &#39;1&#39;</p>
+<h4>Simple Errors -ERR Authentication failed.</h4>
+<p>You get an Authentication failed even though you know and swear that you have 
+entered the correct password?</p>
+<ul>
+	<li>Check the /var/mysql/myhost.log file to ensure that the correct query is 
+	sent by dovecot to the MySQL Server (i.e. <span class="style14">SELECT 
+	password FROM mailbox WHERE username = &#39;VIRTUALACCOUNT@VIRTUALDOMAIN&#39; AND 
+	active = &#39;1&#39;</span>)</li>
+	<li>Check that your dovecot configuration is using the same encryption 
+	method for creating/reading passwords, as postfixadmin. For example, in our 
+	exercise we are using CRYPT: <span class="style14">default_pass_scheme = 
+	CRYPT</span>.</li>
+</ul>
+<h3>Testing the IMAP server</h3>
+<p>We use telnet on the localhost to test imap&#39;s configuration</p>
+<p class="ScreenSession">Screen Session</p>
+<p class="Code">$ telnet localhost imap</p>
+<p class="pScreenOutput">Trying ::1...<br>
+telnet: connect to address ::1: Connection refused<br>
+Trying 127.0.0.1...<br>
+Connected to localhost.<br>
+Escape character is &#39;^]&#39;.<br>
+* OK Dovecot ready.</p>
+<p class="Code">a1 login charlie@alpha.example.org charlie</p>
+<p class="pScreenOutput">a1 OK Logged in.</p>
+<p class="Code">a2 select inbox</p>
+<p class="pScreenOutput">* FLAGS (\Answered \Flagged \Deleted \Seen \Draft)<br>
+* OK [PERMANENTFLAGS (\Answered \Flagged \Deleted \Seen \Draft \*)] Flags 
+permitted.<br>
+* 3 EXISTS<br>
+* 0 RECENT<br>
+* OK [UNSEEN 1] First unseen.<br>
+* OK [UIDVALIDITY 1170991431] UIDs valid<br>
+* OK [UIDNEXT 4] Predicted next UID<br>
+a2 OK [READ-WRITE] Select completed.</p>
+<p class="Code">a3 fetch 3 body[text]</p>
+<p class="pScreenOutput">* 3 FETCH (BODY[TEXT] {66}<br>
+Hopefully you&#39;ve received this email message without fault ?<br>
+<br>
+<br>
+)<br>
+a3 OK Fetch completed.</p>
+<p class="Code">a4 close</p>
+<p class="pScreenOutput">a4 OK Close completed.</p>
+<p class="Code">a5 logout</p>
+<p class="pScreenOutput">* BYE Logging out<br>
+a5 OK Logout completed.<br>
+Connection closed by foreign host.</p>
+<p>Note:</p>
+<p class="style2">a1, a2, .., a5 are randomly selected unique leaders (in 
+this case we're just making things sequential)</p>
+<p class="style2"><em>&quot;<strong>a3 fetch </strong><span class="style4">3</span><strong> body[text]</strong>&quot;</em>, the number '3' refers to 
+the '3<em> EXISTS</em>' in the list returned by '<strong>a2 select inbox'</strong></p>
+<p>Your maillog file is your friend and will give you clues to where you can 
+check for other errors.</p>
+<p class="pFileReference">File Fragment: /var/log/maillog</p>
+<p class="pScreenOutput">auth-worker(default): mysql: Connected to localhost 
+(mail)<br>
+imap-login: Login: user=&lt;charlie@alpha.example.org&gt;, method=PLAIN, 
+rip=127.0.0.1, lip=127.0.0.1, secured<br>
+IMAP(charlie@alpha.example.org): Disconnected: Logged out</p>
+<p>Likewise the mysql transaction log should give further assistance should the 
+installation be having problems.</p>
+<p class="pFileReference">File Fragment: /var/mysql/myhost.log</p>
+<p class="pScreenOutput">Connect dovecot@localhost on mail<br>
+Query SELECT password FROM mailbox WHERE username = &#39;charlie@alpha.example.org&#39; 
+AND active = &#39;1&#39;<br>
+Query SELECT maildir, 901 AS uid, 901 AS gid FROM mailbox WHERE username = 
+&#39;charlie@alpha.example.org&#39; AND active = &#39;1&#39;</p>
+<h2>Reference Resources</h2>
+<p><a href="http://sol4.net/telnetpop3.shtml">POP3 Access using Telnet</a> from 
+sol4.net</p>
+<p> <a href="http://www.tnpi.biz/internet/mail/forge.shtml" class="anchBlue">The Network People, Inc. Mail Server Testing</a> </p>
+<h2><a name="author"></a>Author and Copyright</h2>
+<p>Copyright (c) 2007 Samiuela LV Taufa. All Rights Reserved.</p>
+<p>I reserve the right to be totally incorrect even at the best advice
+of betters. In other words, I'm probably wrong in enough places for you
+to call me an idiot, but don't 'cause you'll hurt my sensibilities,
+just tell me where I went wrong and I'll try again.</p>
+<p>You are permitted and encouraged to use this guide for fun or for
+profit as you see fit. If you republish this work in what-ever form, it
+would be nice (though not enforceable) to be credited.</p>
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+  <tbody>
+    <tr>
+      <td class="block" bgcolor="#cccccc" valign="middle" width="100%">
+      <p class="block">dovecot - serving imap, pop, and sasl</p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p><font color="#808080" face="sans-serif" size="-2"><strong>Copyright&nbsp;
+&copy; 2000/1/2
+<a href="http://www.nomoa.com">NoMoa.COM</a> All rights reserved.</strong></font></p>
+</body>
+</html>

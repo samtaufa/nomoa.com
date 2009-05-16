@@ -1,0 +1,64 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>NoMOA.com - SchoolNET Electronic Archiving</title>
+<link rel="STYLESHEET" type="text/css" href="project.css">
+</head>
+<body topmargin="5" leftmargin="5">
+<h1>Electronic Archiving</h1>
+<p>The reams of Gestetner Stencil papers are a testament to how much reprints 
+  are part of school systems.</p>
+<p>The concept of Electronic Archiving is to archive electronic documents for 
+  re-use, distribution. The design will have to factor what are existing (approachable) 
+  technologies and the mechanism to installing and ensuring use.</p>
+<p>Discussions on this proposal will need to review what are the basic needs for 
+  consistency in document creation and archiving methodologies.</p>
+<p>Issues:</p>
+<ul>
+  <li> storage hierarchy / storage mechanism</li>
+  <li>storage format</li>
+  <li>security policies</li>
+  <li>backup policies</li>
+  <li>naming conventions</li>
+</ul>
+<h3>Storage Hierarchy</h3>
+<p>The hierarchy of document storage are categorised by intended audience while 
+  keywords (standardised by the design group) can be included in documents to 
+  maximise search / retrieval.</p>
+<p>Storage Location: //storage/examinations/english/form5/[midyear|finals|topical]</p>
+<p>contains documents relevant to the specified topic/course/level/section. Each 
+  document placed into this location can also include a &quot;Keywords&quot; section 
+  where related &quot;section&quot; information can be entered. Microsoft Word 
+  (for example) has a document properties component of the document where 'keywords' 
+  can be entered.</p>
+<p>Files stored on Microsoft Windows NTFS 5.0 each have additional properties 
+  maintained by the File System that includes: Summary Data (including keywords)</p>
+<h3> Storage Format</h3>
+<p>Although it would seem appropriate to use a database, the use of an extra layer 
+  of work to store and retrieve the documents is likely to be an impediment to 
+  the use of the system. The quickest way to useage (as opposed to implementation) 
+  is to use a monitored hierarchical file system and store the documents in their 
+  original format.</p>
+<p>Allow addition (file creation) to the system, but control deletion and modification. 
+  Staff can then check-out a document, make modifications and resubmit to the 
+  archive, but they cannot accidently wipe an existing document.</p>
+<p>A simplified search utility can be developed to search everything or by specified 
+  keywords/categories. The utility can list the available documents, and attempt 
+  to launch them if the application exists on the client.</p>
+<h3>Security Policies</h3>
+<p>The archives will require a number of access privileges, but at minimum should 
+  have a public access policy to maximise the useage of the data store.</p>
+<p>For example, once examination papers have been sat, all students should have 
+  read access to the papers.</p>
+<h3>Backup Policies</h3>
+<p>This is less likely to be pushed to conformity but a discussion should outline 
+  for participating schools a safe sequence of data backup procedures.</p>
+<p>Considering the potential value of the system, it will be important to improve 
+  system integrity and up-time.</p>
+<h3>Naming Convention</h3>
+<p>As many documents of a similar nature will be created a standard naming convention 
+  should increase the useability of the system. (An area where creativity is likely 
+  to be counter-productive)</p>
+<p>Last updated: <!-- #BeginDate format:Am1 -->August 29, 2000<!-- #EndDate --></p>
+</body>
+</html>

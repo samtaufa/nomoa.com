@@ -1,0 +1,206 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0//EN">
+<html>
+  <head>
+    <title>=8&gt; nomoa.com/bsd OpenBSD - Miscellaneous Stuff</title>
+    <link rel="STYLESHEET" type="text/css" href="openbsd.css">
+<script language="JavaScript">
+<!--
+
+function newImage(arg) {
+	if (document.images) {
+		rslt = new Image();
+		rslt.src = arg;
+		return rslt;
+	}
+}
+
+function changeImages() {
+	if (document.images && (preloadFlag == true)) {
+		for (var i=0; i<changeImages.arguments.length; i+=2) {
+			document[changeImages.arguments[i]].src = changeImages.arguments[i+1];
+		}
+	}
+}
+
+var preloadFlag = false;
+function preloadImages() {
+	if (document.images) {
+		openbsd_over = newImage("mmedia/openbsd-over.gif");
+		openbsd_down = newImage("mmedia/openbsd-down.gif");
+		preloadFlag = true;
+	}
+}
+
+// -->
+</script>
+<!-- End Preload Script -->
+</head>
+
+<body bgcolor="#FFFACD" onLoad="preloadImages();">
+<p class="logo">
+<a class="anchBlue" href="http://www.nomoa.com/bsd" 
+   onMouseOver="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;"
+   onMouseOut="changeImages('openbsd', 'mmedia/openbsd.gif'); return true;"
+   onMouseDown="changeImages('openbsd', 'mmedia/openbsd-down.gif'); return true;"
+   onMouseUp="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;">
+   <img name="openbsd"  align="absMiddle" 
+        alt="OpenBSD ... The Only way to Go ..." border="0" height="50"
+        src="mmedia/openbsd.gif" width="368"></a>
+</p>
+
+<h1> Miscellaneous Stuff that don't yet fit</h1>
+<hr color="fuchsia">
+<ul>
+  <li><a href="#intro">Introduction</a></li>
+  <li><a href="#misc">Miscellaneous Tools</a> 
+    <ul>
+      <li><a href="#bandwidth" class="anchBlue">Bandwidth Limiter</a></li>
+      <li class="anchBlue"><a href="#antivirus">Anti-Virus Solutions</a></li>
+      <li><a href="#netmonitor">Network Usage, Monitoring Tools</a></li>
+      <li><a href="#drivemirroring">Drive Mirroring</a></li>
+    </ul>
+  </li>
+  <li><a href="#uncategor">Totally uncategorised</a> 
+    <ul>
+      <li><a href="#cat5" class="anchBlue">CAT5 Cabling</a></li>
+    </ul>
+  </li>
+  <li><a href="#author">Author and Copyright</a></li>
+</ul>
+<hr color="fuchsia">
+<h2><a name="intro"></a>Introduction</h2>
+<p>Miscellaneous Stuff I haven't got a category for, but need to jot down so I 
+  can write up on it. </p>
+<p>Actually, these are things of general interest to myself, and have learned 
+  about while watching the misc@ mailing list. I'm jotting down those things that 
+  I think I will eventually look at so as to have a centralised placed to look 
+  for them (in a compacted fashion.)</p>
+<p>Most of this information has been derived from misc@openbsd.org and other mailing 
+  lists.</p>
+<h2><a name="misc"></a>Miscellaneous Tools</h2>
+<p>These are but some of the tools that I've come across as being discussed and 
+  potentially of need of some documentation.</p>
+<h3><a name="bandwidth"></a>Bandwidth Limiter</h3>
+ 
+<p>Bandwidth management is everyone's concern, even the large corporate with plenty of money to burn. The first good news is that OpenBSD 3.3 integrates the queue management system ALTQ into the base install.  You get a secure OS with bandwidth limiting facilities, just coool. To learn more about it, follow the PF FAQ information on http://www.openbsd.org and subscribe to the pf mailing list.</p>
+  
+<p>The following tools have been mentioned on various discussions   as valuable tools (to some) for managing their bandwidth utilisation by clients.</p>
+<p><a href="http://www.csl.sony.co.jp/person/kjc/programs.html" class="anchBlue">http://www.csl.sony.co.jp/person/kjc/programs.html</a><br>
+  AltQ (Alternate Queueing) seems to be the most mentioned tool. </p>
+<p>AltQ became part of the post 3.0 source tree and is likely to gain more documentation.</p>
+<p></p>
+<p><a href="http://citeseer.nj.nec.com/cho99managing.html">http://citeseer.nj.nec.com/cho99managing.html</a> 
+  <a href="http://www.csl.sony.co.jp/%7Ekjc/software.html">http://www.csl.sony.co.jp/~kjc/software.html</a><br>
+  <a href="http://www.csl.sony.co.jp/person/kjc/kjc/software/TIPS.txt">http://www.csl.sony.co.jp/person/kjc/kjc/software/TIPS.txt</a><br>
+  <a href="http://www.muine.org/%7Ehoang/openpf.html#qos">http://www.muine.org/~hoang/openpf.html#qos</a></p>
+<p>[OpenBSD 3.x man pages]<br>
+  /usr/share/altq - examples</p>
+<p>&nbsp;</p>
+<p><a href="http://www.squid-cache.org" class="anchBlue">http://www.squid-cache.org</a></p>
+<p>According to the squid mailing lists, the <i><a href="http://www.squid-cache.org/Doc/FAQ/FAQ-19.html#ss19.8" class="anchBlue">delay 
+  pools</a></i> are good for time periods such as an hour, but not optimal for 
+  people who wish to configure the bandwidth constraints over longer periods such 
+  as per day or per week.</p>
+<h3><a name="antivirus"></a>Anti-Virus Solutions</h3>
+<p>The next level of security, apart from the Network OS, is to secure malicious 
+  communications or resource transfers. The following Anti-Virus products have 
+  variants that are either Native under the BSDs or can be executed in the Linux 
+  compability layer. Be warned that some have reported installation problems with 
+  the way some of the anti-virus programs install themselves.</p>
+<p>It is also recommended that you browse the mailing list archives for MTA's 
+  such as exim and postfix who are bound to have various discussions relating 
+  to anti-virus software.</p>
+<p>Our first anti-virus installation is successfully using RAV Antivirus, largely 
+  because it has native OpenBSD support. You have to license the product but we 
+  have been satisfied with its current performance. It works as a mail filter 
+  and the executables also function as scanners on standard files.</p>
+<p>Network Associates WebShield:<br>
+  <a href="http://www.mcafeeb2b.com/products/internet-gateway-protection.asp" class="anchBlue">http://www.mcafeeb2b.com/products/internet-gateway-protection.asp</a> 
+  {Solaris Sparc}</p>
+<p>H+BEDV AntiVir/X: <a href="http://www.hbedv.com/produkte/products.htm" class="anchBlue">http://www.hbedv.com/produkte/products.htm</a> 
+  {Linux, FreeBSD}</p>
+<p>Sophos Sweep: <a href="http://www.sophos.com/products/antivirus/savunix.html">http://www.sophos.com/products/antivirus/savunix.html</a> 
+  {Linux, FreeBSD}</p>
+<p>Trend Micro InterScan VirusWall: <a href="http://www.antivirus.com/products/internet_gateway.htm" class="anchBlue">http://www.antivirus.com/products/internet_gateway.htm</a> 
+  {Linux, Solaris}</p>
+<p>CAI InoculateIT: <a href="http://www3.ca.com/Solutions/ProductFamily.asp?ID=128">http://www3.ca.com/Solutions/ProductFamily.asp?ID=128</a> 
+  {Linux} </p>
+<p>F-Secure A-V: <a href="http://www.eu.f-secure.com/products/anti-virus/">http://www.eu.f-secure.com/products/anti-virus/</a> 
+  {Linux}</p>
+<p>Karspersky <a href="http://www.kasperskylabs.com/">http://www.kasperskylabs.com/</a> 
+  {Linux, FreeBSD, BSDi}</p>
+<p>RAV Antivirus: <a href="http://www.rav.ro">http://www.rav.ro</a> {OpenBSD, 
+  FreeBSD, Qmail, Sendmail, Postfix and Communigate PRO}</p>
+<p>Some of the above antivirus server solutions also filter ftp, http, and mail. 
+  Below are some programs for use with mail servers to filter mail.</p>
+<p>Additional option in the program to configure groups with differing attachment 
+  privileges (eg. restrict, or remove attachments for certain groups.)</p>
+<p>Amavis: <a href="http://www.amavis.org">http://www.amavis.org</a> {Linux, *BSD, 
+  Solaris} A Mail Virus Scanner.</p>
+<p>Inflex: <a href="http://www.inflex.co.za/">http://www.inflex.co.za/</a></p>
+<p>Q-Mail Scanner: <a href="http://qmail-scanner.sourceforge.net/" class="anchBlue">http://qmail-scanner.sourceforge.net/</a> 
+  QMail </p>
+<p>A good site for references to Anti-Virus providers is the Virus Bulletin Site 
+  which evaluates anti-virus software packages. You can also check out the documentation 
+  for amavis.</p>
+<p>Virus Bulletin: <a href="http://www.virusbtn.com" class="anchBlue">http://www.virusbtn.com</a></p>
+<p>Open Antivirus: <a href="http://www.openantivirus.org/av-unix_e.txt" class="anchBlue">http://www.openantivirus.org/av-unix_e.txt</a></p>
+<p>[note: Last review of information from above websites 2001.11.02]</p>
+<h3><a name="netmonitor"></a>Network Usage/Monitoring Tools</h3>
+<p>For some service providers it may be important to keep track of actual external 
+  traffic generated by users. The following tools have been discussed as relevant 
+  for this type of auditing, monitoring task.</p>
+<p>mrtg, cricket (in ports)</p>
+<p>IP Meter <a href="http://www.ipmeter.com">http://www.ipmeter.com</a> </p>
+<p>IP Audit <a href="http://ipaudit.sourceforge.net/">http://ipaudit.sourceforge.net/ 
+  </a></p>
+<h3><a name="drivemirroring"></a>Drive Mirroring</h3>
+<p>Drive mirroring is useful when you want the ability to dump an active/functional 
+  system onto another disk, such that you can quickly recreate the exact same 
+  system onto the same machine or on to similar other systems.</p>
+<p>We have been effectively using Norton Ghost for our Windows platforms and it 
+  was interesting to note mail discussions on other solutions, including open 
+  source.</p>
+<p>A fault with using Norton Ghost for imaging OpenBSD is that NG does not recognise 
+  the FFS, or UFS file system. This does not have an effect on NG being able to 
+  image and recreate OpenBSD partitions, but it does significantly increase the 
+  image size as NG cannot use any significant compression algorithms.</p>
+<p>One significant advantage of NG for Windows is NG can resize the image partition 
+  to fit within changes in the disk sizes targetted for the image. In this way, 
+  you can use the same image on multiple size drives, so long as the contents 
+  in the image can fit on the target drives.</p>
+<p>g4u (ghost for unix) <a href="http://rfhs8012.fh-regensburg.de/%7Efeyrer/g4u" class="anchBlue">http://rfhs8012.fh-regensburg.de/~feyrer/g4u</a></p>
+<p>is based on NetBSD (?)</p>
+<p>Other recommendations is to script dumps (dd) of the hard-drive to an ftp server</p>
+<p>There are of course further reference information in the FAQ on duplicating 
+  file systems. Likewise Ben Goren has further information on his site: <a href="http://openbsd.trumpetpower.com/faq/faq10.html#DupFS" class="anchBlue">http://openbsd.trumpetpower.com/faq/faq10.html#DupFS</a></p>
+<h2><a name="uncategor"></a>Totally Uncategorised</h2>
+<h3><a name="cat5"></a>CAT5 Cabling</h3>
+<p>Steve DeRose's guide to CAT5 computer network wiring <a href="http://www.derose.net/steve/guides/wiring/" class="anchBlue">http://www.derose.net/steve/guides/wiring/</a></p>
+<p>Why mention this ? Because I've been hit often enough with problems in cabling, 
+  it's bad enough when its my own fault for messing my home network cabling.</p>
+<p>I've even gone to sites that were supposedly professionally cabled and it didn't 
+  take long to figure that their network problem was related to not being in spec.</p>
+<p>I used to blame the drivers or OS when I had network faults, especially &quot;time-outs&quot; 
+  on the network cards. Now, I make sure I include checking the cabling as an 
+  early part of the diagnosis process.</p>
+<h2><a name="author"></a>Author and Copyright</h2> 
+<p>Copyright (c) 2000/1/2 Samiuela LV Taufa. All Rights Reserved.</p>
+
+<p>I reserve the right to be totally incorrect even at the best advice of betters. In other words, I'm probably wrong in enough places for you to call me an idiot, but don't 'cause you'll hurt my sensibilities, just tell me where I went wrong and I'll try again.</p>
+
+<p>You are permitted and encouraged to use this guide for fun or for profit as you see fit. If you republish this work in what-ever form, it would be nice (though not enforceable) to be credited.</p>
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+  <tr>
+    <td class="block" valign="MIDDLE" width="100%" bgcolor="#cccccc"><strong>
+      <p class="block">Miscellanea - Just some interesting stuff</p>
+      </strong></td>
+  </tr>
+</table>
+<p><font color="#808080" face="sans-serif" size="-2"><strong>Copyright&nbsp; &copy; 
+  2000/1/2
+<a href="http://www.nomoa.com">NoMoa.COM</a> All rights reserved.</strong></font></p>
+  </body>
+</html>
+

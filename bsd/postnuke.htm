@@ -1,0 +1,428 @@
+
+<html>
+<head>
+<title>=8&gt; nomoa.com/bsd OpenBSD - postNuke, a Portal Beginning</title><link rel="STYLESHEET" type="text/css" href="openbsd.css">
+<script language="JavaScript">
+<!--
+
+function newImage(arg) {
+	if (document.images) {
+		rslt = new Image();
+		rslt.src = arg;
+		return rslt;
+	}
+}
+
+function changeImages() {
+	if (document.images && (preloadFlag == true)) {
+		for (var i=0; i<changeImages.arguments.length; i+=2) {
+			document[changeImages.arguments[i]].src = changeImages.arguments[i+1];
+		}
+	}
+}
+
+var preloadFlag = false;
+function preloadImages() {
+	if (document.images) {
+		openbsd_over = newImage("mmedia/openbsd-over.gif");
+		openbsd_down = newImage("mmedia/openbsd-down.gif");
+		preloadFlag = true;
+	}
+}
+
+// -->
+</script>
+<!-- End Preload Script -->
+</head>
+
+<body bgcolor="#FFFACD" onLoad="preloadImages();">
+<p class="logo">
+<a class="anchBlue" href="http://www.nomoa.com/bsd" 
+   onMouseOver="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;"
+   onMouseOut="changeImages('openbsd', 'mmedia/openbsd.gif'); return true;"
+   onMouseDown="changeImages('openbsd', 'mmedia/openbsd-down.gif'); return true;"
+   onMouseUp="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;">
+   <img name="openbsd"  align="absMiddle" 
+        alt="OpenBSD ... The Only way to Go ..." border="0" height="50"
+        src="mmedia/openbsd.gif" width="368"></a>
+</p>
+
+<h1> postNuke - A Portal Beginning</h1>
+<hr color="fuchsia">
+<p>Table of Contents: </p>
+<ul>
+  <li><a href="#introduction" class="anchBlue">Introduction</a> 
+  <li><a href="#NukeGet" class="anchBlue">Getting The Files </a> 
+  <li><a href="#NukeInstall" class="anchBlue">Installation </a> 
+    <ul>
+      <li class="anchBlue2"><a href="#NukeInstallMove" class="anchBlue">Moving 
+        the Files to their Home </a> 
+      <li class="anchBlue"><a href="#NukeInstallMySQL" class="anchBlue">Configuring 
+        the MySQL Server </a> 
+        <ul>
+          <li><a href="#NukeInstallMySQLdb" class="anchBlue">Create the Database.</a></li>
+          <li><a href="#NukeInstallMySQLsecurity" class="anchBlue">Security Note</a></li>
+        </ul>
+      </li>
+      <li><a href="#NukeInstallStartup" class="anchBlue">Configuring Site Installation 
+        Settings </a> 
+    </ul>
+  </li>
+  <li><a href="#autoinstall" class="anchBlue">Automated Installation</a></li>
+  <li><a href="#NukeGAdmin" class="anchBlue">Graphical Administration</a></li>
+  <li>Relative Reference</li>
+  <li><a href="#author" class="anchBlue">Author and Copyright</a></li>
+</ul>
+<hr color="fuchsia">
+<h2><a name="introduction"></a>Introduction</h2>
+<p >Been looking for that piece of software to differentiate, turn your website 
+  into a dynamic environment? Want to give your website users the opportunity 
+  to participate in a community? Want forums, news articles ?</p>
+<p >What you are looking for is some form of web portal system. The current buzzword 
+  is Content Management System (CMS.)</p>
+<p >A very popular portal (CMS) system is <a href="http://www.phpnuke.org" class="anchBlue">phpNuke</a> 
+  and the derivative works <a href="http://www.myphpnuke.com" class="anchBlue">myphpnuke</a> 
+  and <a href="http://www.postnuke.com" class="anchBlue">postNuke</a>. In fact, 
+  on the postNuke site you will find a lot of references to other similar systems.</p>
+<p > These notes show specific intructions for installing the Rogue 7.14 revision 
+  of <a href="http://www.postnuke.com" class="anchBlue">postNuke</a>. For more 
+  information refer to the respective web sites <a href="http://www.phpnuke.org">http://www.phpnuke.org</a>, 
+  <a href="http://www.myphpnuke.com" class="anchBlue">http://www.myphpnuke.com</a> 
+  or <a href="http://www.postnuke.com">http://www.postnuke.com</a></p>
+<p >If you have the time to learn to configure and install MySQL, PHP4 then you 
+  are already half way ready to install a great database driven web site.</p>
+<p class="pScreenSmall" ><span class="pScreenOutput"><font color="#FF0000">Warning!:</font><font color="#FF0000">Warning!:</font><font color="#FF0000">Warning!:</font><font color="#FF0000">Warning!:</font><font color="#FF0000">Warning!:</font><font color="#FF0000">Warning!:</font></span></p>
+<p class="pScreenSmall" ><span class="pScreenOutput">We have experienced security 
+  problems with these portal systems, so use at your own risk. Their nice features, 
+  but definitely not necessary for a secure environment.</span></p>
+<p class="pScreenSmall" >&nbsp;</p>
+<p class="pScreenSmall" >Postnuke purports to be actively pursuing security and 
+  performance issues with their system but be aware that introducing scripting 
+  systems to your system may significantly compromise your system.</p>
+<p class="pScreenSmall" align="center" ><span class="pScreenOutput"><font color="#FF0000">Warning!:</font></span><span class="pScreenOutput"><font color="#FF0000">Warning!:</font></span><span class="pScreenOutput"><font color="#FF0000">Warning!:</font></span><span class="pScreenOutput"><font color="#FF0000">Warning!:</font></span><span class="pScreenOutput"><font color="#FF0000">Warning!:</font></span><span class="pScreenOutput"><font color="#FF0000">Warning!:</font></span></p>
+<p >This installation uses <a href="apache.htm" class="anchBlue">Apache,</a> <a href="mysql.htm" class="anchBlue">MySQL</a> 
+  and <a href="php4_3.3c.htm" class="anchBlue">PHP 4</a> as the web, database, scripting 
+  Engine servers. Although this discussion is primarily for OpenBSD, I have had 
+  this installation successfully work on MSWindows and phpNuke is primarily developed 
+  (and working) in Linux.</p>
+<h2><a name="NukeGet"></a>Getting the Files</h2>
+<p class="pFileReference">[ref: Rogue_714.tar.gz]</p>
+<p>The 1st thing to do is to download the source files for postNuke from the <a href="http://www.postnuke.com" class="anchBlue">http://www.postnuke.com</a> 
+  website.</p>
+<p>Rogue is the working name for the 0.7 series of PostNuke. These instructions 
+  should be relatively similar to the releases in this series.</p>
+<h2><a name="NukeInstall"></a>Installation</h2>
+<p class="pFileReference">[ref: Rogue_MaintenanceII.tar.gz]</p>
+<p>After you have downloaded the files, untar the file on your local drive and 
+  review two important files, INSTALL and README.</p>
+<p class="Code">~$ <b>tar -zxvf Rogue_714.tar.gz</b></p>
+<p class="Code">~$ <b>cd pn_714</b></p>
+<p class="Code">pn_714$ <b>ls</b></p>
+<p>The tar file extracts two sub-directories from its root; html/ contains the 
+  php files that you will be using, and sql/ which contains the script instructions 
+  for configuring your MySQL database.</p>
+<p>Documentation is in text format in the html/docs directory or html in the html/manual 
+  directory.</p>
+<h3><a name="NukeInstallMove"></a>Moving the files to their home</h3>
+<p class="pFileReference">[ref: ./html, ./sql, ~/public_html or /var/www/htdocs]</p>
+<p>Copy (or move) the files in the html/ directory to your home directory (eg. 
+  /var/www/htdocs or ~/public_html)</p>
+<p class="Code">pn_714$<b> cd html</b></p>
+<p class="Code">html$ <b>mv * ~/public_html</b></p>
+<p>Refer to the notes on <a href="apache.htm" class="anchBlue2">Apache</a> if 
+  you have any difficulties with this section. I would put the files into something 
+  like /var/www/nuke and modify Apache to point to this as the home directory. 
+  This way, I can keep the wonderful manuals in /var/www/htdocs for Apache, and 
+  mod_ssl. </p>
+<h3><a name="NukeInstallMySQL"></a>Configuring the MySQL Database</h3>
+<p class="pFileReference">[ref: postnuke_mysql_create.sql, sql/nuke.sql]</p>
+<p>We will configure the MySQL Database in two stages. In the 1st stage we will 
+  configure the database to be used and the user through whom we will use. In 
+  the 2nd stage we will configure the tables in the database, and populate the 
+  table with some initial data.</p>
+<table width="80%" border="1" class="pScreenSmall">
+  <tr> 
+    <td nowrap class="pScreenSmall"> 
+      <p  class="pScreenSmall"> # postnuke_mysql_create.sql <br>
+        #<br>
+        # You can simply direct this file to mysql at STDIN:<br>
+        # mysql --user username --password --host host &lt; postnuke_mysql_create.sql<br>
+        # . username will need to have privileges to create a database and change 
+        mysql<br>
+        # . root access is the simplest if you run your own server, otherwise 
+        you can modify<br>
+        # . this script as you need and ask the ISP/Site Manager to configure 
+        your database<br>
+        # . for you.<br>
+        #============================================================================<br>
+        # YOU WILL WANT TO CHANGE -<br>
+        #<br>
+        # <font color="#0000FF"><b>NOMOA&nbsp;&nbsp;&nbsp;&nbsp;</b></font> &nbsp;-to- 
+        the username you wish to use (occurs TWICE) [16 character field]<br>
+        # <font color="#0000FF"><b>rogue_db</b></font> &nbsp;&nbsp;-to- the database 
+        name you wish to use. (occurs TWICE) [64 character field]<br>
+        # <b><font color="#0000FF">password</font></b> -to- the Password you wish 
+        to encrypt (occurs ONCE)[16 character field]<br>
+        #============================================================================</p>
+      <p class="pScreenSmall">&nbsp;</p>
+      <p class="pScreenSmall">CONNECT mysql; </p>
+      <p class="pScreenSmall">&nbsp;</p>
+      <p class="pScreenSmall">INSERT INTO user ( host, user, password )<br>
+        &nbsp;&nbsp;VALUES (<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;'localhost',<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;'<font color="#0000FF"><b>NOMOA</b></font>',<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;password('<b><font color="#0000FF">password</font></b>')<br>
+        &nbsp;&nbsp;);</p>
+      <p class="pScreenSmall">&nbsp;</p>
+      <p class="pScreenSmall">INSERT INTO db (<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;host, db, user,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;Select_priv, Insert_priv, Update_priv, Delete_priv,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;Create_priv, Drop_priv )<br>
+        &nbsp;&nbsp;VALUES (<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;'localhost',<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;'<b><font color="#0000FF">rogue_db</font></b>',<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;'<b><font color="#0000FF">NOMOA</font></b>',<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;'Y', 'Y', 'Y', 'Y',<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;'Y', 'Y'<br>
+        &nbsp;&nbsp;);</p>
+      <p class="pScreenSmall">&nbsp;</p>
+      <p class="pScreenSmall">CREATE DATABASE <b><font color="#0000FF">rogue_db</font></b>;</p>
+      <p class="pScreenSmall">FLUSH PRIVILEGES;</p>
+      <p class="pScreenSmall">&nbsp;</p>
+      <p class="pScreenSmall"># done!</p>
+    </td>
+  </tr>
+  <tr>
+    <td nowrap class="pScreenSmall" align="center"><b>Figure 1 - MySQL script 
+      to create the user account, access privileges, and database</b></td>
+  </tr>
+</table>
+<h4><a name="NukeInstallMySQLdb"></a>1st Stage - Create the Database.</h4>
+<p> Use the above script to configure the user account, access privileges, and 
+  create the new database to be used. If you have a shell connection to your OpenBSD 
+  server, while this page is on the screen, then you can start mysql and paste 
+  the above script onto the terminal session.</p>
+<p>Otherwise, save the content into a text file, such as postnuke_mysql_create.sql</p>
+<p class="Code">$ <b>mysql -u privilegeduser -p &lt; postnuke_mysql_create.sql</b></p>
+<p class="Code">Password: ******** (password prompt)</p>
+<p class="kernelO"> In postnuke/myphnuke you can now continue with the installation 
+  instructions provided by those applications (provided scripts will create the 
+  tables.)</p>
+<h5 class="kernelO"><a name="NukeInstallMySQLsecurity"></a>Security Note:</h5>
+<table width="80%" border="0" class="pScreenOutput">
+  <tr> 
+    <td class="pScreenSmall"> When the PostNuke server is initialised, anyone 
+      can run the install process.<br>
+      <br>
+      If your server is online, while you are installing, you may wish to install 
+      'OFF' the root server before moving the files 'online'.</td>
+  </tr>
+</table>
+<!--
+<h4><a name="NukeInstallMySQLtbl"></a>2nd Stage - Create and Fill the Tables. 
+</h4>
+<p>Use the sql script supplied with PostNuke to create the database tables and 
+  populate the table with initial data. You can change the table contents within 
+  the administration module.</p>
+<p class="Code">$ <b>cd ~/pn_714/sql</b></p>
+<p class="Code">$ <b>ls</b></p>
+<p class="Code">nuke.sql</p>
+<p class="Code">&nbsp;</p>
+<p class="Code">$ <b>mysql -u privilegeduser -p <font color="#0000FF">rogue_db</font> 
+  &lt; rogue.sql</b></p>
+<p class="Code">Password: ******** (password prompt)</p>
+<p>Please take note that &quot;<font color="#0000FF"><b>rogue_db</b></font>&quot; 
+  mentioned here is the database name you specified above in the script file 'phpnuke_mysql_create.sql' 
+  I am using a different database name just in case you are not able to use the 
+  default name 'nuke' because more than one person on your system is using phpNuke.</p>
+ //-->
+<h3><a name="NukeInstallStartup"></a>Configuring Site Installation Settings</h3>
+<p class="pFileReference">[ref: config.php]</p>
+<p>At this point you can continue with the 'Automated Installation Process' or 
+  fiddle a little as below before going to that.</p>
+<p>In this part of the configuration, we will configure phpNuke so we can start-up 
+  the web based administration system.</p>
+<p class="pFileReference">Edit the file <b>config.php</b> and make the following 
+  changes:</p>
+<table width="80%" border="0" class="Code">
+  <tr> 
+    <td class="pScreenSmall">// -----------------------------------------------------------------<br>
+      // Database &amp; System Config<br>
+      //<br>
+      // dbtype: type of database, currently only mysql<br>
+      // dbhost: MySQL Database Hostname<br>
+      // dbuname: MySQL Username<br>
+      // dbpass: MySQL Password<br>
+      // dbname: MySQL Database Name<br>
+      // system: 0 for Unix/Linux, 1 for Windows<br>
+      // encoded: 0 for MySQL information unenccoded<br>
+      // , 1 for encoded<br>
+      // -----------------------------------------------------------------<br>
+      //<br>
+      $pnconfig['dbtype'] = 'mysql';<br>
+      $pnconfig['dbhost'] = 'localhost';</td>
+  </tr>
+  <tr> 
+    <td class="CodeSmall">$pnconfig['dbuname'] = '<b><font color="#0000FF">NOMOA</font></b>';<br>
+      $pnconfig['dbpass'] = '<b><font color="#0000FF">password</font></b>';<br>
+      $pnconfig['dbname'] = '<font color="#0000FF"><b>rogue_db</b></font>';</td>
+  </tr>
+  <tr> 
+    <td class="pScreenSmall">$pnconfig['system'] = '0';<br>
+      $pnconfig['prefix'] = 'nuke';</td>
+  </tr>
+  <tr> 
+    <td class="pScreenSmall">$pnconfig['encoded'] = '0';</td>
+  </tr>
+</table>
+<p>Be sure to change the above user-name, database-password, and database-name 
+  to those which you defined earlier, and will be using.</p>
+<h4>Save the file.</h4>
+<p>The final console activity is to set the user-id, group-id and modes for the 
+  files.</p>
+<ul>
+  <li>change the directory to set the user-id 'www', and group-id 'www'.</li>
+  <li>use 'chmod 770 directory' on all directories</li>
+  <li>use 'chmod 660 filename' on all files</li>
+  <li>fix permissions for config.php and config-old.php</li>
+</ul>
+<table width="80%" border="0" class="Code">
+  <tr> 
+    <td class="Code"># find . -type d -exec chmod 0775 {} \;<br>
+      # find . -type f -exec chmod 0664 {} \;<br>
+      # chmod 666 config*</td>
+  </tr>
+</table>
+<p><i>[ref: Thanks to smn and Mystique for corrections and the original 'cleaner' 
+  find command-line]</i></p>
+<h2><a name="autoinstall"></a>Automated Installation Process</h2>
+<p>To finalise your installation (essentially setting the default administrator 
+  password) launch a web browser pointing to your postnuke site:</p>
+<p> http://your-site-details/install.php</p>
+<p>1. Verify the language you wish for the installation/site</p>
+<p>2. Verify configuration requirements for config.php and config-old.php</p>
+<p>$ chmod 666 config*.php</p>
+<p>3. Verify database configuration settings (as set above)</p>
+<p>The important section during the installation process is setting the administration 
+  password.</p>
+<p>&nbsp;</p>
+<h2><a name="NukeGAdmin"></a>Graphical Administration</h2>
+<p>You should now be able to start up your Nuke'd website by launching the browser 
+  and pointing to http://your-site-details/ or something like http://your-site-details/nuke</p>
+<p>If you are having problems, refer to the notes on configuring your Apache server. 
+</p>
+<p>To begin administration, changes, start-up your favourite browser to http://your-site-details. 
+  Log in as the administrator account created during the installation process.</p>
+<p>Once you are logged in with administrator privileges, you can select the &quot;Administration 
+  Menu&quot; from the &quot;Main Menu&quot; Block.</p>
+
+<div align="center"> </div>				  
+<p>When you have successfully logged in as Administrator, then you should a display 
+  similar to that shown below of Administration commands.</p>
+
+<div align="center">
+<table width="90%" border="1" cellspacing="4" cellpadding="4" bgcolor="#FFFFFF">
+  <tr><td>
+<center>
+          <font size="1"><b>Administration Menu</b></font><br>
+        <font size="1">[ Online Manual ]</font> 
+      </center>
+      <table border="0" width="100%" cellspacing="1">
+        <tr>
+          <td align="center"><FONT size="1"><b>Add Story</b></font></td>
+            <td align="center"><FONT size="1"><b><font color="#0000FF">Blocks</font></b></font></td>
+          <td align="center"><FONT size="1"><b>Download</b></font></td>
+            <td align="center"><FONT size="1"><b><font color="#0000FF">Edit Users</font></b></font></td>
+          <td align="center"><FONT size="1"><b>Ephemerids</b></font></td>
+          <td align="center"><FONT size="1"><b>FAQ</b></font></td>
+        </tr>
+        <tr>
+          <td align="center"><FONT size="1"><b>File Manager</b></font></td>
+          <td align="center"><FONT size="1"><b>Messages</b></font></td>
+            <td align="center"><FONT size="1"><b><font color="#0000FF">Edit Admins</font></b></font></td>
+            <td align="center"><FONT size="1"><b><font color="#0000FF">HTTP Referers</font></b></font></td>  <td align="center"><FONT size="1"><b><font color="#0000FF">Preferences</font></b></font></td>
+          <td align="center"><FONT size="1"><b>Reviews</b></font></td>
+        </tr>
+        <tr>
+          <td align="center"><FONT size="1"><b>Sections Manager</b></font></td>
+          <td align="center"><FONT size="1"><b>Surveys/Polls</b></font></td>
+            <td align="center"><FONT size="1"><b><font color="#0000FF">Topics Manager</font></b></font></td>
+            <td align="center"><FONT size="1"><b><font color="#0000FF">Web Links</font></b></font></td>
+          <td align="center"><FONT size="1"><b>Logout / Exit</b></font></td>
+        </tr>
+      </table>
+    </td>
+  </tr></table>
+ </div>
+<p>The following is a squence of minimal modifications I go through to customise 
+  my installation. I will leave the graphics and theme modifications for other 
+  sites more suited to that stuff.</p>
+<ul>
+  <li>Set, Change your Admin Password</li>
+  <ul>
+    <li>Add an unprivileged user</li>
+  </ul>
+  <li>Modify BLOCKS to display</li>
+  <li>Modify TOPICS</li>
+  <li>Modify HTTP-Refers</li>
+  <li>Modify WEB-Links</li>
+  <li>META Tags</li>
+</ul>
+<p>Enjoy !!</p>
+<h2>Relative Reference</h2>
+<p>Paul Pruett documented the below php based CMS systems while he mentions that 
+  there are other CMS systems coded in python, perl. If you want to search for 
+  them on google, try using 'nuke' 'content management system' :</p>
+<p>phpWebSite Open Source, Community-Driven WebWare<br>
+  <a href="http://phpwebsite.appstate.edu/">http://phpwebsite.appstate.edu/</a></p>
+<p><br>
+  Systems based on the slash code used on www.slashdot.org: <a href="http://sourceforge.net/projects/slashcode/">SLASH</a>, 
+  <a href="http://sourceforge.net/projects/phpslash/">phpSLASH</a>, <a href="http://sourceforge.net/projects/pslash/">plsash</a>.<br>
+</p>
+<p><a href="http://phpnuke.org/">phpnuke</a> - spawned at least two cms communities 
+  (<a href="http://www.postnuke.com/">postnuke</a> and <a href="http://www.myphpnuke.com/">myphpnuke</a>.) 
+  Another potentially important fork from this code is <a href="www.xaraya.com">www.xaraya.com</a></p>
+<p><a href="http://sourceforge.net/projects/phptalo/"></a>The Today Web Framework, 
+  or &quot;Today&quot;,<br>
+  <a href="http://4th.com/tech/Today/">http://4th.com/tech/Today/</a></p>
+<p><a href="http://sourceforge.net/projects/phptalo/">http://sourceforge.net/projects/phptalo/</a></p>
+<p>and variants with &quot;blogs&quot;</p>
+<p><a href="http://sourceforge.net/projects/geeklog/">http://sourceforge.net/projects/geeklog/</a></p>
+<p>and built with zope, plone,<br>
+  <a href="http://sourceforge.net/projects/plone/http://sourceforge.net/projects/plone/">http://sourceforge.net/projects/plone/http://sourceforge.net/projects/plone/</a></p>
+<p>bricolage<br>
+  <a href="http://sourceforge.net/projects/bricolage/">http://sourceforge.net/projects/bricolage/</a></p>
+<p><br>
+  <a href="http://sourceforge.net/projects/magellancms/">http://sourceforge.net/projects/magellancms/</a></p>
+<p><br>
+  <a href="http://sourceforge.net/projects/phpweblog/">http://sourceforge.net/projects/phpweblog/</a></p>
+<p></p>
+<p>Other forms of content management include a relatively new concept, the <a href="http://c2.com/cgi/wiki?WelcomeVisitors">wiki</a>, 
+  which is growing in popularity. Thomas Horna sent out this bit of information, 
+  WikiWikiWeb is a collaborative hypertext environment, with an<br>
+  emphasis on easy access to and modification of information. :</p>
+<p>An example of a large community based on Wiki is the <a href="http://www.wikipedia.org/">WikiPedia 
+  Online Encyclopedia</a> and another example is the <a href="http://senseis.xmp.net/?SenseisLibrary">Sense 
+  Is Library.</a></p>
+<p>Someone's even put up an <a href="http://www.obsd.pronym.org/wiki/index.php/HomePage">OpenBSD 
+  Wiki</a> </p>
+<p><br>
+  How many Wiki Engines (implementations) are out there: <a href="http://c2.com/cgi/wiki?WikiEngines">http://c2.com/cgi/wiki?WikiEngines</a></p>
+<h2><a name="author"></a>Author and Copyright</h2>
+<p>Copyright (c) 2000/1/2 Samiuela LV Taufa. All Rights Reserved.</p>
+<p>I reserve the right to be totally incorrect even at the best advice of betters. In other words, I'm probably wrong in enough places for you to call me an idiot, but don't 'cause you'll hurt my sensibilities, just tell me where I went wrong and I'll try again.</p>
+<p>You are permitted and encouraged to use this guide for fun or for profit as 
+  you see fit. If you republish this work in what-ever form, it would be nice 
+  (though not enforceable) to be credited.</p>
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+  <tr> 
+    <td class="block" valign="MIDDLE" width="100%" bgcolor="#cccccc">
+      <p class="block"><b>postNuke <strong>, a Portal Beginning</strong></b></p>
+      </td>
+  </tr>
+</table>
+<p><font color="#808080" face="sans-serif" size="-2"><strong>Copyright&nbsp; &copy; 
+  2000/1/2 <a href="http://www.nomoa.com">NoMoa Publishers</a> All rights 
+  reserved.  Caveat Emptor</strong></font></p>
+</body>
+</html>

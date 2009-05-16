@@ -1,0 +1,127 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0//EN">
+<html>
+  <head>
+    <title>=8&gt; nomoa.com/bsd OpenBSD - dhcpd getting the IP message out</title>
+    <link rel="STYLESHEET" type="text/css" href="openbsd.css">
+<script language="JavaScript">
+<!--
+
+function newImage(arg) {
+	if (document.images) {
+		rslt = new Image();
+		rslt.src = arg;
+		return rslt;
+	}
+}
+
+function changeImages() {
+	if (document.images && (preloadFlag == true)) {
+		for (var i=0; i<changeImages.arguments.length; i+=2) {
+			document[changeImages.arguments[i]].src = changeImages.arguments[i+1];
+		}
+	}
+}
+
+var preloadFlag = false;
+function preloadImages() {
+	if (document.images) {
+		openbsd_over = newImage("mmedia/openbsd-over.gif");
+		openbsd_down = newImage("mmedia/openbsd-down.gif");
+		preloadFlag = true;
+	}
+}
+
+// -->
+</script>
+<!-- End Preload Script -->
+</head>
+
+<body bgcolor="#FFFACD" onLoad="preloadImages();">
+<p class="logo">
+<a class="anchBlue" href="http://www.nomoa.com/bsd" 
+   onMouseOver="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;"
+   onMouseOut="changeImages('openbsd', 'mmedia/openbsd.gif'); return true;"
+   onMouseDown="changeImages('openbsd', 'mmedia/openbsd-down.gif'); return true;"
+   onMouseUp="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;">
+   <img name="openbsd"  align="absMiddle" 
+        alt="OpenBSD ... The Only way to Go ..." border="0" height="50"
+        src="mmedia/openbsd.gif" width="368"></a>
+</p>
+
+<h1> dhcpd - getting the IP message out</h1>
+<hr color="fuchsia">
+<ul>
+  <li><a href="#intro">Introduction</a>
+    <ul>
+    </ul>
+  </li>
+  <li><a href="#author">Author and Copyright</a></li>
+</ul>
+<hr color="fuchsia">
+<h2><a name="intro"></a>Introduction</h2>
+<p>DHCPd documentation is rather straight forward and these notes are to document 
+  some of the things that don't seem to be clearly documented (or in a quick to 
+  find location.)</p>
+<p>Related files to configuring the DHCPd server.</p>
+<p class="pFileReference">/etc/dhcpd.conf - configuration file<br>
+  /var/db/dhcpd.leases - maintains existing leases in case of server shutdown<br>
+</p>
+<p class="pFileReference">/etc/rc.conf.local - configuration file to enable dhcpd 
+  between system startups<br>
+</p>
+<p class="pFileReference">/etc/dhcpd.interfaces - list of interfaces to which 
+  dhcpd will send ip</p>
+<p>Documentation can be found in many different places (refer the man pages configuration 
+  files above and dhcpd man pages) as well as in the FAQ.</p>
+<p><br>
+</p>
+<table width="80%" border="0">
+  <tr>
+    <td class="Code">
+      <pre>shared-network LOCAL-NET {
+    option  domain-name "colorado.edu";
+    option  domain-name-servers 128.138.129.76, 128.138.240.1;
+
+    subnet 10.0.0.0 netmask 255.255.255.0 {     
+                option routers 10.0.0.1;
+                default-lease-time 3600;
+
+                range 10.0.0.33 10.0.0.34;     
+                range 10.0.0.38 10.0.0.127;
+
+                host judith {     
+                     hardware ethernet 00:90:27:66:de:a5;     
+                     fixed-address 10.0.0.32;     
+                }
+                host baelzebub {     
+                     hardware ethernet 0:d0:9:2c:be:6e;     
+                     fixed-address 10.0.0.35;     
+                }     
+   }     
+}
+</pre>
+    </td>
+  </tr>
+</table>
+<p class="pFileReference">&nbsp; </p>
+<p class="pFileReference">&nbsp;</p>
+<h2><a name="author"></a>Author and Copyright</h2> 
+<p>Copyright (c) 2000/1/2 Samiuela LV Taufa. All Rights Reserved.</p>
+
+<p>I reserve the right to be totally incorrect even at the best advice of betters. In other words, I'm probably wrong in enough places for you to call me an idiot, but don't 'cause you'll hurt my sensibilities, just tell me where I went wrong and I'll try again.</p>
+
+<p>You are permitted and encouraged to use this guide for fun or for profit as you see fit. If you republish this work in what-ever form, it would be nice (though not enforceable) to be credited.</p>
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+  <tr>
+    <td class="block" valign="MIDDLE" width="100%" bgcolor="#cccccc"><strong>
+      <p class="block">dhcpd - getting the IP message out</p>
+      </strong></td>
+  </tr>
+</table>
+<p><font color="#808080" face="sans-serif" size="-2"><strong>Copyright&nbsp; &copy; 
+  2000/1/2
+<a href="http://www.nomoa.com">NoMoa.COM</a> All rights reserved.</strong></font></p>
+  </body>
+</html>
+

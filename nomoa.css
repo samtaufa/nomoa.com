@@ -1,0 +1,102 @@
+BODY {
+	font-family : Verdana, Geneva, Arial, Helvetica, sans-serif;
+	font-size : small;
+}
+h1,h2,h3,h4,h5 { 
+	font-family : Verdana, Geneva, Arial, Helvetica, sans-serif;
+	font-weight:"bold";
+	font-style:"normal"; 
+	}
+H1 {font-size:160%; 
+	color:"#ffcc00"; }
+H2 {font-size:160%; }
+H3 {font-size:145%; }
+H4 {font-size:120%; }
+H5 {font-size:110%; 
+	font-style:"italic";}
+CODE {font-size:80%; 
+	font-family:"courier new, courier, lucida console, lucida typewriter, monospace"; 
+	color:"#000099";}
+.NAVTOP {font-size:83%; 
+	font-family:"verdana, arial, helvetica, sans-serif";}
+.NAVSIDE {font-size:83%; 
+	font-family:"verdana, arial, helvetica, sans-serif";}
+.TEXT {font-size:83%; 
+	font-family:"verdana, arial, helvetica, sans-serif";}
+.COPY {font-size:67%; 
+	font-family:"verdana, arial, helvetica, sans-serif";}
+.PROCH {font-size:100%; 
+	font-family:"verdana, arial, helvetica, sans-serif"; 
+	color:"#6699cc"; 
+	font-style:"normal"; 
+	font-weight:"bold";}
+td, p {
+	font-family: Verdana, Geneva, Arial, Helvetica, sans-serif;
+	font-size : small;
+	font-style : normal;
+}
+A.sites {  color: #FF9999; cursor: hand; filter: FlipH;
+				font-weight : bold;	
+				letter-spacing : -1pt;	
+				text-decoration : none;
+}
+
+a:hover {
+		    	color : #cc0099;
+				font-weight : bold;	
+				letter-spacing : -1pt;	
+				text-decoration : none;
+				  }
+
+a:visited {
+		    	color : #660033;
+				font-weight : bold;	
+				letter-spacing : -1pt;	
+				text-decoration : none;
+				  }
+
+a:visited:hover {
+		    	color : #cc0099;
+				font-weight : bold;	
+				letter-spacing : -1pt;	
+				text-decoration : none;
+				  }
+a.anchtoolbar {
+	COLOR: White;
+	TEXT-DECORATION: none;
+	font-family : Verdana, Geneva, Arial, Helvetica, sans-serif;
+	font-size : 10 pt;
+	font-stretch : wider;
+	font-weight : bolder;
+	font-variant : normal;
+	background-color : #006600;
+}
+a.anchtoolbar:hover {
+	COLOR: Yellow;
+	TEXT-DECORATION: none;
+	font-family : Verdana, Geneva, Arial, Helvetica, sans-serif;
+	font-size : 10 pt;
+	font-stretch : wider;
+	font-weight : bolder;
+	font-variant : normal;
+	background-color : Blue;
+}
+a.anchtoolbar:visited {
+	COLOR: #E0FFFF;
+	TEXT-DECORATION: none; 
+	font-family : Verdana, Geneva, Arial, Helvetica, sans-serif;
+	font-size : 10 pt;
+	font-stretch : wider;
+	font-weight : bolder;
+	font-variant : normal;
+	background-color : #006600;
+}
+
+a.anchtoolbar:visited:hover {
+	COLOR: Yellow;
+	TEXT-DECORATION: none; 
+	font-stretch : wider;
+	font-weight : bolder;
+	font-variant : normal;
+	background-color : #006600;
+}

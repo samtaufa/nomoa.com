@@ -1,0 +1,211 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0//EN">
+<html>
+  <head>
+    <title>=8&gt; nomoa.com/bsd OpenBSD - rc.conf Configuring your System Startup</title>
+    <link rel="STYLESHEET" type="text/css" href="openbsd.css">
+<script language="JavaScript">
+<!--
+
+function newImage(arg) {
+	if (document.images) {
+		rslt = new Image();
+		rslt.src = arg;
+		return rslt;
+	}
+}
+
+function changeImages() {
+	if (document.images && (preloadFlag == true)) {
+		for (var i=0; i<changeImages.arguments.length; i+=2) {
+			document[changeImages.arguments[i]].src = changeImages.arguments[i+1];
+		}
+	}
+}
+
+var preloadFlag = false;
+function preloadImages() {
+	if (document.images) {
+		openbsd_over = newImage("mmedia/openbsd-over.gif");
+		openbsd_down = newImage("mmedia/openbsd-down.gif");
+		preloadFlag = true;
+	}
+}
+
+// -->
+</script>
+<!-- End Preload Script -->
+</head>
+
+<body bgcolor="#FFFACD" onLoad="preloadImages();">
+<p class="logo">
+<a class="anchBlue" href="http://www.nomoa.com/bsd" 
+   onMouseOver="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;"
+   onMouseOut="changeImages('openbsd', 'mmedia/openbsd.gif'); return true;"
+   onMouseDown="changeImages('openbsd', 'mmedia/openbsd-down.gif'); return true;"
+   onMouseUp="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;">
+   <img name="openbsd"  align="absMiddle" 
+        alt="OpenBSD ... The Only way to Go ..." border="0" height="50"
+        src="mmedia/openbsd.gif" width="368"></a>
+</p>
+
+<h1> rc.conf - Configuring your System Startup</h1>
+<hr color="fuchsia">
+<ul>
+  <li><a href="#intro">Introduction</a></li>
+  <li><a href="#rc.conf.local">rc.conf.local - A localised version of rc.conf</a> 
+    <ul>
+      <li><a href="#Section1" class="anchBlue">Section 1 Turn Features On</a></li>
+      <li><a href="#Section2" class="anchBlue">Section 2 Switch Programs On</a></li>
+      <li><a href="#Section3" class="anchBlue">Section 3 Configuration Options</a></li>
+    </ul>
+  </li>
+  <li><a href="#author">Author and Copyright</a></li>
+</ul>
+<hr color="fuchsia">
+<h2><a name="intro"></a>Introduction</h2>
+<p>rc.conf contains the majority of configuration options for initialising/starting 
+  your OpenBSD system.</p>
+<p>Although many texts specify you can make your changes in this file (/etc/rc.conf) 
+  it is also recommended by the man pages that you leave this file pristine (as 
+  is) and make your system specific changes in a new file /etc/rc.conf.local</p>
+<p>Changes you make in the /etc/rc.conf.local file will override settings in /etc/rc.conf.</p>
+<h2><a name="rc.conf.local"></a>rc.conf.local - A localised version of rc.conf</h2>
+ 
+<p>The file, reflecting the rc.conf file, should be divided into THREE sections.</p>
+<p>1. Section 1: Setting Programs that require Features turned on or off</p>
+<p>2. Section 2: Start/Stop Programs that do not need parameters</p>
+<p>3. Section 3: Configuring information for programs started above. Ignored if 
+  servers are not started.</p>
+<p class="pFileReference">File: /etc/rc.conf.local</p>
+<table cellspacing="2" border="2" class="dns">
+  <tr> 
+    <td> 
+      <pre>
+# ##
+# SECTION 1 - Turn Features on/off
+# ##
+
+
+
+# ##
+# SECTION 2 - Switch Programs On/Off
+# ##
+
+
+
+# ##
+# SECTION 3 - Configuration Options
+# ##
+
+shlib_dirs = &quot;&quot;</pre>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <div align="center">Diagram - Sample of /etc/rc.conf.local</div>
+    </td>
+  </tr>
+</table>
+<h3><a name="Section1"></a>Section 1 - Turn Features On</h3>
+<p>This section is where you set parameters for programs that need to be started 
+  with different types of options.</p>
+<p>For example, sendmail is usually started with different options depending on 
+  whether you wish to process queues only, or also set up smtp processing.</p>
+<table cellspacing="2" border="2" class="dns">
+  <tr> 
+    <td> 
+      <pre>
+# ##
+# SECTION 1 - Turn Features on/off
+# ##
+xdm_flags = &quot;&quot;                # use two double-quotes
+sendmail  = &quot;-bd &#150;q30m&quot;       # for normal use: &quot;-bd -q30m&quot; 
+ftpd_flags= &quot;-DllUSA&quot;         # for non-inetd use: ftpd_flags=&quot;-D&quot;</pre>
+    </td>
+  </tr>
+  <tr> 
+    <td> 
+      <div align="center">Diagram - Sample of Section 1</div>
+    </td>
+  </tr>
+</table>
+<p>The above settings override the default /etc/rc.conf settings. </p>
+<p>xdm_flags now specifies to start xdm (previously it was xdm=NO.) The sendmail 
+  directive now specifies the use of '-bd' whereas the default specification is 
+  without '-bd' </p>
+<p>The ftpd_flags are read by the start up scripts and specify parameters for 
+  the ftpd daemon.</p>
+<h3><a name="Section2"></a>Section 2 - Switch Programs On</h3>
+<p>This section is for programs that merely need to be turned on or off. For example 
+  this is a good place for programs that get their configuration information from 
+  configuration files and not from command-line arguments.</p>
+<table cellspacing="2" border="2" class="dns">
+  <tr> 
+    <td> 
+      <pre>
+# ##
+# SECTION 2 - Start/Stop Programs that do not require parameters
+# ##
+<a href="mysql.htm#starting">mysql=YES</a>
+<a href="samba_openbsd3.2.htm#service">smbd=No</a><br><a href="samba_openbsd3.2.htm#service">nmbd=No</a></pre>
+    </td>
+  </tr>
+  <tr> 
+    <td> 
+      <div align="center">Diagram - Sample of Section 2</div>
+    </td>
+  </tr>
+</table>
+<p>The above modifications tells rc.local to start the mysql services, but not 
+  to start the Samba services (smbd, and nmbd.)</p>
+<h3><a name="Section3"></a>Section 3 - Configuration Options</h3>
+<p>In this section we specify directives for programs started in either Section 
+  1 or Section 2. These directives will either be read when programs are activated 
+  or ignored when programs are not activated.</p>
+<p>We can also place in here other directives that may be reviewed by the scripts 
+  in /etc/rc</p>
+<table cellspacing="2" border="2" class="dns">
+  <tr> 
+    <td> 
+      <pre>
+# ##
+# SECTION 3
+# ##
+shlib_dirs=&quot;$shlib_dirs /new/path1 /new/path2&quot;
+</pre>
+    </td>
+  </tr>
+  <tr> 
+    <td> 
+      <div align="center">Diagram - Sample of Section 3</div>
+    </td>
+  </tr>
+</table>
+<p>The above changes to shlib_dirs expands the existing shlib_dirs read from /etc/rc.conf 
+  ($shlib_dirs) and adds two new paths to shlib_dirs. Note that a space is used 
+  as the separator. You can also use multiple lines of shlib_dirs. Refer: rc.conf(8), 
+  ldconfig(8). Because the script reading /etc/rc.conf{.loca,} is Bourne Shell 
+  you can also use settings like shlib_dirs=&quot;/usr/local/lib/{path1,path2,path3,}</p>
+<p><b>WARNING:</b> There are no spaces between shlib_dirs, the &quot;=&quot; sign, 
+  and the first quote &quot;</p>
+<p>&nbsp;</p>
+<h2><a name="author"></a>Author and Copyright</h2> 
+<p>Copyright (c) 2000/1/2 Samiuela LV Taufa. All Rights Reserved.</p>
+
+<p>I reserve the right to be totally incorrect even at the best advice of betters. In other words, I'm probably wrong in enough places for you to call me an idiot, but don't 'cause you'll hurt my sensibilities, just tell me where I went wrong and I'll try again.</p>
+
+<p>You are permitted and encouraged to use this guide for fun or for profit as you see fit. If you republish this work in what-ever form, it would be nice (though not enforceable) to be credited.</p>
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+  <tr>
+    <td class="block" valign="MIDDLE" width="100%" bgcolor="#cccccc"><strong>
+      <p class="block">rc.conf - Configuring OpenBSD's startup</p>
+      </strong></td>
+  </tr>
+</table>
+<p><font color="#808080" face="sans-serif" size="-2"><strong>Copyright&nbsp; &copy; 
+  2000/1/2
+<a href="http://www.nomoa.com">NoMoa.COM</a> All rights reserved.</strong></font></p>
+  </body>
+</html>
+

@@ -1,0 +1,897 @@
+<html >
+
+<head>
+<link rel="STYLESHEET" type="text/css" href="openbsd.css">
+<title>=8> nomoa.com/bsd OpenBSD - Firewalling that BAD guys out</title>
+
+<script language="JavaScript">
+<!--
+
+function newImage(arg) {
+	if (document.images) {
+		rslt = new Image();
+		rslt.src = arg;
+		return rslt;
+	}
+}
+
+function changeImages() {
+	if (document.images && (preloadFlag == true)) {
+		for (var i=0; i<changeImages.arguments.length; i+=2) {
+			document[changeImages.arguments[i]].src = changeImages.arguments[i+1];
+		}
+	}
+}
+
+var preloadFlag = false;
+function preloadImages() {
+	if (document.images) {
+		openbsd_over = newImage("mmedia/openbsd-over.gif");
+		openbsd_down = newImage("mmedia/openbsd-down.gif");
+		preloadFlag = true;
+	}
+}
+
+// -->
+</script>
+<!-- End Preload Script -->
+</head>
+
+<body bgcolor="#fffacd" onLoad="preloadImages();">
+<p class="logo">
+<a class="anchBlue" onMouseDown="changeImages('openbsd', 
+   &#13;&#10; 'mmedia/openbsd-down.gif'); return true;"
+   href   
+   ="http://www.nomoa.com/bsd" onMouseOver  
+   ="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;" onMouseOut="changeImages('openbsd', 'mmedia/openbsd.gif'); return true;" onMouseUp="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;">
+   <img name="openbsd"  align="absMiddle" 
+        alt="OpenBSD ... The Only way to Go ..." border="0" height="50"
+        src="mmedia/openbsd.gif" width="368"></a>
+</p>
+
+<h1>Firewalling with ipf and nat</h1>
+
+<p>Table of Contents</p>
+<ul>
+  <li><a href="#introduction" class="anchBlue">Introduction</a></li>
+  <li><a href="#ipON" class="anchBlue">Turn IP Forwarding On</a></li>
+  <li><a href="#filterON" class="anchBlue">Turn Filtering On</a></li>
+  <li><a href="#ip" class="anchBlue">Start IP Filtering Manually</a></li>
+  <li><a href="#natStart" class="anchBlue">Start NAT Manually</a></li>
+  <li><a href="#srSampleRules" class="anchBlue">Sample Rules</a></li>
+  <ul>
+    <li><a href="#srIP" class="anchBlue">IP Firewall</a></li>
+    <li><a href="#srNat" class="anchBlue">IP NAT</a></li>
+  </ul>
+  <li><a href="#srIpDocs" class="anchBlue">Sample IP Filter with Documentation</a></li>
+  <ul>
+    <li><a href="#srIpDocsInvalidExternalLinks" class="anchBlue">Invalid External 
+      Links (mostly hostile)</a></li>
+    <li><a href="#srIpDocsBadPackets" class="anchBlue">Bad Packets</a></li>
+    <li><a href="#srIpDocsFingerPrinting" class="anchBlue">OS Fingerprinting attempts</a></li>
+    <li><a href="#srIpDocsLimitingAccess" class="anchBlue">Limiting Access</a></li>
+  </ul>
+  <li><a href="#srNatDocs" class="anchBlue">Sample NAT with Documentation</a></li>
+  <ul>
+    <li><a href="#srNatDocsOut" class="anchBlue">Outgoing Traffic</a></li>
+    <li><a href="#srNatDocsRedirect" class="anchBlue">Redirecting Traffic</a></li>
+  </ul>
+  <li><a href="#srJames" class="anchBlue">Sample by James Deucker</a></li>
+  <li>Relative Reference</li>
+  <li>Copyright</li>
+</ul>
+<h2><a name="introduction"></a>Introduction</h2>
+<p>Prior to release 3.0, the favoured firewall tool for OpenBSD was combining 
+  ipf with nat.</p>
+<p>For a wonderful tutorial on OpenBSD PF check out 
+<a href="http://home.nuug.no/~peter/pf/en/">http://home.nuug.no/~peter/pf/en/</a> 
+The tutorial is very thorough with many example configurations.</p>
+<p>If you're really thinking of using these notes as the basis for firewalling, 
+  then don't. This should have been a tutorial for getting ipf, nat working but 
+  the OpenBSD FAQ came out with a real nice instructional, so grab the FAQ. I've 
+  just kept these notes as a reference hack. Besides, I don't always have an Internet 
+  connection to test configuration changes, ideas.</p>
+<p>Why have it on the web if there wrong ? Well, some of them I've actually used 
+  and they work, and these are notes. These notes continue as an attempt to understand 
+  how the ipf rules work, and the basic configuration one would have to secure 
+  a site. The fiddles (rulesets) in this list will hopefully document what may 
+have been a safe generic configuration.</p>
+<p>Configuration in /etc/sysctl.conf and /etc/rc.conf<br>
+IP Filter rules in /etc/ipf.rules<br>
+Network Address Translation (NAT) rules in /etc/ipnat.rules<br>
+Examples are in /usr/share/ipf</p>
+
+<h2><a name="ipON"></a>Step 1  Turn IP Forwarding on</h2>
+
+<p>Uncomment the line disabling ip filter</p>
+
+
+<p class="pFileReference">Edit the file: /etc/sysctl.conf<br>
+<p class="Code">#net.inet.ip.forwarding=1&nbsp;&nbsp;# 1= Permit forwarding (routing) 
+  or packets<br>
+  net.inet.ip.forwarding=1&nbsp;&nbsp;&nbsp;# 1 = Permit forwarding (routing) 
+  or packets</p>
+<p>To effect the above (do the above) without having to restart the server. Use 
+  the following command documented in the FAQ.</p>
+<p class="Code"># sysctl -w net.inet.ip.forwarding=1<br>
+</p>
+<p class="pScreenOutput">net.inet.ip.forwarding: 0 -&gt; 1</p>
+<h2><a name="filterON"></a>Step 2  Turn Filtering On</h2>
+
+<p>To enable ipf and ipnat at boot, change the default filter settings (NO) to 
+  YES</p>
+
+
+<p class="pFileReference">Edit the File <a href="rc.conf.htm">/etc/rc.conf.local</a> 
+  and add the following lines to <a href="rc.conf.htm#Section2">Section 2</a>
+<p class="Code">ipfilter=YES<br>
+  ipnat=YES
+<p class="pFileReference">This will override the standard settings in /etc/rc.conf 
+  shown here:<br>
+
+<p class="pScreenOutput">ipfilter=NO<br>
+  ipnat=NO</p>
+
+
+<h2><a name="ip"></a>Start IP Filtering Manually</h2>
+
+<p class="pFileReference">[ref: ipf(8)]<br>
+  [File: /etc/ipf.rules]</p>
+<p>The standard file location for the ipf.rules will reside in /etc as ipf.rules</p>
+<p>Without restarting your computer, and after you've created your 1st set of 
+  rules, you can force ipf to start and use the new rules with a command similar 
+  to the below:</p>
+<p class="Code"># ipf -Fa -vf /etc/ipf.rules -E</p>
+<p>The -E, enables ipf so if you modify your rules then you can reload the new 
+  rules using the same above commands without the -E.</p>
+<p>Note that reloading directly from file to the active ruleset is not recommended. 
+  Check the FAQ for a better method.</p>
+
+<h2><a name="natStart"></a>Start NAT manually</h2>
+
+<p class="pFileReference">[File: /etc/ipnat.rules]</p>
+<p>The standard file location for the ipnat.rules will reside in /etc as ipnat.rules</p>
+<p>Without restarting your computer, and after you've created your 1st set of 
+  rules, you can force ipnat to start and use the new rules with a command similar 
+  to the below:</p>
+<p class="Code"></p>
+<p class="Code"># ipnat -CF -f /etc/ipnat.rules</p>
+
+<h2><a name="srSampleRules"></a>Sample filter rules</h2>
+
+<p class="pFileReference">[files location: /usr/share/ipf]</p>
+<p>The basic OpenBSD installation comes with a number of sample firewall rules. 
+  Samples files for ipfilter begin with firewall, while samples for NAT begin 
+  with nat.</p>
+<h3><a name="srIP"> </a>IP filter Rules</h3>
+<p>firewall.1 - tight firewall through ppp connection<br>
+  firewall.2 - heavy security firewall through a ppp connection<br>
+  firewall.3 - restrictive firewall through a ppp connection</p>
+
+<p>Other files (example.*) provide examples of specific
+block/allow scenarios with the filter system</p>
+
+<h3><a name="srNat"></a>NAT rules</h3>
+
+<p>nat.1 - direct-connect (ethernet card) connection to ISP<br>
+  nat.2 - hints<br>
+  nat.3 - ppp connection to ISP</p>
+
+<h2><a name="srIpDocs"></a>Reviewing a sample ipf.rules</h2>
+
+<p class="pFileReference">[ref: ipf(8)]</p>
+<p>Ipf reads its ruleset sequently until it gets to the end of the ruleset (unless 
+  it has otherwise been told to stop.) Whichever is the last 'valid' rule that 
+  applies to a packet will be the applied rule. This is different from ipfwadm 
+  and ipfw who quits on the first applicable rule to incoming packets.</p>
+<table border="0" width="800" class="Code">
+  <tr> 
+    <td nowrap class="Code"> # ipf filtering example Generic System 1:<br>
+      #&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; * stateless version (does not keep state 
+      information)<br>
+      #&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; * class: heavy duty firewalling<br>
+      # Definitions<br>
+      # XTL_LINK&nbsp; &nbsp;&nbsp;- interface with the external to the world 
+      eg. xl0<br>
+      # XTL_IPADDR &nbsp;- IP to external interface&nbsp; eg. 207.124.66.1<br>
+      # INT_LINK1&nbsp;&nbsp; - interface_1 on the internal network<span
+ style="mso-tab-count: 1">&nbsp;&nbsp; <span style="mso-spacerun:
+ yes">&nbsp;&nbsp;&nbsp;eg. xl1<br>
+      # INT_LINK2 &nbsp;&nbsp;- interface_2 on the internal network<span
+>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; eg. xl2<br>
+      # INT_NETWORK - Internal IP network<span
+>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; eg. 192.168.101.0<br>
+      # INT_BMASK0&nbsp; - Broadcast Mask on 0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+      eg. 192.168.101.0/16<br>
+      # INT_BMASK255 - Broadcast Mask on 255<span
+>&nbsp;&nbsp;&nbsp; eg. 192.168.101.255/32 </span></span></span></span></span></td>
+  </tr>
+</table>
+<p>The above are the definitions used in this example.</p>
+<table border="0" width="800" class="Code">
+  <tr> 
+    <td nowrap class="Code"> pass in &nbsp;quick on lo0 <br>
+      pass out quick on lo0 </td>
+  </tr>
+</table>
+<p>Allow any inbound/outbound on the loopback interface </p>
+<table border="0" width="800" class="Code">
+  <tr> 
+    <td nowrap class="Code"> pass in &nbsp;quick on INT_LINK1<br>
+      pass out quick on INT_LINK1 </td>
+  </tr>
+</table>
+<p><span
+ style="mso-tab-count: 1"><span style="mso-spacerun:
+ yes"><span
+><span
+><span
+>Allow any inbound/outbound on the LAN interface (we can tighten this up further, 
+  but for now we're looking after that evil external connection.)</span></span></span></span></span></p>
+<h3><span
+ style="mso-tab-count: 1"><span style="mso-spacerun:
+ yes"><span
+><span
+><span
+><a name="srIpDocsInvalidExternalLinks"></a>Invalid External Links</span></span></span></span></span><span
+ style="mso-tab-count: 1"><span style="mso-spacerun:
+ yes"><span
+><span
+><span
+> (mostly hostile)</span></span></span></span></span></h3>
+<table border="0" width="800" class="Code">
+  <tr> 
+    <td nowrap class="Code"><span
+ style="mso-tab-count: 1"><span style="mso-spacerun:
+ yes"><span
+><span
+><span
+><span
+> block in&nbsp;&nbsp;&nbsp;&nbsp; quick on XTL_LINK from 192.168.0.0/16 to any<br>
+      block in&nbsp;&nbsp;&nbsp;&nbsp; quick on XTL_LINK from 172.16.0.0/12 to 
+      any<br>
+      block in&nbsp;&nbsp;&nbsp;&nbsp; quick on XTL_LINK from 10.0.0.0/8 to any<br>
+      block in&nbsp;&nbsp;&nbsp;&nbsp; quick on XTL_LINK from 127.0.0.0/8 to any<br>
+      block in&nbsp;&nbsp;&nbsp;&nbsp; quick on XTL_LINK from localhost to any<br>
+      block in&nbsp;&nbsp;&nbsp;&nbsp; quick on XTL_LINK from 255.255.255.255/32 
+      to any<br>
+      block in log quick on XTL_LINK from INT_NETWORK to any </span></span></span></span></span></span></td>
+  </tr>
+</table>
+<p><span
+ style="mso-tab-count: 1"><span style="mso-spacerun:
+ yes"><span
+><span
+><span
+>This ruleset prevents 'spoofing' of private internet addresses from <span
+>the outside world. We should not be receiving these through the external link 
+  because private IP addresses are not routeable. &nbsp;</span></span></span></span></span></span></p>
+<table border="0" width="800" class="Code">
+  <tr> 
+    <td nowrap class="Code"><span
+ style="mso-tab-count: 1"><span style="mso-spacerun:
+ yes"><span
+><span
+><span
+><span
+> block in log quick on XTL_LINK from </span><span
+ style="mso-tab-count: 1"><span style="mso-spacerun:
+ yes"><span
+><span
+>INT_BMASK0</span></span></span></span><span
+> to any </span></span></span></span></span></span></td>
+  </tr>
+</table>
+<p>There shouldn't be anyone from our Network trying to get through on the outside 
+  network card either. This takes into consideration that we are using legitimate/routeable 
+  addresses on our internal network.</p>
+<table border="0" width="800" class="Code">
+  <tr> 
+    <td nowrap class="Code"><span
+ style="mso-tab-count: 1"><span style="mso-spacerun:
+ yes"><span
+><span
+><span
+><span
+> block in log quick on XTL_LINK from any to INT_BMASK0<br>
+      block in log quick on XTL_LINK from any to INT_BMASK255 </span></span></span></span></span></span></td>
+  </tr>
+</table>
+<p><span
+ style="mso-tab-count: 1"><span style="mso-spacerun:
+ yes"><span
+><span
+><span
+><span
+>The outside should not be broadcasting on our network either </span></span></span></span></span></span></p>
+<table border="0" width="800" class="Code">
+  <tr> 
+    <td nowrap class="Code"><span
+ style="mso-tab-count: 1"><span style="mso-spacerun:
+ yes"><span
+><span
+><span
+><span
+> block out log quick on XTL_LINK from any to INT_NETWORK<br>
+      block out&nbsp;&nbsp;&nbsp;&nbsp; quick on XTL_LINK from any to 192.168.0.0/16<br>
+      block out&nbsp;&nbsp;&nbsp;&nbsp; quick on XTL_LINK from any to 172.16.0.0/12<br>
+      block out&nbsp;&nbsp;&nbsp;&nbsp; quick on XTL_LINK from any to 10.0.0.0/8<br>
+      block out&nbsp;&nbsp;&nbsp;&nbsp; quick on XTL_LINK from any to 127.0.0.0/8<br>
+      block out&nbsp;&nbsp;&nbsp;&nbsp; quick on XTL_LINK from any to localhost<br>
+      #[ERROR]block out&nbsp;&nbsp;&nbsp;&nbsp; quick on XTL_LINK from any to 
+      0.0.0.0/32<br>
+      block out&nbsp;&nbsp;&nbsp;&nbsp; quick on XTL_LINK from any to 255.255.255.255/32 
+      </span></span></span></span></span></span></td>
+  </tr>
+</table>
+<p><span
+ style="mso-tab-count: 1"><span style="mso-spacerun:
+ yes"><span
+><span
+><span
+><span
+>Likewise, there should be no reason to find a private address on the outside, 
+  so don't waste bandwidth sending stuff that is not going to get routed.</span></span></span></span></span></span></p>
+<p><span
+ style="mso-tab-count: 1"><span style="mso-spacerun:
+ yes"><span
+><span
+><span
+><span
+>Our two settings should help us diagnose problems with our&nbsp; rulesets or 
+  find some attack attempts from outside?</span></span></span></span></span></span></p>
+<table border="0" width="800" class="Code">
+  <tr> 
+    <td nowrap class="Code"><span
+ style="mso-tab-count: 1"><span style="mso-spacerun:
+ yes"><span
+><span
+><span
+><span
+> block out log quick on XTL_LINK from </span><span
+ style="mso-tab-count: 1"><span style="mso-spacerun:
+ yes"><span
+><span
+>any to INT_BMASK0</span></span></span></span></span></span></span></span></span></td>
+  </tr>
+</table>
+<p>Since all our ip address should be inside our network, there is no need for 
+  sending information for our LAN out on the wire (external link.)</p>
+<h3><a name="srIpDocsBadPackets"></a>Bad Packets</h3>
+<table border="0" width="800" class="Code">
+  <tr> 
+    <td nowrap class="Code"><span
+ style="mso-tab-count: 1"><span style="mso-spacerun:
+ yes"><span
+><span
+><span
+><span
+>block in&nbsp;&nbsp;&nbsp;&nbsp; quick on XTL_LINK proto icmp from any to any 
+      icmp-type redir<br>
+      block in&nbsp;&nbsp;&nbsp;&nbsp; quick on XTL_LINK proto tcp/udp all with 
+      short<br>
+      block in&nbsp;&nbsp;&nbsp;&nbsp; quick on XTL_LINK from any to any with 
+      ipopts </span></span></span></span></span></span></td>
+  </tr>
+</table>
+<p><span
+ style="mso-tab-count: 1"><span style="mso-spacerun:
+ yes"><span
+><span
+><span
+><span
+>Block any inherently bad packets coming in from the outside world. These include 
+  ICMP redirect packets, IP fragments so short the filtering rules won't be able 
+  to examine the whole UDP/TCP header, and anything with IP options. </span></span></span></span></span></span></p>
+<h3><a name="srIpDocsFingerPrinting"></a>OS Fingerprinting Attempts</h3>
+<table border="0" width="800" class="Code">
+  <tr> 
+    <td nowrap class="Code"><span
+ style="mso-tab-count: 1"><span style="mso-spacerun:
+ yes"><span
+><span
+><span
+>block in quick on fxp0 proto tcp from any to any flags FUP</span></span></span></span></span></td>
+  </tr>
+</table>
+<p>From the FAQ: If you wanted to deny all packets with the FIN, URG, and<br>
+  PSH flags set (like for instance an nmap OS fingerprinting attempt) you could 
+  use a rule like the above.</p>
+<h3><a name="srIpDocsLimitingAccess"></a>Limiting Access</h3>
+<table border="0" width="800" class="Code">
+  <tr> 
+    <td nowrap class="Code"><span
+ style="mso-tab-count: 1"><span style="mso-spacerun:
+ yes"><span
+><span
+><span
+><span
+> #pass in&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; quick on XTL_LINK proto icmp from any 
+      to INT_NETWORK icmp-type 0<br>
+      block in log &nbsp;quick on XTL_LINK proto icmp from any to XTL_IPADDR<br>
+      #pass in&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; quick on XTL_LINK proto icmp from 
+      any to INT_NETWORK icmp-type 11 </span></span></span></span></span></span></td>
+  </tr>
+</table>
+<p><span
+ style="mso-tab-count: 1"><span style="mso-spacerun:
+ yes"><span
+><span
+><span
+><span
+>LIMIT ACCESS so there is no smurfing ? (ICMP attacks) let in 0 (ping) and 11 
+  (trace-route) but kill it for people who want to bash on the server. Because 
+  my sample network uses non-routeable we really shouldn't be allowing in any 
+  'pings' or 'trace-route' from the outside.</span></span></span></span></span></span></p>
+<table border="0" width="800" class="Code">
+  <tr> 
+    <td nowrap class="Code"><span
+ style="mso-tab-count: 1"><span style="mso-spacerun:
+ yes"><span
+><span
+><span
+><span
+> block in&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; on XTL_LINK 
+      proto udp from any to any<br>
+      block in log quick on XTL_LINK proto udp from any to any port = sunrpc<br>
+      block in log quick on XTL_LINK proto tcp/udp from any to any port = nfsd<br>
+      block in log quick on XTL_LINK proto tcp/udp from any to any port = msp<br>
+      block in log quick on XTL_LINK proto tcp/udp from any to any port = chargen<br>
+      block in log quick on XTL_LINK proto tcp/udp from any to any port = time<br>
+      &nbsp;<br>
+      pass in&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+      on XTL_LINK proto udp from any to any port = domain<br>
+      pass in&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+      on XTL_LINK proto udp from any to any port = talk<br>
+      pass in&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+      on XTL_LINK proto udp from any to any port = ntalk </span></span></span></span></span></span></td>
+  </tr>
+</table>
+<p><span
+ style="mso-tab-count: 1"><span style="mso-spacerun:
+ yes"><span
+><span
+><span
+><span
+>[UDP PACKETS] Block all incoming UDP traffic except talk and DNS traffic. NFS 
+  &nbsp;and portmap are special-cased and logged. </span></span></span></span></span></span></p>
+<table border="0" width="800" class="Code">
+  <tr> 
+    <td nowrap class="Code"><span
+ style="mso-tab-count: 1"><span style="mso-spacerun:
+ yes"><span
+><span
+><span
+><span
+><span
+><span
+><span
+> block in log quick on XTL_LINK proto tcp from any to INT_NETWORK port = 513<br>
+      block in log quick on XTL_LINK proto tcp from any to INT_NETWORK port = 
+      514<br>
+      block in log quick on XTL_LINK proto tcp from any to INT_NETWORK port = 
+      23<br>
+      block in log quick on XTL_LINK proto tcp/udp from any to XTL_IPADDR port 
+      = 109<br>
+      block in log quick on XTL_LINK proto tcp/udp from any to XTL_IPADDR port 
+      = 110<br>
+      block in log quick on XTL_LINK proto tcp/udp from any to XTL_IPADDR port 
+      = 143<br>
+      block in log quick on XTL_LINK proto tcp/udp from any to XTL_IPADDR port 
+      = 220<br>
+      </span><span
+ style="mso-tab-count: 1"><span style="mso-spacerun:
+ yes"><span
+><span
+><span
+><span
+><span
+><span
+><span
+>block in log quick on 
+      XTL_LINK proto tcp/udp from any to XTL_IPADDR port =     
+                            901</span></span></span></span></span></span></span></span></span><span
+> </span></span></span></span></span></span></span></span></span></td>
+  </tr>
+</table>
+<p><span
+ style="mso-tab-count: 1"><span style="mso-spacerun:
+ yes"><span
+><span
+><span
+><span
+>[PORTS WITH BAD SECURITY] Block ports with clear-text password transfers from 
+  coming in on&nbsp; the external link</span></span></span></span></span></span></p>
+<pre><span
+ style="mso-tab-count: 1"><span style="mso-spacerun:
+ yes"><span
+><span
+><span
+><span
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 513<span
+>&nbsp; rlogin&nbsp;&nbsp;    109 pop2</span><span
+ style="mso-tab-count: 1"><span style="mso-spacerun:
+ yes"><span
+><span
+><span
+><span
+>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span></span></span></span></span></span><span
+>901 swat
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 514<span
+>&nbsp; rsh&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    110 pop3&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 23<span
+>&nbsp;&nbsp;telnet&nbsp;&nbsp;    220/143 imap</span></span></span></span></span></span></span></span></span></pre>
+<table border="0" width="800" class="Code">
+  <tr> 
+    <td nowrap class="Code"><span
+ style="mso-tab-count: 1"><span style="mso-spacerun:
+ yes"><span
+><span
+><span
+><span
+><span
+><span
+><span
+> block return-rst in log on XTL_LINK proto tcp from any to any flags S/SA<br>
+      block return-rst in on XTL_LINK proto tcp from any to any port = auth flags 
+      S/SA<br>
+      &nbsp;<br>
+      block in log quick on XTL_LINK proto tcp/udp from any to INT_NETWORK port 
+      = 111<br>
+      block in log quick on XTL_LINK proto udp from any to INT_NETWORK port = 
+      514<br>
+      block in log quick on XTL_LINK proto tcp from any to INT_NETWORK port = 
+      515<br>
+      block in log quick on XTL_LINK proto tcp/udp from any to INT_NETWORK port 
+      = 2049<br>
+      block in log quick on XTL_LINK proto tcp from any to INT_NETWORK port = 
+      6000 </span></span></span></span></span></span></span></span></span></td>
+  </tr>
+</table>
+<p><span
+ style="mso-tab-count: 1"><span style="mso-spacerun:
+ yes"><span
+><span
+><span
+><span
+><span
+><span
+><span
+>[KNOWN SERVICES] &nbsp;Block all incoming TCP traffic connections to known services, 
+  &nbsp;returning a connection reset so things like ident don't take&nbsp;forever 
+  timing out.&nbsp; Don't log ident (auth port) as it's so common. </span></span></span></span></span></span></span></span></span></p>
+<table border="0" width="800" class="Code">
+  <tr> 
+    <td nowrap class="Code"><span
+ style="mso-tab-count: 1"><span style="mso-spacerun:
+ yes"><span
+><span
+><span
+><span
+><span
+><span
+><span
+> pass in on XTL_LINK proto tcp from any to any port 1024 &gt;&lt; 5000<br>
+      #pass in on XTL_LINK proto tcp from any port = ftp-data to any port 1024 
+      &gt;&lt; 5000 </span></span></span></span></span></span></span></span></span></td>
+  </tr>
+</table>
+<p><span
+ style="mso-tab-count: 1"><span style="mso-spacerun:
+ yes"><span
+><span
+><span
+><span
+><span
+><span
+><span
+>Allow incoming TCP connections to ports between 1024 and 5000, as these don't 
+  have daemons listening but are used by outgoing services like ftp and talk.&nbsp; 
+  For slightly more obscurity (though not much more security), the second commented 
+  out rule can chosen instead. </span></span></span></span></span></span></span></span></span></p>
+<table border="0" width="800" class="Code">
+  <tr> 
+    <td nowrap class="Code"><span
+ style="mso-tab-count: 1"><span style="mso-spacerun:
+ yes"><span
+><span
+><span
+><span
+><span
+><span
+><span
+> pass out&nbsp;&nbsp;&nbsp; on XTL_LINK from INT_NETWORK to any keep state<br>
+      pass in&nbsp;&nbsp;&nbsp;&nbsp; on XTL_LINK from any to INT_NETWORK<br>
+      &nbsp;<br>
+      pass out&nbsp;&nbsp;&nbsp; on INT_LINK1 from INT_NETWORK to any<br>
+      pass in&nbsp;&nbsp;&nbsp;&nbsp; on INT_LINK1 from any to INT_NETWORK<br>
+      &nbsp;<br>
+      #pass out&nbsp;&nbsp;&nbsp; on INT_LINK2 from INT_NETWORK to any<br>
+      #pass in&nbsp;&nbsp;&nbsp;&nbsp; on INT_LINK2 from any to INT_NETWORK</span></span></span></span></span></span></span></span></span></td>
+  </tr>
+</table>
+<p><span
+ style="mso-tab-count: 1"><span style="mso-spacerun:
+ yes"><span
+><span
+><span
+><span
+><span
+><span
+><span
+>[GENERAL SETTINGS] Pass any packets from Internal Network to the world. Let in 
+  any packets for Internal Network from the world<br>
+  </span></span></span></span></span></span></span></span></span></p>
+<h2><a name="srNatDocs"></a>Reviewing a sample ipnat.rules</h2>
+<p class="pFileReference">[ref: ipnat(8)]</p>
+<p></p>
+<table border="0" width="800" class="Code">
+  <tr> 
+    <td nowrap class="Code"> # ipnat Name Address Translation example Generic 
+      System 1:<br>
+      #<br>
+      # Definitions<br>
+      # XTL_LINK&nbsp; - interface with the external connection to the world<span
+> eg. xl0<br>
+      # INTL_LINK - interface with the internal connection (LAN) e.g. xl1<br>
+      # INT_NETWORK - Internal IP network<span
+>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; eg. 192.168.101.0/16<br>
+      # EXT_NETWORK - External IP network<span
+>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; eg. 207.124.66.1<br>
+      #<br>
+      # INT_RDR_MAIL - ip addr of Mail Server &nbsp;&nbsp;eg. 192.168.101.25<br>
+      # INT_RDR_FTP&nbsp; - ip addr of FTP&nbsp; Server&nbsp;&nbsp;&nbsp;eg. 192.168.101.21<br>
+      # INT_RDR_DNS&nbsp; - ip addr of DNS&nbsp; Server </span></span></span></td>
+  </tr>
+</table>
+<h3><a name="srNatDocsOut"></a>Outgoing Traffic</h3>
+<table border="0" width="800" class="Code">
+  <tr> 
+    <td nowrap class="Code"><span class="Code"
+><span
+><span
+>map XTL_LINK INT_NETWORK -&gt; XTL_LINK/32 portmap tcp/udp 10000:60000<br>
+      map XTL_LINK INT_NETWORK -&gt; EXT_NETWORK/32 </span></span></span></td>
+  </tr>
+</table>
+<p><span
+><span
+><span
+><span
+><span
+><span><span><span>map tells the NAT how a range of addresses 
+should be translated.&nbsp; The entries use the following 
+format:</span></span></span> </span></span></span></span></span></p>
+<table border="0" width="800" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="pScreenOutput">map ifname internal/mask -&gt; external/mask 
+      options</td>
+  </tr>
+</table>
+<p>The <i>ifname</i> field is the interface to which packets 
+  are sent. Since we are trying to connect to the rest of the world, we use our 
+  external interface as 'ifname'.</p>
+<table border="0" width="800" class="Code">
+  <tr> 
+    <td nowrap class="Code"><span class="Code"
+><span
+><span
+>map xl0 192.168.101.0/16 -&gt; 207.124.66.1/32 portmap tcp/udp 10000:60000<br>
+      map xl0 192.168.101.0/16 -&gt; 207.124.66.1/32</span></span></span></td>
+  </tr>
+</table>
+<p><span><span><span>Our above rule remaps all connections originating from INT_NETWORK 
+  (192.168.101.0 through&nbsp;to 192.168.101.254) to the externally-connected 
+  network</span></span></span></p>
+<p><span><span><span>The <i>external</i> address is the offically assigned IP 
+  number of the gateway or network.</span></span></span></p>
+<p><i>mask</i> is the netmask of the address. This mask is 32 bits long, and is 
+  divided into four 8-bit numbers.</p>
+<p>The <i>option portmap </i>used in the above example solves the problem of trying 
+  to shove a large number of ip addresses (your LAN) into a one small 'external 
+  ip address' address space (the external interface.)</p>
+<h3><a name="srNatDocsRedirect"></a>Redirecting Traffic</h3>
+<p>rdr tells the NAT how to redirect incoming packets.&nbsp; It is useful if one&nbsp;wishes to redirect a connection through 
+  a proxy, or to another box on the&nbsp; private network.&nbsp; The format of 
+  this directive is: </p>
+<p class="pScreenOutput">rdr ifname external/mask port service -&gt; internal 
+  port service protocol</p>
+<p>This setup is best described by an example of an actual entry:</p>
+<table border="0" width="800" class="Code">
+  <tr> 
+    <td nowrap class="Code"> 
+      <p class="Code"> # rdr XTL_LINK <span
+>EXT_NETWORK</span>/32 port ftp&nbsp;-&gt; INT_RDR_FTP&nbsp; port ftp</p>
+      <p class="Code">&nbsp;</p>
+      <p class="Code">rdr xl0 204.124.66.1/32 port ftp&nbsp; -&gt; 192.168.101.21 
+        port ftp</p>
+    </td>
+  </tr>
+</table>
+<p>This redirects all ftp packets received on XTL_LINK to <span
+><span
+>EXT_NETWORK</span></span>, port ftp.&nbsp; A netmask is not needed on the internal 
+  address; it is always 32. The external and internal fields, similar to the map 
+  directive, may be actual addresses, hostnames, or interfaces.&nbsp;Likewise, 
+  the service field may be the name of a service, or a port number.&nbsp; The 
+  protocol of the service may be selected by appending tcp, udp, tcp/udp, or tcpudp 
+  (the last two have the same effect) to the end of the line.&nbsp; TCP is the 
+  default.</p>
+<p>I am using EXT_NETWORK above, as we are only accepting the ports access from 
+  real ip addresses to real ip addresses (no internal service should be directly 
+  accessible due to the firewall ipf rulesets)</p>
+<table border="0" width="800" class="Code">
+  <tr> 
+    <td nowrap class="Code"><span
+><span
+><span
+> rdr XTL_LINK <span
+>EXT_NETWORK</span>/32 port www &nbsp;-&gt; INT_RDR_WWW&nbsp; port www<br>
+      rdr XTL_LINK <span
+>EXT_NETWORK</span>/32 port smtp -&gt; INT_RDR_MAIL port smtp<br>
+      rdr XTL_LINK <span
+>EXT_NETWORK</span>/32 port ssh&nbsp; -&gt; INT_RDR_SSH &nbsp;port ssh </span></span></span></td>
+  </tr>
+</table>
+<p><span
+><span
+>Redirect www, smtp, ssh to the internal boxes that will be handling these services 
+  (keep the load off the gateway box.)</span></span></p>
+<h2><a name="srJames"></a>Sample by James Deucker</h2>
+<p>The following sample was published by Mr. James Deucker on the OpenBSD misc 
+  mailing list.</p>
+  <!-- <james.deucker@AU.UNISYS.COM> -->
+<pre>
+From: "Deucker, James H." 
+To: "'misc@openbsd.org'" <misc@OPENBSD.ORG>
+Subject: ipf.rules 
+Date: Mon, 14 Aug 2000 22:43:16
+
+
+-0500 I hear people asking for example rules sets for ipf, and they're really
+not that hard to put together from the manuals, faq and ipfilter web
+page. However, as I see so many people ask so often, I thought I'd post
+my ipf.rules set for perusal in the
+
+archives. I don't claim this set to be complete, I don't even claim that they
+secure. They seem to do what I want at the moment, and I'd certainly appreciate
+any comments on them. I'm here to have fun and learn
+
+heaps. Notes: my internal network is 172.16.2.0/24, on interface ep1. My
+external interface is on ep2, the ip changes, and it's hooked up to my cable
+modem (telstra bigpond [australia] cable
+
+network). I don't care what goes on in my internal network, and at the moment I
+don't use NAT, that's a project for next week when things have calmed down
+at
+
+work. I use Squid 2.3 from Ports for http, I use SOCKS5 for ICQ and napster. I
+run ssh on its normal port and a high one (2022). I use sendmail to send
+mail out from my network, and fetchmail to pull all our mailboxes down. I
+use homeip.net dyndns to give me a name to point to ssh in. I allow
+ident packets to the
+
+firewall. So, for your enjoyment, here they
+
+are.#----ipf.rules----8*&lt;----snip-below-this-line----
+
+#
+# LOOPBACK
+#
+
+# allow any inbound/outbound on the loopback interface
+pass in quick on lo0
+pass out quick on lo0
+
+# --------------------------------------------------------
+
+#
+# LAN
+#
+
+# allow any inbound/outbound on the LAN interface
+pass in quick on ep1
+pass out quick on ep1
+
+# --------------------------------------------------------
+
+#
+# HOSTILE
+#
+
+# prevent spoofing in and out
+# from unroutable addresses
+block in log quick on ep2 from 127.0.0.0/8 to any
+block in log quick on ep2 from 192.168.0.0/16 to any
+block in log quick on ep2 from 169.254.0.0/16 to any
+block in log quick on ep2 from 172.16.0.0/12 to any
+block in log quick on ep2 from 10.0.0.0/8 to any
+
+block out log quick on ep2 from 127.0.0.0/8 to any
+block out log quick on ep2 from 192.168.0.0/16 to any
+block out log quick on ep2 from 169.254.0.0/16 to any
+block out log quick on ep2 from 172.16.0.0/12 to any
+block out log quick on ep2 from 10.0.0.0/8 to any
+
+# explicit allow
+pass in quick on ep2 from any to any port = ssh
+pass in quick on ep2 from any to any port = 2022 # ssh high port
+pass in quick on ep2 proto tcp from any to any port = 
+
+auth # block too-small
+fragments block in log quick proto tcp all with
+
+short # block source routed
+packets block in log quick on ep2 all with opt
+lsrr block in log quick on ep2 all with opt
+
+ssrr # block OS
+fingerprinting block in log quick on ep2 proto tcp from any to any flags
+
+FUP # default
+deny block return-icmp-as-dest(port-unr) in log quick on ep2 proto udp from
+any to
+any block return-rst in log quick on ep2 proto tcp from any to
+any block in log quick on ep2 from any to
+
+any # allow traffic
+out pass out on ep2 proto tcp from any to any keep
+state pass out on ep2 proto udp from any to any keep
+state pass out on ep2 proto icmp from any to any keep
+
+state#----ipf.rules----&gt;*8----snip-above-this-line----
+
+If people would so desire, I can also post my squid.conf, socks5.conf,
+fetchmail.conf and m4 for sendmail. (though I'd probably just post a diff
+against squid.conf from the default ports one)
+
+And just to reiterate, please if you have any comments or suggestions as to
+how I can do this any better, tell me :)
+
+enjoy,
+
+James Deucker
+Patrician of Networks
+
+
+</pre>
+<p>Relative References</p>
+<p><a href="http://www.openbsd.org/faq/index.html">OpenBSD FAQ</a><br>
+  <a href="http://www.obfuscation.org/ipf/">IP Filter Based Firewalls HOWTO</a><br>
+  <a href="http://www.clark.net/pub/mjr/pubs/fwfaq/">Internet Firewalls: FAQ</a><br>
+</p>
+<p>[Posted 2002-07-23] </p>
+<p>I was able to create a firewall/router combination that handles both<br>
+  Ethernet and wireless traffic by using OpenBSD 3.1 and pf. A full<br>
+  description of my experience is at the URL that follows. Please feel free<br>
+  to link to it, or contact me with comments or corrections:</p>
+<p><a href="http://www.well.com/%7Ejbyrd/firewall.html" class="anchBlue">http://www.well.com/~jbyrd/firewall.html</a></p>
+<p>I have no opinion about which firewall solution or filtering package is<br>
+  &quot;best&quot;. I merely report what worked in my case, and I'm confident 
+  that<br>
+  other methods could have been used to achieve a similar result.</p>
+<p>I don't subscribe to this list, so please feel free to contact me<br>
+  out-of-band with comments or additions.</p>
+<p>Sincerely,</p>
+<p>John Byrd</p>
+<h2><a name="author"></a>Author and Copyright</h2>
+<p>Copyright (c) 2000/1/2 Samiuela LV Taufa. All Rights Reserved.</p>
+
+<p>I reserve the right to be totally incorrect even at the best advice of betters. In other words, I'm probably wrong in enough places for you to call me an idiot, but don't 'cause you'll hurt my sensibilities, just tell me where I went wrong and I'll try again.</p>
+
+<p>You are permitted and encouraged to use this guide for fun or for profit as you see fit. If you republish this work in what-ever form, it would be nice (though not enforceable) to be credited.</p>
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+  <tr>
+    <td class="block" valign="center" width="100%" bgcolor="#cccccc"><strong>
+      <p class="block">&nbsp;Firewalling - Keeping the BAD GUYS out</p>
+      </strong></td>
+  </tr>
+</table>
+<p><font color="#808080" face="sans-serif" size="-2"><strong>Copyright&nbsp; &copy; 
+  2000/1/2
+<a href="http://www.nomoa.com">NoMoa.COM</a> All rights reserved.</strong></font></p>
+
+</body>
+
+</html>

@@ -1,0 +1,159 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0//EN">
+<html>
+  <head>
+    <title>=8&gt; nomoa.com/bsd OpenBSD - ports A Quick Intro</title>
+    <link rel="STYLESHEET" type="text/css" href="openbsd.css">
+<script language="JavaScript">
+<!--
+
+function newImage(arg) {
+	if (document.images) {
+		rslt = new Image();
+		rslt.src = arg;
+		return rslt;
+	}
+}
+
+function changeImages() {
+	if (document.images && (preloadFlag == true)) {
+		for (var i=0; i<changeImages.arguments.length; i+=2) {
+			document[changeImages.arguments[i]].src = changeImages.arguments[i+1];
+		}
+	}
+}
+
+var preloadFlag = false;
+function preloadImages() {
+	if (document.images) {
+		openbsd_over = newImage("mmedia/openbsd-over.gif");
+		openbsd_down = newImage("mmedia/openbsd-down.gif");
+		preloadFlag = true;
+	}
+}
+
+// -->
+</script>
+<!-- End Preload Script -->
+</head>
+
+<body bgcolor="#FFFACD" onLoad="preloadImages();">
+<p class="logo">
+<a class="anchBlue" href="http://www.nomoa.com/bsd" 
+   onMouseOver="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;"
+   onMouseOut="changeImages('openbsd', 'mmedia/openbsd.gif'); return true;"
+   onMouseDown="changeImages('openbsd', 'mmedia/openbsd-down.gif'); return true;"
+   onMouseUp="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;">
+   <img name="openbsd"  align="absMiddle" 
+        alt="OpenBSD ... The Only way to Go ..." border="0" height="50"
+        src="mmedia/openbsd.gif" width="368"></a>
+</p>
+
+<h1> ports - A Quick Intro</h1>
+<hr color="fuchsia">
+<ul>
+  <li><a href="#intro">Introduction</a></li>
+  <li><a href="#preliminary">Preliminary Information</a></li>
+  <li><a href="#author">Author and Copyright</a></li>
+</ul>
+<hr color="fuchsia">
+<h2><a name="intro"></a>Introduction</h2>
+<p class="pFileReference">[ref: ports(7), bsd.port.mk(5), packages-specs(7)] </p>
+<p>The OpenBSD ports collection is a great tool for packaging/installing binaries 
+  without the need to know the intracacies of OpenBSD's layout nor the dependencies 
+  of applications.</p>
+<p>You just need to 'make' it.</p>
+<p>I put these notes together because although OpenBSD's manual pages are great, 
+  I was still confused (not surprisingly.)</p>
+<p>The general documentation is available on the <a href="http://www.openbsd.org">OpenBSD</a>, 
+  <a href="http://www.freebsd.com">FreeBSD</a> sites as well as the above mentioned 
+  man pages.</p>
+<h1>Flavors</h1>
+<p>Flavors allow you to specify features to be included into an application where 
+  the generic flavor is stated in your make command while the Makefile configures 
+  the appropriate compiler arguments.</p>
+<h3>Determining What Flavors exist</h3>
+<p>To find out whether a port supports FLAVORS, use the following command</p>
+<p class="Code"># <b>env show=&quot;FLAVORS&quot; make show</b></p>
+<p>For example:</p>
+<p class="Code"> # <b>cd /usr/ports/snort</b></p>
+<p class="Code"> snort #<b>make show=FLAVORS</b></p>
+<p class="pScreenOutput">
+  postgresql mysql smbalert flexresp</p>
+<p class="Code"> snort #<b>env show=FLAVORS make show</b></p>
+<p class="pScreenOutput"> postgresql mysql smbalert flexresp</p>
+<p class="Code"> snort #</p>
+<p>The above example shows that snort can be generated with support for 4 additional 
+  features (postgresql support, mysql support, smbalert, flexresp)</p>
+<p>Another example:</p>
+<p class="CodeSmall">ports # <b>cd /usr/ports/shells/</b><br>
+  shells # <b>make show=FLAVORS</b></p>
+<p class="pScreenSmall">
+  ===&gt; shells/bash<br>
+  static<br>
+  ===&gt; shells/bash (static)<br>
+  static<br>
+  ===&gt; shells/bash2<br>
+  static<br>
+  ===&gt; shells/bash2 (static)<br>
+  static<br>
+  ===&gt; shells/es<br>
+  static<br>
+  ===&gt; shells/scsh</p>
+<p class="pScreenSmall">===&gt; shells/tcsh<br>
+  static<br>
+  ===&gt; shells/tcsh (static)<br>
+  static<br>
+  ===&gt; shells/zsh<br>
+  static<br>
+  ===&gt; shells/zsh (static)<br>
+  static<br>
+  ===&gt; shells/zsh-devel<br>
+  static<br>
+  ===&gt; shells/zsh-devel (static)<br>
+  static</p>
+<p class="CodeSmall">shells #</p>
+<p>The above example, shows that the 'shells' can be compiled with the flavor 
+  'static'.<br>
+</p>
+<h3>Compiling with the Flavors</h3>
+<p>To compile with flavors use the command sequence:</p>
+<p class="Code"># <b>env FLAVOR=&quot;flavor1 flavor2&quot; make </b></p>
+<p>For example:</p>
+<p class="Code"># <b>cd /usr/ports/www/php4</b><br>
+  php4 # <b>make show=FLAVORS</b></p>
+<p class="pScreenOutput">gdbm gettext imap ldap mhash mm recode snmp gd no_x11 
+  pdflib mcrypt curl dbase filepro mysql mysql_bundled postgresql iodbc<br>
+</p>
+<p class="Code">php4 # <b>env FLAVO<span class="Code">R=&quot;mysql gdbm gettext 
+  imap pdflib&quot; make package</span></b></p>
+<p>After discovering what flavors are available for php4, we can make the php4 
+  package (or install) with the specific flavors we wish.</p>
+<p>Another example:</p>
+<p class="Code"># <b>cd /usr/ports/emulators/bochs/</b></p>
+<p class="Code">bochs # <b>make show=FLAVORS</b></p>
+<p class="pScreenOutput">debug i386 i486 pci smp net no_x11 term</p>
+<p class="Code"># <b>env FLAVOR=&quot;i386 i486 pci net term&quot; make install</b></p>
+<p>Changing into emulators/bochs we find there are 8 flavors supported by this 
+  port. We generate the application for those flavor we want.</p>
+<p>According to the man pages, FLAVORS is an enhancement to the ports collection 
+  1st implemented in OpenBSD.</p>
+<h2><a name="author"></a>Author and Copyright</h2> 
+<p>Copyright (c) 2000/1/2 Samiuela LV Taufa. All Rights Reserved.</p>
+
+<p>I reserve the right to be totally incorrect even at the best advice of betters. In other words, I'm probably wrong in enough places for you to call me an idiot, but don't 'cause you'll hurt my sensibilities, just tell me where I went wrong and I'll try again.</p>
+
+<p>You are permitted and encouraged to use this guide for fun or for profit as you see fit. If you republish this work in what-ever form, it would be nice (though not enforceable) to be credited.</p>
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+  <tr>
+    <td class="block" valign="MIDDLE" width="100%" bgcolor="#cccccc"><strong>
+      <p class="block">ports - A Quick Intro</p>
+      </strong></td>
+  </tr>
+</table>
+<p><font color="#808080" face="sans-serif" size="-2"><strong>Copyright&nbsp; &copy; 
+  2000/1/2
+<a href="http://www.nomoa.com">NoMoa.COM</a> All rights reserved.</strong></font></p>
+  </body>
+</html>
+

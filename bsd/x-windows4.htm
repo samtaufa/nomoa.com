@@ -1,0 +1,773 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0//EN">
+<html>
+  <head>
+    <title>=8&gt; nomoa.com/bsd OpenBSD - XF86 4.1 a windows pretty face
+    </title>
+    <link rel="STYLESHEET" type="text/css" href="openbsd.css">
+<script language="JavaScript">
+<!--
+
+function newImage(arg) {
+	if (document.images) {
+		rslt = new Image();
+		rslt.src = arg;
+		return rslt;
+	}
+}
+
+function changeImages() {
+	if (document.images && (preloadFlag == true)) {
+		for (var i=0; i<changeImages.arguments.length; i+=2) {
+			document[changeImages.arguments[i]].src = changeImages.arguments[i+1];
+		}
+	}
+}
+
+var preloadFlag = false;
+function preloadImages() {
+	if (document.images) {
+		openbsd_over = newImage("mmedia/openbsd-over.gif");
+		openbsd_down = newImage("mmedia/openbsd-down.gif");
+		preloadFlag = true;
+	}
+}
+
+// -->
+</script>
+<!-- End Preload Script -->
+</head>
+
+<body bgcolor="#FFFACD" onLoad="preloadImages();">
+<p class="logo"> <a class="anchBlue" href="http://www.nomoa.com/bsd" 
+   onMouseOver="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;"
+   onMouseOut="changeImages('openbsd', 'mmedia/openbsd.gif'); return true;"
+   onMouseDown="changeImages('openbsd', 'mmedia/openbsd-down.gif'); return true;"
+   onMouseUp="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;"> 
+  <img name="openbsd"  align="absMiddle" 
+        alt="OpenBSD ... The Only way to Go ..." border="0" height="50"
+        src="mmedia/openbsd.gif" width="368"></a> <a href="http://www.kde.org" target="_top"><img src="mmedia/knbutton.gif" width="88" height="31" align="middle" border="0" alt="KDE"></a></p>
+  
+    
+<h1> XF86 4.1 X Windows</h1>
+<hr color="Fuchsia">
+<p>Table of Contents</p>
+<ul>
+  <li><a href="#introduction">Introduction</a></li>
+  <li><a href="#ConfiguringX">Configuring X</a></li>
+  <ul>
+    <li><a href="#determine">Determining your system configuration</a></li>
+    <li><a href="#41Mouse">4.1 &amp; The Mouse</a></li>
+    <li><a href="#chooseConfig">Choosing your configuration program</a></li>
+  </ul>
+  <li><a href="#startx">Ready to StartX</a></li>
+  <ul>
+    <li><a href="#startxStart">Starting</a></li>
+    <li><a href="#startxStop">Stopping</a></li>
+    <li><a href="#startxTest">Testing</a></li>
+  </ul>
+  <li><a href="#installKDE">Installing KDE - D Face for X</a></li>
+  <ul>
+    <li><a href="#installKDEpackage">Installing the Binary Packages</a></li>
+    <li><a href="#KDE.xinitrc">configuring .xinitrc (personal desktop choice)</a></li>
+    <li><a href="#KDExinitrc">configuring xinitrc (global desktop choice)</a></li>
+  </ul>
+  <li><a href="#bootX">Boot Straight into X</a></li>
+  <ul>
+    <li><a href="#bootXdm">using xdm</a></li>
+    <li><a href="#bootKdm">using kdm - another desktop manager</a></li>
+    <ul>
+      <li><a href="#kdmConfig">configuring kdm</a></li>
+      <li><a href="#kdmKde">kde from kdm</a></li>
+      <li><a href="#kdmUserSelect">user selectable desktops from kdm</a></li>
+    </ul>
+  </ul>
+  <li><a href="#vesa">a VESA configuration for XFree86 4.x</a></li>
+  <li>Relative Reference</li>
+  <li><a href="#author">Author and Copyright</a></li>
+</ul>
+<hr color="Fuchsia">
+<h2><a name="introduction"></a>Introduction</h2>
+<p class="pFileReference">Security Issues: xf86(4) </p>
+<p>Unix/BSDs provide a great sturdy platform for running services that just need 
+  to be &quot;going and going and ...&quot; For this type of environment the Windowing 
+  Graphical User Interface is mostly unnecessary (or maybe totally unnecessary.) 
+  But a Win GUI augments the tough exterior of the sturdy server with a more approachable 
+  look for those new to Unix/BSDs who are used to a desktop environment (ala MS 
+  Windows.) OpenBSD is as adept as other *NIX systems in displaying a nice gui 
+  and a flexible GUI provides a platform for non-*NIX people to be introduced 
+  to, operate and maintain the general configurations of a a secure OpenBSD box. 
+</p>
+<p>These notes refer to XFree86 4.1 and OpenBSD 3.0</p>
+<p>Your OpenBSD team has put together a good guide in /usr/X11R6/README, step-by-step 
+  instructions for installing your X-Windows system.</p>
+<p>The utilities required for installing both XFree86 4.1 and XFree86 3.3.6 are 
+  both referenced and more complete documentation are stored in:</p>
+<table width="80%" border="1" class="pScreenOutput">
+  <tr> 
+    <td><b>Location</b></td>
+    <td><b>Release</b></td>
+  </tr>
+  <tr> 
+    <td>/usr/X11R6/lib/X11/doc/</td>
+    <td>XFree86 4.1</td>
+  </tr>
+  <tr> 
+    <td>/usr/X11R6/lib/X11/doc/XFree86-3.3.6/</td>
+    <td>XFree86 3.3.6</td>
+  </tr>
+</table>
+<p>If you would like to refer to the documentation previously available on installing 
+  X, please refer to <a href="x-windows3.htm" class="anchBlue">the article x-windows3.htm</a></p>
+<h2><a name="ConfiguringX"></a>Configuring X</h2>
+<p class="pFileReference">[ref: XF3.3x /usr/X11R6/lib/X11/doc/XFree86-3.3.6/QuickStart.doc, 
+  XF86Config-3(4)]<br>
+[ref: XF4.1 &nbsp;/usr/X11R6/lib/X11/doc/, XF86Config(5)]</p>
+<p>To get X Windows started on your system you 1st have to generate a configuration 
+  file (assuming of course that you <a href="x-windows3.htm#files" class="anchBlue">installed 
+  the x* files during installation.</a> and followed /usr/X11R6/README)</p>
+  
+<h3><a name="determine"></a> Determining your System Configuration </h3>
+<p class="pFileReference">[ref: SuperProbe(1)]<br>
+  [ref: <a href="x-windows3.htm" class="anchBlue">x-windows3.htm</a>]</p>
+<p>The use of SuperProbe to determine your video card settings are documented 
+  in our <a href="x-windows3.htm#determine">previous installation instructions.</a> 
+  Essentially, running the program will help you with selecting the correct video 
+  card for configuring the X server.</p>
+<p>If you really want to use an accelerator driver only available in XFree86 3.x 
+  then please look at the previous instructions for installing XF 3.x.</p>
+<p>Fortunately we do not have to do much work with the mouse, because of the new 
+  wsmouse device with OpenBSD 3.0</p>
+  
+  <p>If the older notes do not help, what I have found to be a starting point on a new machine with no idea about the video card, is the XFree 4.x's XFree86 -configure option.</p>
+  <p>From the documention: [XFree86(1)]</p>
+<p class="pScreenOutput">       -configure
+               When this option is specified, the X server  loads
+               all  video  driver  modules,  probes for available
+               hardware, and writes out an initial  XF86Config(5)
+               file based on what was detected.  This option cur­
+               rently has some problems on some platforms, but in
+               most  cases it is a good way to bootstrap the con­
+               figuration process.  This option is only available
+               when the server is run as root (i.e, with real-uid
+               0).
+</p>  
+  
+<p>After running XF86Config from root you should get some response similar to the following:</p>  
+ <p class="Code"># XFree86 -configure</p> 
+<p class="pScreenOutput">Your XF86Config file is /root/XF86Config.new<br>
+&nbsp;<br>
+To test the server, run 'XFree86 -xf86config /root/XF86Config.new'</p>
+
+<p>Now I can test whether the XF86 configuration generated by the program works by using the example shown above.</p>
+<p class="Code"># XFree86 -xf86config /root/XF86Config.new<p>
+
+<p>Don't look for something exciting, this should only be the X environment, which will basically just show as a blank screen with a mouse cursor. Worse, it will probably be at the lowest possible resolution, but it's working.</p>
+<p>Ctrl+Alt+Bksp: For those very new to X, use the Control+Alt+Backspace key combination (hold all three keys down at the same time) to stop X and return to the command-prompt.</p>
+
+<p>Success? If the graphic screen worked for you, you can now use this Configuration as a basis for your X environment. To do this copy the /root/XF86Config.new file to the standard location for your machine (usually at /etc/X11)</p>
+<p class="Code"># cp /root/XF86Config.new /etc/X11/XF86Config</p>
+
+<p>WARNING: make backups of any existing files before you copy anything.</p>
+
+<p>In OpenBSD (3.2 & 3.3 tested with this comment) the only major thing to configure from the above sample configuration are:</p>
+<ul>
+    <li>Screen Resolutions: Pick the one you actually want to use, and specify the pixel dimensions, see examples below</li>
+    <li>Monitor Horizontal Sync and Vertical Refresh: The defaults are not identified and you may need to specify something to make sure your graphics selection in screen resolutions is acceptable.</li>
+</ul>
+
+<h3><a name="41Mouse"></a>4.1 &amp; The Mouse</h3>
+<p class="pFileReference">[ref: wsmouse(4)]</p>
+<p>One key aspect to realise with OpenBSD 3.0 and XFree86 4.x is that the mouse 
+  protocol is now 'wsmouse' irregardless of which mouse you may have (at least 
+  on my i386 systems, i'm sorry if i'm wrong.)</p>
+<h3><a name="chooseConfig"></a>Choosing your Configuration Program</h3>
+<p class="pFileReference">[ref: XF3.3x xf86config3]<br>
+  [ref: XF4.1 xf86cfg(1), xf86config(1)]</p>
+<p>Two programs are recommended for creating your XF86Config file: xf86cfg and 
+  xf86config.</p>
+<p>xf86cfg configuration is confusing if you are not used to it (a quasi GUI interface) 
+  alternately it offers a text-mode configuration 'xf86cfg -textmode'</p>
+<p>It significantly helps the XF86Config process if you can connect from another 
+  computer 'ssh' and execute the installation sequence so you can more easily 
+  review error output, which is logged in /var/log/XFree86.0.log. (i.e. use a 2nd screen to tail -f /var/log/XFree86.0.log and view the startup process/failure.) </p>
+<h2><a name="startx"></a>Ready to StartX</h2>
+<p>If your configuration has been successful then you can start and stop X Windows 
+  by doing the following.</p>
+<h3><b><a name="startxStart"></a>Starting:</b></h3>
+<p>Both setup programs should create a workable server, and you can test it by 
+  using the <i>startx</i> script. </p>
+<table width="80%" border="0" class="Code">
+  <tr> 
+    <td class="Code"># /usr/X11R6/bin/startx </td>
+  </tr>
+</table>
+<h3><b><a name="startxStop"></a>Stopping:</b></h3>
+<p>To Get out of X, use Ctrl+Alt+Backspace</p>
+<p>After starting X Windows for the 1st time you should get a screen with one 
+  or two x-term windows open on the screen.</p>
+<h3><b><a name="startxTest"></a>Testing:</b></h3>
+<p>Often, I screw up the resolution, or the color mode configuration. One simple 
+  way of starting X into a different configuration than that which is in the configuration 
+  file, is to use the following example.</p>
+<p>To start X Window using 256 color mode:</p>
+<table width="80%" border="0" class="Code">
+  <tr> 
+    <td class="Code"># startx -- -bbp 8</td>
+  </tr>
+</table>
+<p>To start X Window in true colour mode, use the following command</p>
+<table width="80%" border="0" class="Code">
+  <tr> 
+    <td class="Code"># startx -- -bbp 32</td>
+  </tr>
+</table>
+<p>'startx' is a script to initialise services for the X Window environment which 
+  in the default OpenBSD configuration starts up a simple 'window manager' and 
+  an 'xterm' connection running under the fvwm Window Manager.</p>
+<h2><a name="installKDE"></a>Installing KDE - D Face for X</h2>
+<p>I'm not really into interface wars between KDE &amp; GNOME and all the 'lighter' 
+  stuff, because I much prefer KDE for my OpenBSD box, and I much prefer Internet 
+  Explorer over the other browsers, so ...</p>
+<h3><a name="installKDEpackage"></a>Installing the Binary Packages</h3>
+<p>Members of the OpenBSD development team involved with KDE development have 
+  done a wonderful set of work to incorporate many of the standard features of 
+  KDE into OpenBSD's port.</p>
+<p>I've got the OpenBSD 3.0 cd set, so I just pkg_add all the kde files, including 
+  koffice. (copied from the CD to /usr/ports/packages/i386/All)</p>
+<table border="0" class="Code" width="80%">
+  <tr> 
+    <td nowrap class="Code"> # <b>cd /usr/ports/packages/i386/All</b> </td>
+  </tr>
+  <tr> 
+    <td nowrap class="Code">All # <b>ls kde*</b></td>
+  </tr>
+  <tr> 
+    <td nowrap class="pScreenOutput">kdeartwork-2.2.1.tgz kdebase-ns-2.2.1.tgz 
+      kdegraphics-2.2.1.tgz kdenetwork-2.2.1.tgz<br>
+      kdebase-2.2.1.tgz kdegames-2.2.1.tgz kdelibs-2.2.1.tgz kdetoys-2.2.1.tgz</td>
+  </tr>
+  <tr> 
+    <td nowrap class="Code">All # <b>ls kof*</b></td>
+  </tr>
+  <tr> 
+    <td nowrap class="pScreenOutput">koffice-1.1.tgz</td>
+  </tr>
+  <tr> 
+    <td nowrap class="Code"> # <b>pkg_add koffice-1.1.tgz kdenetwork-2.2.1.tgz</b><br>
+      # <b>pkg_add kdegraphics* kdegames* kdetoys*</b> </td>
+  </tr>
+</table>
+<p>You can test the installation by starting an xterm while in X Windows and typing 
+  startkde at the command prompt. This should start up kde for your personal configuration.</p>
+<p>If KDE does not start up, then something is broken with the KDE install and 
+  you can refer to the /var/log/XFree86.0.log for further items to check that 
+  may be broken (missing) in your install.</p>
+<h3><a name="KDE.xinitrc"></a>Configuring .xinitrc (personal desktop choice)</h3>
+<p class="pFileReference"> </p>
+<p class="pFileReference">[ref: Red Hat Linux Administrator's Handbook 2nd ed. 
+  Mohammed J. Kabir]</p>
+<p>To allow user customisation, the startx script looks for system wide files 
+  and their corresponding version in the user home directory. If the user files 
+  are not found then the global version is used, otherwise the local user version 
+  is used. In this way, your users can have their own custom visual displays when 
+  they start up in X Window.</p>
+<p>The global configuration files are xserverrc and xinitrc. The user custom versions 
+  are ~/.xserverrc and ~/.xinitrc</p>
+<p>xserverrc or ~/.xserverrc contain details of which X servers to start, while</p>
+<p>xinitrc or ~/.xinitrc contain details of which client applications are going 
+  to be run after the X Window system has started. When the script exits, the 
+  X server is also terminated.</p>
+<p>Create a file : ~/.xinitrc to contain the following startup commands.</p>
+<p class="pFileReference">File: ~/.xinitrc</p>
+<table border="0" class="pScreenOutput" width="80%">
+  <tr> 
+    <td nowrap class="pScreenOutput"> #!/bin/sh<br>
+      /usr/local/bin/startkde </td>
+  </tr>
+</table>
+<p>After creating the above file, then you need to make the file executable by 
+  performing the following command as the user.</p>
+<table border="0" class="Code" width="80%">
+  <tr> 
+    <td nowrap class="Code">
+      $ cd ~<br>
+$ chmod a+x .xinitrc
+    </td>
+  </tr>
+</table>
+<p>Now, when the user starts X (by using startx) the user will be presented with 
+  KDE as their default GUI.</p>
+<h3><a name="KDExinitrc"></a>Configuring xinitrc (global desktop choice)</h3>
+<p>To set the environment so all desktops started with startx are kde, make changes 
+  to /usr/X11R6/lib/X11/xinit/xinitrc</p>
+<p>The relevant lines are shown below.</p>
+<p class="pFileReference">File: xinitrc</p>
+<table border="0" class="Code" width="80%">
+  <tr> 
+    <td nowrap class="pScreenOutput"> # start some nice programs <br>
+      xclock -geometry 50x50-1+1 &amp;<br>
+      xconsole &amp;<br>
+      xterm -geometry 80x24 &amp; </td>
+  </tr>
+  <tr> 
+    <td nowrap class="Code"># fvwm || xterm</td>
+  </tr>
+  <tr> 
+    <td nowrap class="Code">/usr/local/bin/startkde</td>
+  </tr>
+</table>
+<p>&nbsp;</p>
+<h2><a name="bootX"></a>Boot Straight to X</h2>
+<p>The default X install supports can be started straight into X Windows by using 
+  the xdm display manager. The installation of KDE gives you an additional display 
+  manager kdm.</p>
+<h3><a name="bootXdm"></a>Using xdm</h3>
+<p class="pFileReference">[ref: rc.conf(8), xdm(1)]</p>
+<p>To automatically start the machine with the X environment, configuration changes 
+  are made in the /etc/rc.conf.local file </p>
+<p> To enable the X manager to begin on startup, create or change options in <a href="rc.conf.htm#Section1" class="anchBlue">Section 
+  1</a> of the <a href="rc.conf.htm" class="anchBlue">/etc/rc.conf.local</a> file</p>
+<p class="pFileReference"> Edit the File: /etc/rc.conf.local and add a line that 
+  reads as follows in Section 1:</p>
+<table width="80%" border="0" class="Code">
+  <tr> 
+    <td class="Code">xdm_flags=""&nbsp; # note the use of two double-quotes </td>
+  </tr>
+</table>
+<p>The above setting will override the general settings in /etc/rc.conf which 
+  reads as follows:</p>
+<table width="80%" border="0" class="pScreenOutput">
+  <tr> 
+    <td class="pScreenOutput">xdm_flags=NO </td>
+  </tr>
+</table>
+<p> When you restart your machine, xdm will start and greet you with a dialog 
+  prompt for your username and password. </p>
+<p>You can obviously go straight to this display manager from the command prompt 
+  by typing in '/usr/X11R6/bin/xdm'</p>
+<table width="80%" border="0" class="Code">
+  <tr> 
+    <td class="Code"># <b>/usr/X11R6/bin/xdm</b></td>
+  </tr>
+</table>
+<p>The configuration files for xdm are stored in /etc/X11/xdm</p>
+<p>One mail discussion recommends that you should use xdm_flags=&quot;-udpPort 
+  0&quot; to stop xdm from listening to the Network.</p>
+<p class="pFileReference"> From the man pages xmd(1)</p>
+<table width="80%" border="0" class="pScreenOutput">
+  <tr>
+    <td><b>-udpPort port_number</b><br>
+      Specifies the value for the DisplayManager.request&shy;Port resource. This 
+      sets the port-number which xdm will monitor for XDMCP requests. As XDMCP 
+      uses the registered well-known UDP port 177, this resource should not be 
+      changed except for debugging. If set to 0 xdm will not listen for XDMCP 
+      or Chooser requests.</td>
+  </tr>
+</table>
+<h3><a name="bootKdm"></a>using kdm - another X display manager</h3>
+<p class="pFileReference">[ref: rc.conf(8), kdm]</p>
+<p>To enable the X manager to begin on startup, create or change options in <a href="rc.conf.htm#Section1" class="anchBlue">Section 
+  1</a> of the <a href="rc.conf.htm" class="anchBlue">/etc/rc.conf.local</a> file</p>
+<p class="pFileReference"> Edit the File: /etc/rc.conf.local and add a line that 
+  reads as follows in <a href="rc.conf.htm#Section1">Section 1</a>:</p>
+<table width="80%" border="0" class="Code">
+  <tr> 
+    <td class="Code">kdm_flags=""&nbsp; # note the use of two double-quotes </td>
+  </tr>
+</table>
+<p>Edit the file: /etc/rc.local and add the lines</p>
+<table border="0" width="80%" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="pScreenOutput"> 
+      <p class="pScreenOutput"><b>echo -n 'starting local daemons:'</b></p>
+      <p class="pScreenOutput"> &nbsp;&nbsp;# [ ... stuff left out ... ]<br>
+        &nbsp;</p>
+    </td>
+  </tr>
+  <tr> 
+    <td nowrap class="Code"> 
+      <p class="Code">if [ &quot;X${kdm_flags}&quot; != X&quot;NO&quot; ]; then 
+        <br>
+        &nbsp;&nbsp; <b></b>echo 'starting kdm...'; /usr/local/bin/kdm ${kdm_flags} 
+        <br>
+        fi&nbsp;&nbsp; </p>
+    </td>
+  </tr>
+  <tr> 
+    <td nowrap class="pScreenOutput"> 
+      <p class="pScreenOutput"><br>
+        # [ ... stuff left out ... ]</p>
+      <p class="pScreenOutput"> <b>echo '.' </b></p>
+    </td>
+  </tr>
+</table>
+<p>When you restart your machine, kdm will start and greet you with a dialog prompt 
+  for your username and password. </p>
+<p>You can obviously go straight to this display manager from the command prompt 
+  by typing in '/usr/local/bin/kdm'</p>
+<table width="80%" border="0" class="Code">
+  <tr> 
+    <td class="Code"># <b>/usr/local/bin/kdm</b></td>
+  </tr>
+</table>
+<h4><a name="kdmConfig"></a>Configuring kdm</h4>
+<p class="pFileReference">[ref: kdmrc]</p>
+<p>kdm can be configured by root in the KMenu :-&gt; <i>Preferences</i> :-&gt; 
+  System :-&gt; <i>Login Manager</i></p>
+<p>The configuration files for xdm are stored in /usr/local/share/config/kdm/kdmrc</p>
+<p>Aspects of the configuration file that are appropriate to change include:</p>
+<p class="pFileReference">Edit File ./kdmrc to include the following settings</p>
+<table border="0" width="80%" class="CodeSmall">
+  <tr> 
+    <td nowrap class="Code"><b><font color="#00cc00">[Shutdown]</font></b><br>
+      <b>HaltCmd=/sbin/halt -p<br>
+      RebootCmd=/sbin/reboot</b><br>
+      <br>
+      <font color="#009900"><b><font color="#00cc00">[X-*-Greeter]</font></b></font><br>
+      ...<br>
+      <b>DefaultUser=</b><br>
+      ... <br>
+      <b>MinShowUID=<font color="#00CC00">1000</font></b><br>
+      ...<br>
+      <b>LogoArea=Logo<br>
+      LogoPixmap=<font color="#00CC00">/usr/X11R6/lib/X11/xdm/pixmaps/OpenBSD_15bpp.xpm</font></b></td>
+  </tr>
+</table>
+<p><i>HaltCmd</i>. I modified this to include <font color="00cc00"><b>&quot;-p&quot;</b></font> 
+  because my laptop must be powered off by software (i think) and if it merely 
+  halts without powering down, then the power switch essentially puts the laptop 
+  into sleep mode.</p>
+<p><i>MinShowUID</i>=<font color="00cc00"><b>1000</b></font>. Standard users (so 
+  far as I know) begin at 1000 so specifically putting this in prevents system 
+  userids like www etc. from showing on the dialog box.</p>
+<p><i>LogoPixmap</i>=?. Specifies the pixture to use with the startup/login screen. 
+  Being patriotic, I recommend the OpenBSD logo as specified in the above example.</p>
+<h4><a name="kdmKde"></a>kde from kdm</h4>
+<p class="pFileReference">[Ref: /etc/X11/xdm/Xsession]</p>
+<p> kdm offers three options (at least) of window managers to launch for a selected 
+  user. To configure kdm so it correctly launches KDE from the selection menu, 
+  make the following changes to the file Xsession: Change the section in the Xsession 
+  file that reads: </p>
+<p class="pFileReference">Edit the file Xsession and update the lines that read</p>
+<table border="0" class="pScreenOutput" width="80%">
+  <tr> 
+    <td nowrap class="pScreenOutput"> 
+      <p class="pScreenOutput"> case $1 in<br>
+        failsafe)<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;xterm -geometry 
+        80x24-0-0<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;do_exit<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;;;</p>
+      <p class="pScreenOutput">esac</p>
+    </td>
+  </tr>
+</table>
+<p class="pFileReference">To read as follows </p>
+<table border="0" class="pScreenOutput" width="80%">
+  <tr> 
+    <td nowrap class="pScreenOutput"> 
+      <p class="pScreenOutput">case $1 in<br>
+        failsafe)<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;xterm -geometry 
+        80x24-0-0<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;do_exit<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;;; </p>
+    </td>
+  </tr>
+</table>
+<table border="0" class="Code" width="80%">
+  <tr> 
+    <td nowrap class="Code"> 
+      <p class="Code"><b>kde | default)<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/usr/local/bin/startkde<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;do_exit<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;;;</b></p>
+    </td>
+  </tr>
+</table>
+<table border="0" class="pScreenOutput" width="80%">
+  <tr> 
+    <td nowrap class="pScreenOutput"> 
+      <p class="pScreenOutput">esac</p>
+    </td>
+  </tr>
+</table>
+<p>When you start kdm you can now select either failsafe or kde and kdm will launch 
+  the selected desktop environment. The '| default' will set the default desktop 
+  to the KDE instructions.</p>
+<h4><a name="kdmUserSelect"></a>User Selectable Desktop</h4>
+<p>As you can see, you can now modify the kdmrc file to include further GUI desktop 
+  selections for your users. Of course, you should have the GUI installed and 
+  tested before making modifications both in kdmrc &amp; Xsession</p>
+<p class="pFileReference">Edit kdmrc to modify the below line</p>
+<table border="0" width="80%" class="pScreenOutput">
+  <tr> 
+    <td nowrap class="pScreenOutput">SessionTypes=default,kde,failsafe,</td>
+  </tr>
+</table>
+<p class="pFileReference">to read as follows</p>
+<table border="0" width="80%" class="Code">
+  <tr> 
+    <td nowrap class="Code">SessionTypes=default,kde,failsafe,fvwm</td>
+  </tr>
+</table>
+<p>and obviously you will have to make some additions to the script shown above 
+  for Xsession. The following is one example.</p>
+<table border="0" class="pScreenOutput" width="80%">
+  <tr> 
+    <td nowrap class="pScreenOutput"> case $1 in<br>
+      failsafe)<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;xterm -geometry 80x24-0-0<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;do_exit<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;;; <br>
+      kde | default) <br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/usr/local/bin/startkde<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;do_exit<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;;;</td>
+  </tr>
+  <tr> 
+    <td nowrap class="Code"> <b>fvwm)<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;xterm &amp;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;xterm &amp;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fvwm<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;do_exit<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;;;</b></td>
+  </tr>
+</table>
+<table border="0" class="pScreenOutput" width="80%">
+  <tr> 
+    <td nowrap class="pScreenOutput"> esac</td>
+  </tr>
+</table>
+<p>&nbsp;</p>
+<h2><a name="vesa"></a>a VESA configuration for XFree86 4.x</h2>
+<p>The following is a sample VESA /etc/X11/XF86Config I used for my laptop. This 
+  configuration is nice in how it handles multiple pointer devices and has been 
+  used by other laptop owners with a different configuration than specified in 
+  the comments.</p>
+<p>The configuration file works with my:</p>
+<p><i>OpenBSD 3.0 w/ XFree86 4.1.0<br>
+  Toshiba Satellite Pro 4600, 15 inch Super VGA<br>
+  16MB Trident CyberBlade XP</i></p>
+<p><i>Gateway Solo 9300 Pro</i></p>
+<p>The only changes made in this file, from the original files by <i>hme</i> were 
+  to specify the OpenBSD specific port devices and keyboard type and the fact 
+  that OpenBSD's wsmouse device can handle two input devices simultaneously(?).</p>
+<table border="0" class="dns" width="80%">
+  <tr> 
+    <td nowrap> 
+      <pre>
+# $Id: x-windows4.htm,v 1.1.1.1 2002/06/10 02:09:58 samt Exp $
+#
+# XF86Config (XFree86 4.0.2) file for Toshiba Satellite Pro 4600.
+#
+# This is a Trident CyberBlade XP graphics card with 16 MByte memory.
+# SVGA graphics is supported up to 1600x1200 @ 85 Hz.
+# The LCD is a 15 inch 1024x768 TFT.
+#
+# The card is not recognised by the trident driver, and the vga driver
+# gives only 320x200 pixels.  So the generic vesa driver is used, which
+# supports up to 1280x1024.
+#
+# This file is bascially created with xf86config for an unsupported VGA card.
+# However, then the Driver was changed from "vga" to "vesa", the DefaultDepth
+# from 8 bpp to 16 bpp, and the Modes list reduced to "1024x768" only.
+#
+# If you add a "1280x1024" mode at the end of the Modes line,
+# you will have a 640x480 viewport on that size of screen, scrolled by
+# mouse movement.  If you put that mode in front of "1024x768" you will
+# have a 1024x768 viewport on a 1280x1024 screen, but cannot scroll to
+# the right or bottom edge.
+#
+# 24 bpp and 32 bpp do not work, I suspect the card does not support
+# 24 bpp and the vesa driver does not support more than 24 bpp.
+#
+# This file is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+#
+# (C) 2001 United Kingdom Astronomy Technology Centre.
+# Horst Meyerdierks &lt;hme over-at roe.ac.uk&gt;.
+# Some sections courtesy of Helmut Bluhm.
+#
+# 2001/03/03: Original version.
+# 2001/03/04: Modified keyboard section, minor addition to mouse section.
+# 2001/03/08: Minor tweaking of keyboard section.
+# 2001/04/27: Remove references to pc101 in keyboard section,
+#             to make my UK keyboard work with Red Hat 7.1 XFree86 4.0.3.
+# 2001/05/23: Dual mouse sections for simultaneous use of PS/2 and USB mice,
+#             also both with IMPS/2 and ZAxisMapping.
+# 2001/06/01: Swap InputDevice lines in ServerLayout to initialise USB mouse
+#             last (after keyboard).
+# 2001/12/12: /dev/wsmouse is adequate to pick up dual USB &amp; Internal Pointer
+#             device wsmouse(4)(samt)
+
+Section "Module"
+    Load        "dbe"   # Double buffer extension
+    SubSection  "extmod"
+      Option    "omit xfree86-dga"   # don't initialise the DGA extension
+    EndSubSection
+    Load        "type1"
+    Load        "freetype"
+EndSection
+
+Section "Files"
+    RgbPath    "/usr/X11R6/lib/X11/rgb"
+    FontPath   "/usr/X11R6/lib/X11/fonts/local/"
+    FontPath   "/usr/X11R6/lib/X11/fonts/misc/"
+    FontPath   "/usr/X11R6/lib/X11/fonts/75dpi/:unscaled"
+    FontPath   "/usr/X11R6/lib/X11/fonts/100dpi/:unscaled"
+    FontPath   "/usr/X11R6/lib/X11/fonts/Type1/"
+    FontPath   "/usr/X11R6/lib/X11/fonts/Speedo/"
+    FontPath   "/usr/X11R6/lib/X11/fonts/75dpi/"
+    FontPath   "/usr/X11R6/lib/X11/fonts/100dpi/"
+    FontPath   "/usr/local/AbiSuite/fonts/"
+EndSection
+
+Section "ServerFlags"
+EndSection
+
+Section "InputDevice"
+    Identifier  "Keyboard1"
+    Driver      "Keyboard"
+    Option "AutoRepeat"  "500 30"
+    Option "LeftAlt"     "Meta"
+    Option "RightAlt"    "Meta"
+    Option "ScrollLock"  "Compose"
+    Option "RightCtl"    "Control"
+    Option "XkbKeycodes" "xfree86"
+    Option "XkbTypes"    "default"
+    Option "XkbCompat"   "default"
+    Option "XkbRules"    "xfree86"
+    Option "XkbLayout"   "us"
+EndSection
+
+Section "InputDevice"
+    Identifier  "Mouse"
+    Driver      "mouse"
+    Option "Protocol"    "wsmouse"
+    Option "Device"      "/dev/wsmouse"
+    Option "Emulate3Buttons"
+    Option "Emulate3Timeout" "150"
+    Option "ZAxisMapping" "4 5"
+EndSection
+
+Section "Monitor"
+    Identifier  "Tosh 4600 LCD"
+    HorizSync   31.5 - 82.0
+    VertRefresh 50-90
+EndSection
+
+Section "Device"
+    Identifier  "Standard VGA"
+    VendorName  "Unknown"
+    BoardName   "Unknown"
+#   Chipset     "generic"
+    Driver      "vga"
+#   BusID       "PCI:0:10:0"
+#   VideoRam     256
+#   Clocks       25.2 28.3
+EndSection
+
+Section "Device"
+    Identifier  "Trident XP"
+    Driver      "vesa"
+        # unsupported card
+    #VideoRam    16384
+    # Insert Clocks lines here if appropriate
+EndSection
+
+Section "Screen"
+    Identifier  "Screen 1"
+    Device      "Trident XP"
+    Monitor     "Tosh 4600 LCD"
+    DefaultDepth 16
+    Subsection "Display"
+        Depth       8
+        Modes       "1024x768"
+        ViewPort    0 0
+    EndSubsection
+    Subsection "Display"
+        Depth       16
+        Modes       "1024x768"
+        ViewPort    0 0
+    EndSubsection
+EndSection
+
+Section "ServerLayout"
+    Identifier  "Simple Layout"
+    Screen      "Screen 1"
+    InputDevice "Mouse"     "CorePointer"
+    InputDevice "Keyboard1" "CoreKeyboard"
+EndSection</pre>
+    </td>
+  </tr>
+</table>
+<p>My apologies to the purist, I tried to maintain where I got the above information 
+  (some Toshiba site in Japan) but didn't do a good job of that so I do not have 
+  a link to the original source.</p>
+<h2>Whacking the Hardway</h2>
+<p>[ref XFree86(1)]</p>
+<p>I have a machine that of OpenBSD 3.2 and XFree86 4.2.1, the video card was 
+  not directly supported so it was very hit and miss on how to set up X.</p>
+<p>The direction I had to take was to manually run the XFree86 binary (/usr/X11R6/bin/XFree86) 
+  with the following option.</p>
+<table width="75%" border="1" class="pScreenOutput">
+  <tr>
+    <td class="pScreenOutput"><strong>-configure</strong><br>
+      When this option is specified, the X server loads<br>
+      all video driver modules, probes for available<br>
+      hardware, and writes out an initial XF86Config(5)<br>
+      file based on what was detected. This option cur&shy;<br>
+      rently has some problems on some platforms, but in<br>
+      most cases it is a good way to bootstrap the con&shy;<br>
+      figuration process. This option is only available<br>
+      when the server is run as root (i.e, with real-uid<br>
+      0).</td>
+  </tr>
+</table>
+<p><br>
+  After running XFree86 -configure, the program stores the new configuration at 
+  /root/XF86Config.new and you can test the configuration using:</p>
+<table width="75%" border="1" class="Code">
+  <tr>
+    <td class="Code"># XFree86 -xf86config /root/XF86Config.new</td>
+  </tr>
+</table>
+<p>This gives me the opportunity to fine-tune the configuration before installing 
+  it as my full config.</p>
+<table width="75%" border="1" class="pScreenOutput">
+  <tr> 
+    <td class="pScreenOutput"><strong>-xf86config file</strong><br>
+      Read the server configuration from file. This<br>
+      option will work for any file when the server is<br>
+      run as root (i.e, with real-uid 0), or for files<br>
+      relative to a directory in the config search path<br>
+      for all other users.</td>
+  </tr>
+</table>
+<p>The program will give me a working Screen and Video Card Device section which, 
+  again, can be finetuned.</p>
+<p>&nbsp;</p>
+<h2>Relative Reference</h2>
+<p>Some addresses picked up on the misc@ mailing list.</p>
+<p>Tutorial at IBM <a href="http://www-105.ibm.com/developerworks/education.nsf/linux-onlinecourse-bytitle/3100FF4795B3F31F86256AF70056FDB3?OpenDocument">http://www-105.ibm.com/developerworks/education.nsf/linux-onlinecourse-bytitle/3100FF4795B3F31F86256AF70056FDB3?OpenDocument</a></p>
+<h2><a name="author"></a>Author and Copyright</h2>
+<p>Copyright (c) 2000/1/2 Samiuela LV Taufa. All Rights Reserved.</p>
+
+<p>You are permitted and encouraged to use this guide for fun or for profit as you see fit. If you republish this work in what-ever form, it would be nice (though not enforceable) to be credited.</p>
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+  <tr>
+    <td class="block" valign="MIDDLE" width="100%" bgcolor="#cccccc"><strong>
+      <p class="block">&nbsp;XF86 4.1 a pretty face on OpenBSD</p>
+      </strong></td>
+  </tr>
+</table>
+<p><font color="#808080" face="sans-serif" size="-2"><strong>Copyright&nbsp; &copy; 
+  2000/1/2
+<a href="http://www.nomoa.com">NoMoa.COM</a> All rights reserved.</strong></font></p>
+	
+  </body>
+</html>
+

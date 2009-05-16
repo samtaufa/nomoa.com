@@ -1,0 +1,28 @@
+Python Sample Scripts To Develop
+================================
+
+*** Simple Scripts
+[ ] Displaying Variables
+[ ] Loops
+[ ] Conditional Operators
+[ ] Arrays
+*** Building Python based Web Applications
+[ ] Session Variables
+[ ] Application Variables
+*** Web Interactivity
+[ ] User Form Input with POST or GET
+[ ] HTTP Server Variables
+[ ] Setting Expiration Information
+[ ] Client-Side Scripting
+[ ] Populating Fields
+*** Database Connectivity
+   [ ] Simple Query
+   [ ] Limit Query Results
+   [ ] Scrollable Query
+   [ ] Add/Delete Records
+   [ ] Update Records
+   [ ] Executing Stored Procedures
+*** Sample Code
+   [ ] Ad rotator (or banner rotator)   
+
+Part of this list is generated from samples available for PHP, and ASP.

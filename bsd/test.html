@@ -1,0 +1,62 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+<head>
+	<title>Untitled</title>
+<SCRIPT LANGUAGE="JavaScript">
+<!--
+
+function newImage(arg) {
+	if (document.images) {
+		rslt = new Image();
+		rslt.src = arg;
+		return rslt;
+	}
+}
+
+function changeImages() {
+	if (document.images && (preloadFlag == true)) {
+		for (var i=0; i<changeImages.arguments.length; i+=2) {
+			document[changeImages.arguments[i]].src = changeImages.arguments[i+1];
+		}
+	}
+}
+
+var preloadFlag = false;
+function preloadImages() {
+	if (document.images) {
+		openbsd_over = newImage("mmedia/openbsd-over.gif");
+		openbsd_down = newImage("mmedia/openbsd-down.gif");
+		preloadFlag = true;
+	}
+}
+
+// -->
+</SCRIPT>
+<!-- End Preload Script -->
+	<link rel="stylesheet" type="text/css" href="openbsd.css">
+</HEAD>
+
+<body bgcolor="#FFFACD" ONLOAD="preloadImages();">
+<table width="98%" border="0" cellspacing="0" cellpadding="0">
+<tr>
+    <td align="middle" bgcolor="#000000" width="1">&nbsp;</td>
+    <td bgcolor="#6699cc" valign="top">
+<a class="anchBlue" href="http://www.nomoa.com/bsd" 
+   ONMOUSEOVER="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;"
+   ONMOUSEOUT="changeImages('openbsd', 'mmedia/openbsd.gif'); return true;"
+   ONMOUSEDOWN="changeImages('openbsd', 'mmedia/openbsd-down.gif'); return true;"
+   ONMOUSEUP="changeImages('openbsd', 'mmedia/openbsd-over.gif'); return true;">
+   <img NAME="openbsd"  align="absMiddle" 
+        alt="OpenBSD ... The Only way to Go ..." border="0" height="50"
+        src="mmedia/openbsd.gif" width="368"></a>
+
+
+    </td>
+    <td align="middle" bgcolor="#000000" width="1">&nbsp;</td>
+</tr>
+</table>
+
+
+</body>
+</html>
